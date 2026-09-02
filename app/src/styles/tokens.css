@@ -1,0 +1,214 @@
+/* Design tokens — ported verbatim from "Loophole v5.dc.html" (tinted glass).
+   Dark is the default; [data-theme="light"] is the Day palette. */
+
+:root {
+  --bg: #0a1018;
+  --bg2: #101a28;
+  --panel: rgba(190, 215, 255, 0.09);
+  --panel2: rgba(190, 215, 255, 0.16);
+  --line: rgba(200, 222, 255, 0.22);
+  --line2: rgba(200, 222, 255, 0.36);
+  --ink: #eef4ff;
+  --dim: rgba(238, 244, 255, 0.72);
+  --dim2: rgba(238, 244, 255, 0.56);
+  --g2: #9fb3d1;
+  --g3: #7688a6;
+  --tile: rgba(190, 215, 255, 0.1);
+  --acc: #8ba4ff;
+  --acc2: #6d7ff0;
+  --accLt: #c6d4ff;
+  --cyan: #4dd4f0;
+  --lime: #34d3a6;
+  --pink: #f490c0;
+  --gold: #f9c46b;
+  --track: rgba(200, 222, 255, 0.14);
+  --onAcc: #0a1018;
+  --onPink: #2a0d1d;
+  --onLime: #04241b;
+  --onCyan: #062733;
+  --blur: blur(22px) saturate(1.45);
+  --spec: inset 0 1px 0.5px rgba(255, 255, 255, 0.5), inset 0 -1px 0.5px rgba(255, 255, 255, 0.14),
+    0 10px 26px rgba(4, 10, 20, 0.55);
+  --gradv: linear-gradient(160deg, rgba(168, 186, 255, 0.6), rgba(112, 132, 242, 0.34) 45%, rgba(92, 112, 224, 0.24));
+  --glow: inset 0 1.5px 1px rgba(255, 255, 255, 0.75), inset 0 -2px 1px rgba(198, 212, 255, 0.28),
+    inset 0 -14px 22px rgba(139, 164, 255, 0.16), 0 14px 34px rgba(4, 10, 20, 0.6), 0 0 26px rgba(139, 164, 255, 0.28);
+  --shadow: 0 16px 36px rgba(4, 10, 20, 0.55);
+}
+
+[data-theme='light'] {
+  --bg: #e7edf7;
+  --bg2: #f6f9fd;
+  --panel: rgba(255, 255, 255, 0.58);
+  --panel2: rgba(255, 255, 255, 0.82);
+  --line: rgba(22, 32, 46, 0.12);
+  --line2: rgba(22, 32, 46, 0.22);
+  --ink: #16202e;
+  --dim: rgba(22, 32, 46, 0.74);
+  --dim2: rgba(22, 32, 46, 0.64);
+  --g2: #5b6b82;
+  --g3: #79899e;
+  --tile: rgba(255, 255, 255, 0.6);
+  --acc: #4f5fd6;
+  --acc2: #3f4dc0;
+  --accLt: #3a48b8;
+  --cyan: #0b6f88;
+  --lime: #0a6f57;
+  --pink: #a13c63;
+  --gold: #8f6420;
+  --track: rgba(22, 32, 46, 0.13);
+  --onAcc: #ffffff;
+  --onPink: #ffffff;
+  --onLime: #ffffff;
+  --onCyan: #ffffff;
+  --blur: blur(22px) saturate(1.5);
+  --spec: inset 0 1.5px 1px rgba(255, 255, 255, 1), inset 0 -1px 0.5px rgba(255, 255, 255, 0.6),
+    0 8px 22px rgba(22, 32, 46, 0.14);
+  --gradv: linear-gradient(160deg, #6d7ff0, #3f4dc0);
+  --glow: inset 0 1px 0 rgba(255, 255, 255, 0.4), 0 12px 26px rgba(79, 95, 214, 0.3);
+  --shadow: 0 14px 30px rgba(22, 32, 46, 0.16);
+}
+
+/* ── base ─────────────────────────────────────────────────────────── */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #06090f;
+  color: #eef4ff;
+  font-family: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+/* The device column. Full-bleed on a phone; a centred 402px column elsewhere,
+   which is the width every layout metric in the design was drawn against. */
+#root {
+  display: flex;
+  justify-content: center;
+  background: radial-gradient(1100px 560px at 18% -8%, #1b2740, #06090f 62%);
+}
+
+input,
+button,
+textarea {
+  font-family: inherit;
+}
+
+input::placeholder {
+  color: var(--dim2);
+}
+
+button:focus-visible,
+input:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 2px;
+}
+
+/* ── keyframes (verbatim from the prototype) ──────────────────────── */
+
+@keyframes vUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes vPop {
+  0% { transform: scale(0.82); opacity: 0; }
+  60% { transform: scale(1.04); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes vPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+@keyframes vFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes vDrop {
+  from { transform: translateY(-320%); }
+  to { transform: none; }
+}
+@keyframes vWave {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.16); }
+}
+@keyframes vSlide {
+  from { opacity: 0; transform: translateY(9px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes vShine {
+  0% { transform: translateX(-130%) rotate(12deg); }
+  55%, 100% { transform: translateX(330%) rotate(12deg); }
+}
+@keyframes vFall {
+  0% { transform: translateY(-30px) rotate(0); opacity: 0; }
+  12% { opacity: 1; }
+  100% { transform: translateY(640px) rotate(400deg); opacity: 0; }
+}
+@keyframes vGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(150, 180, 255, 0.55); }
+  60% { box-shadow: 0 0 0 14px rgba(150, 180, 255, 0); }
+}
+@keyframes vDots {
+  0%, 100% { opacity: 0.3; transform: translateY(0); }
+  50% { opacity: 1; transform: translateY(-3px); }
+}
+@keyframes vFlip {
+  from { transform: rotateY(78deg) scale(0.94); opacity: 0.2; }
+  to { transform: none; opacity: 1; }
+}
+
+/* ── utilities ────────────────────────────────────────────────────── */
+
+/* Horizontal rails: scrollable, no visible scrollbar. */
+.rail {
+  scrollbar-width: none;
+}
+.rail::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* Vertical scroll areas keep momentum on iOS but hide the bar. */
+.scroll {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.scroll::-webkit-scrollbar {
+  width: 0;
+}
+
+/* Hover affordances. The prototype expressed these with a `style-hover`
+   attribute; as real CSS they need class hooks. */
+.hov-acc:hover { border-color: var(--acc) !important; }
+.hov-acc-glow:hover { border-color: var(--acc) !important; box-shadow: var(--glow) !important; }
+.hov-cyan:hover { border-color: var(--cyan) !important; }
+.hov-lime:hover { border-color: var(--lime) !important; }
+.hov-gold:hover { border-color: var(--gold) !important; }
+.hov-tile:hover { border-color: rgba(150, 180, 255, 0.6) !important; box-shadow: 0 0 18px rgba(150, 180, 255, 0.2) !important; }
+.hov-row:hover { border-color: rgba(150, 180, 255, 0.5) !important; }
+.hov-ink:hover { color: var(--ink) !important; border-color: var(--acc) !important; }
+.hov-accLt:hover { border-color: var(--acc) !important; color: var(--accLt) !important; }
+
+button:not(:disabled) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
