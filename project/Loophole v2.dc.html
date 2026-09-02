@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/modernist-9ede8b48-aae5-40b1-82bb-8d93f38dbbcd/styles.css">
+<script src="_ds/modernist-9ede8b48-aae5-40b1-82bb-8d93f38dbbcd/_ds_bundle.js"></script>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#100e19;--bg2:#181530;--panel:rgba(255,255,255,.055);--panel2:rgba(255,255,255,.10);--stroke:rgba(255,255,255,.10);--stroke2:rgba(255,255,255,.18);--ink:#f5f3ff;--dim:rgba(245,243,255,.58);--dim2:rgba(245,243,255,.34);--vio:#7c5cff;--vio2:#c084fc;--lime:#a3e635;--cyan:#22d3ee;--pink:#f472b6;--amber:#fbbf24;--gradv:linear-gradient(135deg,#7c5cff 0%,#c084fc 100%);--shadow:0 18px 44px rgba(0,0,0,.45);--glow:0 10px 30px rgba(124,92,255,.45)}
+[data-theme="light"]{--bg:#f4f2ff;--bg2:#ffffff;--panel:rgba(23,18,48,.045);--panel2:rgba(23,18,48,.08);--stroke:rgba(23,18,48,.10);--stroke2:rgba(23,18,48,.18);--ink:#1a1630;--dim:rgba(26,22,48,.62);--dim2:rgba(26,22,48,.40);--shadow:0 18px 44px rgba(60,40,120,.14);--glow:0 10px 30px rgba(124,92,255,.35)}
+body{margin:0;background:#0a0912;color:#f5f3ff}
+a{color:#c084fc}a:hover{color:#e9d5ff}
+@keyframes v2Up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes v2Pop{0%{transform:scale(.8);opacity:0}60%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
+@keyframes v2Pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(.94)}}
+@keyframes v2Float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+@keyframes v2Flip{from{transform:rotateY(76deg) scale(.94);opacity:.2}to{transform:none;opacity:1}}
+@keyframes v2Drop{from{transform:translateY(-320%)}to{transform:none}}
+@keyframes v2Glow{0%,100%{box-shadow:0 0 0 0 rgba(124,92,255,.55)}50%{box-shadow:0 0 0 14px rgba(124,92,255,0)}}
+@keyframes v2Spin{to{transform:rotate(360deg)}}
+@keyframes v2Wave{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+@keyframes v2Fall{0%{transform:translateY(-30px) rotate(0);opacity:0}12%{opacity:1}100%{transform:translateY(620px) rotate(400deg);opacity:0}}
+@keyframes v2Slide{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes v2Shine{0%{transform:translateX(-120%) rotate(12deg)}55%,100%{transform:translateX(320%) rotate(12deg)}}
+@keyframes v2Breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+@keyframes v2Dots{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
+::-webkit-scrollbar{width:0;height:0}
+</style>
+</helmet>
+
+<div style="display:flex;gap:46px;align-items:flex-start;padding:40px 44px;min-height:100vh;background:radial-gradient(1200px 600px at 20% -10%,#241b4d 0%,#0a0912 60%);font-family:'Plus Jakarta Sans',system-ui,sans-serif">
+
+<div style="width:206px;flex:none;position:sticky;top:40px;color:#f5f3ff">
+<div style="display:flex;align-items:center;gap:10px">
+<div style="width:34px;height:34px;border-radius:12px;background:linear-gradient(135deg,#7c5cff,#c084fc);display:grid;place-items:center;box-shadow:0 8px 22px rgba(124,92,255,.5)">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="8.6" cy="12" r="5.2"/><circle cx="15.4" cy="12" r="5.2"/></svg></div>
+<div style="font:800 18px 'Outfit',sans-serif;letter-spacing:-.01em">Loophole</div>
+</div>
+<div style="font-size:11px;color:rgba(245,243,255,.45);margin:10px 0 16px">v2 · rounded / neon</div>
+<div style="font:700 10px 'Outfit',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#c084fc;margin-bottom:8px">App shell</div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<sc-for list="{{ navA }}" as="s" hint-placeholder-count="8">
+<button onClick="{{ s.go }}" style="appearance:none;background:transparent;border:0;border-radius:12px;padding:9px 11px;text-align:left;font:500 13px 'Plus Jakarta Sans',sans-serif;color:rgba(245,243,255,.72);cursor:pointer;display:flex;gap:9px;align-items:center" style-hover="background:rgba(255,255,255,.07);color:#fff">
+<span style="font:700 9.5px 'Outfit',sans-serif;color:rgba(245,243,255,.3)">{{ s.n }}</span>{{ s.label }}</button>
+</sc-for>
+</div>
+<div style="font:700 10px 'Outfit',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#a3e635;margin:18px 0 8px">Game shell</div>
+<div style="display:flex;flex-direction:column;gap:2px">
+<sc-for list="{{ navB }}" as="s" hint-placeholder-count="3">
+<button onClick="{{ s.go }}" style="appearance:none;background:transparent;border:0;border-radius:12px;padding:9px 11px;text-align:left;font:500 13px 'Plus Jakarta Sans',sans-serif;color:rgba(245,243,255,.72);cursor:pointer;display:flex;gap:9px;align-items:center" style-hover="background:rgba(255,255,255,.07);color:#fff">
+<span style="font:700 9.5px 'Outfit',sans-serif;color:rgba(245,243,255,.3)">{{ s.n }}</span>{{ s.label }}</button>
+</sc-for>
+</div>
+<p style="font-size:11.5px;line-height:1.55;color:rgba(245,243,255,.4);margin:20px 0 0">Connect 4 really plays. Game art tiles are gradient placeholders — swap in real key art.</p>
+</div>
+
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" dark="{{ isDark }}" hint-size="402px,874px">
+<div data-theme="{{ theme }}" style="height:100%;display:flex;flex-direction:column;position:relative;background:var(--bg);color:var(--ink);font-family:'Plus Jakarta Sans',system-ui,sans-serif;overflow:hidden">
+<div style="position:absolute;top:-120px;right:-90px;width:320px;height:320px;border-radius:50%;background:radial-gradient(circle,rgba(124,92,255,.55),transparent 70%);filter:blur(10px);pointer-events:none"></div>
+<div style="position:absolute;bottom:-140px;left:-110px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(34,211,238,.28),transparent 70%);filter:blur(10px);pointer-events:none"></div>
+
+<sc-if value="{{ atSplash }}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="01 Splash" onClick="{{ toLogin }}" style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:26px;padding:80px 30px 70px;cursor:pointer;position:relative;z-index:1">
+<div style="display:flex;gap:10px">
+<div style="width:52px;height:52px;border-radius:18px;background:linear-gradient(135deg,#f472b6,#fbbf24);animation:v2Float 4s ease-in-out infinite"></div>
+<div style="width:52px;height:52px;border-radius:18px;background:linear-gradient(135deg,#22d3ee,#7c5cff);animation:v2Float 4s ease-in-out .5s infinite"></div>
+<div style="width:52px;height:52px;border-radius:18px;background:linear-gradient(135deg,#a3e635,#22d3ee);animation:v2Float 4s ease-in-out 1s infinite"></div>
+</div>
+<div>
+<div style="width:76px;height:76px;border-radius:26px;background:var(--gradv);display:grid;place-items:center;box-shadow:var(--glow);margin-bottom:22px">
+<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><circle cx="8.6" cy="12" r="5.2"/><circle cx="15.4" cy="12" r="5.2"/></svg></div>
+<div style="font:800 54px/1 'Outfit',sans-serif;letter-spacing:-.03em">Loophole</div>
+<p style="font-size:16px;line-height:1.5;color:var(--dim);margin:14px 0 0;max-width:280px">Thirteen party games, one lobby. Somebody at this table is lying.</p>
+</div>
+<div style="display:flex;align-items:center;gap:14px;padding:16px 22px;border-radius:999px;background:var(--gradv);box-shadow:var(--glow);animation:v2Glow 2.6s infinite">
+<div style="font:700 17px 'Outfit',sans-serif;color:#fff">Tap to start</div>
+<svg style="margin-left:auto" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ atLogin }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="02 Sign in" style="flex:1;display:flex;flex-direction:column;padding:84px 26px 46px;position:relative;z-index:1;animation:v2Up .3s">
+<div style="font:800 34px/1.1 'Outfit',sans-serif;letter-spacing:-.02em">Welcome back</div>
+<p style="font-size:14.5px;color:var(--dim);margin:10px 0 26px;max-width:280px">One field, one tap. We'll figure out if that's an email or a phone.</p>
+<div style="display:flex;align-items:center;gap:12px;padding:15px 18px;border-radius:20px;background:var(--panel);border:1px solid var(--stroke)">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--vio2)"><rect x="2.5" y="5" width="19" height="14" rx="4"/><path d="M3 8l9 6 9-6"/></svg>
+<input placeholder="Email or phone number" style="flex:1;min-width:0;appearance:none;background:transparent;border:0;outline:none;color:var(--ink);font:500 15px 'Plus Jakarta Sans',sans-serif">
+</div>
+<button onClick="{{ toOnboard }}" style="appearance:none;margin-top:12px;display:flex;align-items:center;gap:12px;padding:17px 22px;border-radius:999px;border:0;background:var(--gradv);box-shadow:var(--glow);cursor:pointer;font:700 16px 'Outfit',sans-serif;color:#fff">Continue
+<svg style="margin-left:auto" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg></button>
+<div style="display:flex;align-items:center;gap:12px;margin:26px 0">
+<div style="height:1px;flex:1;background:var(--stroke)"></div><div style="font-size:12px;color:var(--dim2)">or</div><div style="height:1px;flex:1;background:var(--stroke)"></div>
+</div>
+<div style="display:flex;gap:12px">
+<button onClick="{{ toOnboard }}" style="appearance:none;flex:1;display:flex;align-items:center;justify-content:center;gap:9px;padding:15px;border-radius:20px;background:var(--panel);border:1px solid var(--stroke);cursor:pointer;color:var(--ink);font:600 14px 'Plus Jakarta Sans',sans-serif" style-hover="background:var(--panel2)">
+<div style="width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#f472b6,#fbbf24);display:grid;place-items:center;font:800 12px 'Outfit',sans-serif;color:#fff">G</div>Google</button>
+<button onClick="{{ toOnboard }}" style="appearance:none;flex:1;display:flex;align-items:center;justify-content:center;gap:9px;padding:15px;border-radius:20px;background:var(--panel);border:1px solid var(--stroke);cursor:pointer;color:var(--ink);font:600 14px 'Plus Jakarta Sans',sans-serif" style-hover="background:var(--panel2)">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2"><path d="M14 4h-2a4 4 0 00-4 4v3H5v4h3v6h4v-6h3l1-4h-4V8a1 1 0 011-1h2z"/></svg>Phone</button>
+</div>
+<div style="flex:1;min-height:20px"></div>
+<button onClick="{{ toOnboard }}" style="appearance:none;display:flex;align-items:center;gap:14px;padding:9px 9px 9px 9px;border-radius:999px;background:transparent;border:1.5px solid var(--stroke2);cursor:pointer;color:var(--ink)" style-hover="border-color:var(--vio2)">
+<div style="width:40px;height:40px;flex:none;border-radius:50%;background:var(--gradv);display:grid;place-items:center">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+<div style="font:700 15px 'Outfit',sans-serif">Create new account</div>
+</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ atOnboard }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="03 Onboarding" style="flex:1;display:flex;flex-direction:column;padding:84px 26px 46px;position:relative;z-index:1;animation:v2Up .3s">
+<div style="display:flex;gap:5px;margin-bottom:22px">
+<div style="height:5px;flex:1;border-radius:999px;background:var(--gradv)"></div>
+<div style="height:5px;flex:1;border-radius:999px;background:var(--gradv)"></div>
+<div style="height:5px;flex:1;border-radius:999px;background:var(--panel2)"></div>
+</div>
+<div style="font:800 30px/1.1 'Outfit',sans-serif;letter-spacing:-.02em">Pick a name<br>and a face</div>
+<div style="margin-top:22px;padding:15px 18px;border-radius:20px;background:var(--panel);border:1px solid var(--stroke);display:flex;align-items:center;gap:12px">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--vio2)" stroke-width="2"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></svg>
+<input value="{{ myName }}" onChange="{{ setName }}" style="flex:1;min-width:0;appearance:none;background:transparent;border:0;outline:none;color:var(--ink);font:600 16px 'Plus Jakarta Sans',sans-serif">
+</div>
+<div style="font-size:12px;color:var(--dim2);margin:22px 0 12px">Avatar</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+<sc-for list="{{ marks }}" as="m" hint-placeholder-count="8">
+<button onClick="{{ m.pick }}" style="appearance:none;aspect-ratio:1;border-radius:50%;background:{{ m.grad }};border:0;box-shadow:{{ m.ring }};cursor:pointer;display:grid;place-items:center;font:800 22px 'Outfit',sans-serif;color:#fff">{{ m.g }}</button>
+</sc-for>
+</div>
+<div style="flex:1;min-height:20px"></div>
+<button onClick="{{ toHome }}" style="appearance:none;display:flex;align-items:center;gap:12px;padding:18px 22px;border-radius:999px;border:0;background:var(--gradv);box-shadow:var(--glow);cursor:pointer;font:700 16px 'Outfit',sans-serif;color:#fff">Enter Loophole
+<svg style="margin-left:auto" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg></button>
+</div>
+</sc-if>
+
+<sc-if value="{{ atHome }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="04 Home" style="flex:1;display:flex;flex-direction:column;padding:66px 0 0;position:relative;z-index:1;animation:v2Up .3s">
+<div style="display:flex;align-items:center;gap:12px;padding:0 22px 18px">
+<button onClick="{{ toProfile }}" style="appearance:none;position:relative;width:46px;height:46px;border-radius:50%;background:{{ myGrad }};border:0;cursor:pointer;display:grid;place-items:center;font:800 20px 'Outfit',sans-serif;color:#fff">{{ myMark }}
+<div style="position:absolute;top:1px;right:1px;width:11px;height:11px;border-radius:50%;background:var(--lime);border:2.5px solid var(--bg)"></div></button>
+<div style="margin-right:auto">
+<div style="font-size:12px;color:var(--dim)">Good evening</div>
+<div style="font:700 17px 'Outfit',sans-serif">{{ myName }}</div>
+</div>
+<button onClick="{{ toSettings }}" style="appearance:none;width:44px;height:44px;border-radius:16px;background:var(--panel);border:1px solid var(--stroke);cursor:pointer;color:var(--ink);display:grid;place-items:center" style-hover="background:var(--panel2)">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 00.34 1.87l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.7 1.7 0 00-2.87 1.2V22a2 2 0 01-4 0v-.1A1.7 1.7 0 006 20.7l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.7 1.7 0 002.6 15H2.5a2 2 0 010-4h.1A1.7 1.7 0 003.3 8L3.24 8a2 2 0 012.83-2.83l.06.06A1.7 1.7 0 009 4.6V4.5a2 2 0 014 0v.1A1.7 1.7 0 0018 3.3l.06-.06a2 2 0 012.83 2.83l-.06.06A1.7 1.7 0 0021.4 9h.1a2 2 0 010 4h-.1a1.7 1.7 0 00-1.6 1z"/></svg></button>
+</div>
+
+<div style="padding:0 22px">
+<button onClick="{{ toConfig }}" style="appearance:none;width:100%;text-align:left;border:0;border-radius:28px;padding:24px;cursor:pointer;background:var(--gradv);box-shadow:var(--glow);position:relative;overflow:hidden;color:#fff">
+<div style="position:absolute;right:-30px;top:-30px;width:150px;height:150px;border-radius:50%;background:rgba(255,255,255,.14)"></div>
+<div style="position:absolute;right:26px;bottom:-40px;width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.10)"></div>
+<div style="position:relative">
+<div style="width:42px;height:42px;border-radius:16px;background:rgba(255,255,255,.22);display:grid;place-items:center;margin-bottom:16px">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></div>
+<div style="font:800 27px/1.05 'Outfit',sans-serif;letter-spacing:-.02em">Create a lobby</div>
+<div style="font-size:13.5px;opacity:.9;margin-top:7px">Pick a game, set the rules, share the code</div>
+</div>
+</button>
+
+<div style="height:12px"></div>
+<sc-if value="{{ joinClosed }}" hint-placeholder-val="{{ true }}">
+<button onClick="{{ openJoin }}" style="appearance:none;width:100%;display:flex;align-items:center;gap:14px;padding:17px 20px;border-radius:24px;background:var(--panel);border:1px solid var(--stroke);cursor:pointer;color:var(--ink)" style-hover="background:var(--panel2)">
+<div style="width:38px;height:38px;flex:none;border-radius:14px;background:rgba(34,211,238,.18);display:grid;place-items:center">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2.2"><path d="M15 7h3a4 4 0 010 8h-3M9 17H6a4 4 0 010-8h3M8 12h8"/></svg></div>
+<div style="text-align:left;margin-right:auto">
+<div style="font:700 15px 'Outfit',sans-serif">Join with code</div>
+<div style="font-size:12px;color:var(--dim)">Six characters from a friend</div>
+</div>
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--dim2)" stroke-width="2.4"><path d="M9 5l7 7-7 7"/></svg>
+</button>
+</sc-if>
+<sc-if value="{{ joinOpen }}" hint-placeholder-val="{{ false }}">
+<div style="border-radius:24px;background:var(--panel);border:1px solid var(--stroke2);padding:18px;animation:v2Up .22s">
+<div style="font-size:12px;color:var(--dim);margin-bottom:10px">Room code</div>
+<input value="{{ codeInput }}" onChange="{{ setCode }}" maxLength="6" placeholder="K7QX2M" style="width:100%;appearance:none;background:transparent;border:0;outline:none;color:var(--ink);font:800 32px 'Outfit',sans-serif;letter-spacing:.2em;text-align:center;text-transform:uppercase">
+<button onClick="{{ toLobby }}" style="appearance:none;width:100%;margin-top:14px;padding:15px;border-radius:999px;border:0;background:var(--gradv);cursor:pointer;font:700 15px 'Outfit',sans-serif;color:#fff;box-shadow:var(--glow)">Join lobby</button>
+</div>
+</sc-if>
+</div>
+
+<div style="display:flex;align-items:center;padding:24px 22px 12px">
+<div style="font:700 16px 'Outfit',sans-serif;margin-right:auto">Game library</div>
+<div style="font-size:12px;color:var(--vio2)">See all 13</div>
+</div>
+<div style="display:flex;gap:8px;padding:0 22px 14px;overflow-x:auto">
+<sc-for list="{{ filters }}" as="f" hint-placeholder-count="4">
+<button onClick="{{ f.pick }}" style="appearance:none;flex:none;padding:9px 16px;border-radius:999px;background:{{ f.bg }};border:1px solid {{ f.border }};color:{{ f.color }};cursor:pointer;font:600 12.5px 'Plus Jakarta Sans',sans-serif">{{ f.name }}</button>
+</sc-for>
+</div>
+<div style="display:flex;gap:14px;overflow-x:auto;padding:0 22px 6px">
+<sc-for list="{{ lib }}" as="g" hint-placeholder-count="6">
+<button onClick="{{ g.pick }}" style="appearance:none;flex:none;width:146px;background:transparent;border:0;padding:0;cursor:pointer;text-align:left;color:var(--ink)">
+<div style="height:112px;border-radius:22px;background:{{ g.grad }};position:relative;overflow:hidden;box-shadow:var(--shadow)">
+<div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 40%,rgba(0,0,0,.45))"></div>
+<div style="position:absolute;top:10px;left:10px;padding:5px 10px;border-radius:999px;background:rgba(0,0,0,.35);font:600 10px 'Plus Jakarta Sans',sans-serif;color:#fff">{{ g.cat }}</div>
+<div style="position:absolute;bottom:10px;left:12px;font:800 15px/1.1 'Outfit',sans-serif;color:#fff">{{ g.name }}</div>
+</div>
+<div style="display:flex;align-items:center;gap:6px;margin-top:9px;font-size:11.5px;color:var(--dim)">
+<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="9" cy="8" r="3.2"/><path d="M2 20a7 7 0 0114 0M17 11a3 3 0 100-6M18 20a6.5 6.5 0 00-2-4.7"/></svg>{{ g.meta }}</div>
+</button>
+</sc-for>
+</div>
+<div style="flex:1;min-height:16px"></div>
+<div style="flex:none;margin:8px 18px 30px;padding:8px;border-radius:999px;background:var(--panel);border:1px solid var(--stroke);display:grid;grid-template-columns:repeat(4,1fr);gap:4px;backdrop-filter:blur(14px)">
+<button onClick="{{ tHome.go }}" style="appearance:none;border:0;border-radius:999px;padding:12px 0;cursor:pointer;background:{{ tHome.bg }};color:{{ tHome.color }};display:flex;flex-direction:column;align-items:center;gap:4px;font:600 9.5px 'Plus Jakarta Sans',sans-serif">
+<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M4 11l8-7 8 7v8a2 2 0 01-2 2H6a2 2 0 01-2-2z"/></svg>Home</button>
+<button onClick="{{ tPlay.go }}" style="appearance:none;border:0;border-radius:999px;padding:12px 0;cursor:pointer;background:{{ tPlay.bg }};color:{{ tPlay.color }};display:flex;flex-direction:column;align-items:center;gap:4px;font:600 9.5px 'Plus Jakarta Sans',sans-serif">
+<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><rect x="2" y="7" width="20" height="11" rx="5.5"/><path d="M7 12.5h3M8.5 11v3M16 11.5v.01M18 13.5v.01"/></svg>Play</button>
+<button onClick="{{ tFriends.go }}" style="appearance:none;border:0;border-radius:999px;padding:12px 0;cursor:pointer;background:{{ tFriends.bg }};color:{{ tFriends.color }};display:flex;flex-direction:column;align-items:center;gap:4px;font:600 9.5px 'Plus Jakarta Sans',sans-serif">
+<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0113 0M17 11a3 3 0 100-6M18.5 20a6.5 6.5 0 00-2-4.6"/></svg>Friends</button>
+<button onClick="{{ tYou.go }}" style="appearance:none;border:0;border-radius:999px;padding:12px 0;cursor:pointer;background:{{ tYou.bg }};color:{{ tYou.color }};display:flex;flex-direction:column;align-items:center;gap:4px;font:600 9.5px 'Plus Jakarta Sans',sans-serif">
+<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></svg>You</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ atConfig }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="05 Pre-lobby config" style="flex:1;display:flex;flex-direction:column;padding-top:64px;position:relative;z-index:1;animation:v2Up .3s;min-height:0">
+<div style="display:flex;align-items:center;gap:12px;padding:0 22px 14px">
+<button onClick="{{ toHome }}" style="appearance:none;width:42px;height:42px;border-radius:14px;background:var(--panel);border:1px solid var(--stroke);cursor:pointer;color:var(--ink);display:grid;place-items:center" style-hover="background:var(--panel2)">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 5l-7 7 7 7"/></svg></button>
+<div style="font:700 17px 'Outfit',sans-serif">Set up the game</div>
+</div>
+<div style="flex:1;overflow-y:auto;padding:0 22px;min-height:0">
+<div style="font-size:12px;color:var(--dim);margin:6px 0 10px">1 · Category</div>
+<div style="display:flex;gap:8px">
+<sc-for list="{{ cats }}" as="c" hint-placeholder-count="3">
+<button onClick="{{ c.pick }}" style="appearance:none;flex:1;padding:14px 10px;border-radius:20px;background:{{ c.bg }};border:1px solid {{ c.border }};cursor:pointer;color:{{ c.color }};display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+<div style="width:30px;height:30px;border-radius:11px;background:{{ c.iconBg }};display:grid;place-items:center;color:{{ c.iconColor }}">
+<sc-if value="{{ c.isDed }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6" fill="currentColor"/></svg></sc-if>
+<sc-if value="{{ c.isBoard }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.6" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1.6" fill="currentColor"/></svg></sc-if>
+<sc-if value="{{ c.isArc }}" hint-placeholder-val="{{ false }}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="2" y="7" width="20" height="11" rx="5.5"/><path d="M7 12.5h3M8.5 11v3M16 11.5v.01M18 13.5v.01"/></svg></sc-if>
+</div>
+<div style="font:700 13.5px 'Outfit',sans-serif">{{ c.name }}</div>
+</button>
+</sc-for>
+</div>
+
+<div style="font-size:12px;color:var(--dim);margin:22px 0 10px">2 · Game</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ catGames }}" as="g" hint-placeholder-count="5">
+<button onClick="{{ g.pick }}" style="appearance:none;display:flex;align-items:center;gap:13px;padding:11px 14px 11px 11px;border-radius:20px;background:{{ g.bg }};border:1px solid {{ g.border }};cursor:pointer;color:var(--ink);text-align:left">
+<div style="width:46px;height:46px;flex:none;border-radius:15px;background:{{ g.grad }}"></div>
+<div style="margin-right:auto">
+<div style="font:700 15px 'Outfit',sans-serif">{{ g.name }}</div>
+<div style="font-size:11.5px;color:var(--dim);margin-top:2px">{{ g.meta }}</div>
+</div>
+<div style="width:24px;height:24px;flex:none;border-radius:50%;background:{{ g.dotFill }};border:2px solid {{ g.dot }};display:grid;place-items:center">
+<sc-if value="{{ g.sel }}" hint-placeholder-val="{{ false }}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg></sc-if>
+</div>
+</button>
+</sc-for>
+</div>
+
+<div style="font-size:12px;color:var(--dim);margin:22px 0 10px">3 · Who's playing</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ modes }}" as="m" hint-placeholder-count="3">
+<button onClick="{{ m.pick }}" style="appearance:none;display:flex;align-items:center;gap:12px;padding:14px;border-radius:20px;background:{{ m.bg }};border:1px solid {{ m.border }};cursor:pointer;color:var(--ink);text-align:left">
+<div style="width:22px;height:22px;flex:none;border-radius:50%;background:{{ m.dotFill }};border:2px solid {{ m.dot }};display:grid;place-items:center">
+<sc-if value="{{ m.sel }}" hint-placeholder-val="{{ false }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round"><path d="M5 13l4 4L19 7"/></svg></sc-if>
+</div>
+<div>
+<div style="font:700 14.5px 'Outfit',sans-serif">{{ m.name }}</div>
+<div style="font-size:11.5px;color:var(--dim);margin-top:2px">{{ m.hint }}</div>
+</div>
+</button>
+</sc-for>
+<sc-if value="{{ showDiff }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:20px;background:var(--panel);border:1px solid var(--stroke);animation:v2Slide .25s">
+<div style="font:600 13.5px 'Plus Jakarta Sans',sans-serif;margin-right:auto">Bot skill</div>
+<div style="display:flex;gap:6px">
+<sc-for list="{{ diffs }}" as="d" hint-placeholder-count="3">
+<button onClick="{{ d.pick }}" style="appearance:none;padding:9px 14px;border-radius:999px;background:{{ d.bg }};border:1px solid {{ d.border }};color:{{ d.color }};cursor:pointer;font:700 11.5px 'Outfit',sans-serif">{{ d.name }}</button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+</div>
+
+<div style="font-size:12px;color:var(--dim);margin:22px 0 10px">4 · {{ optLabel }}</div>
+<div style="display:flex;flex-direction:column;gap:10px;padding-bottom:8px">
+<sc-for list="{{ steppers }}" as="s" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:20px;background:var(--panel);border:1px solid var(--stroke)">
+<div style="margin-right:auto">
+<div style="font:600 14px 'Plus Jakarta Sans',sans-serif">{{ s.name }}</div>
+<div style="font-size:11px;color:var(--dim2);margin-top:2px">{{ s.hint }}</div>
+</div>
+<button onClick="{{ s.dec }}" style="appearance:none;width:44px;height:44px;flex:none;border-radius:50%;background:var(--panel2);border:0;cursor:pointer;color:var(--ink);font:700 19px 'Outfit',sans-serif" style-hover="background:var(--vio);color:#fff">–</button>
+<div style="min-width:58px;text-align:center;font:700 16px 'Outfit',sans-serif">{{ s.val }}</div>
+<button onClick="{{ s.inc }}" style="appearance:none;width:44px;height:44px;flex:none;border-radius:50%;background:var(--panel2);border:0;cursor:pointer;color:var(--ink);font:700 19px 'Outfit',sans-serif" style-hover="background:var(--vio);color:#fff">+</button>
+</div>
+</sc-for>
+<sc-for list="{{ rules }}" as="r" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:20px;background:var(--panel);border:1px solid var(--stroke)">
+<div style="margin-right:auto">
+<div style="font:600 14px 'Plus Jakarta Sans',sans-serif">{{ r.name }}</div>
+<div style="font-size:11px;color:var(--dim2);margin-top:2px">{{ r.hint }}</div>
+</div>
+<button onClick="{{ r.toggle }}" style="appearance:none;width:56px;height:32px;flex:none;border-radius:999px;background:{{ r.track }};border:0;cursor:pointer;display:flex;align-items:center;padding:3px">
+<div style="width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.3);margin-left:{{ r.knob }};transition:margin-left .18s"></div>
+</button>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="padding:14px 22px 52px;background:linear-gradient(180deg,transparent,var(--bg) 40%)">
+<button onClick="{{ toLobby }}" style="appearance:none;width:100%;display:flex;align-items:center;gap:12px;padding:18px 22px;border-radius:999px;border:0;background:var(--gradv);box-shadow:var(--glow);cursor:pointer;font:700 16px 'Outfit',sans-serif;color:#fff">Create lobby
+<svg style="margin-left:auto" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg></button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ atLobby }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="06 Lobby" style="flex:1;display:flex;flex-direction:column;padding:64px 0 40px;position:relative;z-index:1;animation:v2Up .3s">
+<div style="display:flex;align-items:center;gap:12px;padding:0 22px 16px">
+<button onClick="{{ toConfig }}" style="appearance:none;width:42px;height:42px;border-radius:14px;background:var(--panel);border:1px solid var(--stroke);cursor:pointer;color:var(--ink);display:grid;place-items:center" style-hover="background:var(--panel2)">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 5l-7 7 7 7"/></svg></button>
+<div style="margin-right:auto">
+<div style="font:700 17px 'Outfit',sans-serif">{{ gameName }}</div>
+<div style="font-size:11.5px;color:var(--dim)">{{ joinedLabel }}</div>
+</div>
+<div style="padding:7px 13px;border-radius:999px;background:rgba(163,230,53,.16);color:var(--lime);font:600 11.5px 'Plus Jakarta Sans',sans-serif">Live</div>
+</div>
+
+<div style="padding:0 22px">
+<button onClick="{{ copyCode }}" style="appearance:none;width:100%;border-radius:26px;padding:20px;background:var(--panel);border:1px dashed var(--stroke2);cursor:pointer;color:var(--ink);display:flex;align-items:center;gap:14px" style-hover="border-color:var(--vio2)">
+<div style="text-align:left">
+<div style="font-size:11.5px;color:var(--dim);margin-bottom:4px">Room code · tap to share</div>
+<div style="font:800 34px 'Outfit',sans-serif;letter-spacing:.14em">{{ room }}</div>
+</div>
+<sc-if value="{{ copied }}" hint-placeholder-val="{{ false }}"><div style="margin-left:auto;padding:8px 14px;border-radius:999px;background:var(--lime);color:#141024;font:700 12px 'Outfit',sans-serif;animation:v2Pop .25s">Copied</div></sc-if>
+<sc-if value="{{ notCopied }}" hint-placeholder-val="{{ true }}"><div style="margin-left:auto;width:42px;height:42px;border-radius:15px;background:var(--panel2);display:grid;place-items:center">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3M12 3v13M7 8l5-5 5 5"/></svg></div></sc-if>
+</button>
+</div>
+
+<div style="padding:20px 22px 0">
+<div style="font-size:12px;color:var(--dim);margin-bottom:12px">Players</div>
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+<sc-for list="{{ seats }}" as="p" hint-placeholder-count="6">
+<button onClick="{{ p.tap }}" style="appearance:none;background:transparent;border:0;padding:0;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:8px;animation:v2Pop .34s">
+<div style="width:66px;height:66px;border-radius:50%;background:{{ p.grad }};border:{{ p.ring }};display:grid;place-items:center;font:800 24px 'Outfit',sans-serif;color:{{ p.markColor }};position:relative">{{ p.mark }}
+<sc-if value="{{ p.isHost }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);padding:3px 9px;border-radius:999px;background:#fbbf24;color:#241a03;font:700 9px 'Outfit',sans-serif">HOST</div></sc-if>
+<sc-if value="{{ p.isBot }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;bottom:-5px;left:50%;transform:translateX(-50%);padding:3px 9px;border-radius:999px;background:#22d3ee;color:#062a33;font:700 9px 'Outfit',sans-serif">BOT</div></sc-if>
+</div>
+<div style="font:600 12.5px 'Plus Jakarta Sans',sans-serif;color:{{ p.color }}">{{ p.name }}</div>
+<div style="font-size:10px;color:var(--dim2);margin-top:-4px">{{ p.sub }}</div>
+</button>
+</sc-for>
+</div>
+<div style="display:flex;gap:8px;margin-top:16px">
+<button onClick="{{ toFriends }}" style="appearance:none;flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:999px;background:var(--panel);border:1px solid var(--stroke2);cursor:pointer;color:var(--ink);font:700 12.5px 'Outfit',sans-serif" style-hover="border-color:var(--vio2)">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><circle cx="9" cy="8" r="3.4"/><path d="M2.5 20a6.5 6.5 0 0113 0M18 8v6M15 11h6"/></svg>Invite friends</button>
+<button onClick="{{ toConfig }}" style="appearance:none;flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;border-radius:999px;background:rgba(34,211,238,.14);border:1px solid rgba(34,211,238,.35);cursor:pointer;color:var(--cyan);font:700 12.5px 'Outfit',sans-serif">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><rect x="2" y="7" width="20" height="11" rx="5.5"/><path d="M7 12.5h3M8.5 11v3M16 11.5v.01M18 13.5v.01"/></svg>{{ modeChip }}</button>
+</div>
+</div>
+
+<div style="padding:22px 22px 0">
+<div style="display:flex;align-items:center;margin-bottom:10px">
+<div style="font-size:12px;color:var(--dim);margin-right:auto">Rules</div>
+<button onClick="{{ toConfig }}" style="appearance:none;background:transparent;border:0;color:var(--vio2);font:600 12px 'Plus Jakarta Sans',sans-serif;cursor:pointer">Edit</button>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<sc-for list="{{ chips }}" as="c" hint-placeholder-count="4">
+<button onClick="{{ toConfig }}" style="appearance:none;padding:9px 14px;border-radius:999px;background:var(--panel);border:1px solid var(--stroke);color:var(--ink);font:500 12px 'Plus Jakarta Sans',sans-serif;cursor:pointer" style-hover="border-color:var(--vio2)">{{ c.t }}</button>
+</sc-for>
+</div>
+</div>
+
+<div style="flex:1;min-height:18px"></div>
+<div style="padding:0 22px">
+<button onClick="{{ startGame }}" disabled="{{ cantStart }}" style="appearance:none;width:100%;display:flex;align-items:center;gap:12px;padding:19px 24px;border-radius:999px;border:0;background:{{ startBg }};box-shadow:{{ startShadow }};cursor:pointer;font:700 17px 'Outfit',sans-serif;color:{{ startColor }};opacity:{{ startOpacity }}">{{ startLabel }}
+<svg style="margin-left:auto" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg></button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ atQuiz }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="07 Imposter Quiz" style="flex:1;display:flex;flex-direction:column;padding-top:62px;position:relative;z-index:1">
+<div style="display:flex;align-items:center;gap:10px;padding:0 22px 14px">
+<div style="padding:7px 14px;border-radius:999px;background:var(--panel);border:1px solid var(--stroke);font:600 11.5px 'Plus Jakarta Sans',sans-serif;color:var(--dim);margin-right:auto;white-space:nowrap">{{ qHud }}</div>
+<div style="display:flex;gap:4px;align-items:center">
+<div style="width:8px;height:8px;border-radius:50%;background:var(--vio2)"></div><div style="width:8px;height:8px;border-radius:50%;background:var(--panel2)"></div><div style="width:8px;height:8px;border-radius:50%;background:var(--panel2)"></div>
+</div>
+<button onClick="{{ toLobby }}" style="appearance:none;width:40px;height:40px;border-radius:14px;background:var(--panel);border:1px solid var(--stroke);cursor:pointer;color:var(--ink);display:grid;place-items:center">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+</div>
+
+<sc-if value="{{ qReveal }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:8px 22px 34px;min-height:0">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+<sc-for list="{{ readers }}" as="r" hint-placeholder-count="5">
+<div style="width:30px;height:30px;border-radius:50%;background:{{ r.grad }};display:grid;place-items:center;font:800 12px 'Outfit',sans-serif;color:#fff;animation:v2Pop .4s both;animation-delay:{{ r.delay }}">{{ r.mark }}</div>
+</sc-for>
+<div style="font-size:11.5px;color:var(--dim);margin-left:2px">5 cards dealt</div>
+</div>
+<div style="flex:1;position:relative;min-height:0">
+<div style="position:absolute;inset:22px 12px auto 12px;height:70%;border-radius:30px;background:var(--panel);border:1px solid var(--stroke);transform:rotate(-4deg)"></div>
+<div style="position:absolute;inset:12px 6px auto 6px;height:74%;border-radius:30px;background:var(--panel2);transform:rotate(3deg)"></div>
+<button onClick="{{ toQ }}" style="appearance:none;position:relative;width:100%;height:100%;border:0;border-radius:32px;background:linear-gradient(150deg,#7c5cff,#c084fc 52%,#f472b6);box-shadow:var(--glow);cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;padding:26px;text-align:left;color:#fff;overflow:hidden;animation:v2Breathe 3.2s ease-in-out infinite">
+<div style="position:absolute;top:0;bottom:0;left:0;width:60px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);animation:v2Shine 3.4s ease-in-out infinite"></div>
+<div style="position:absolute;inset:-45% -15% auto auto;width:240px;height:240px;border-radius:50%;background:rgba(255,255,255,.12)"></div>
+<div style="position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.22) 1.5px,transparent 1.6px);background-size:22px 22px;opacity:.5"></div>
+<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-58%);display:grid;place-items:center">
+<svg width="150" height="150" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.34)" stroke-width="1.1"><circle cx="8.6" cy="12" r="5.2"/><circle cx="15.4" cy="12" r="5.2"/></svg>
+<div style="position:absolute;font:800 72px 'Outfit',sans-serif;color:rgba(255,255,255,.92);text-shadow:0 6px 20px rgba(0,0,0,.25)">?</div>
+</div>
+<div style="display:flex;align-items:center;gap:10px;position:relative">
+<div style="padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.22);font:700 10.5px 'Outfit',sans-serif;letter-spacing:.06em">GENERAL PACK</div>
+<div style="padding:6px 12px;border-radius:999px;background:rgba(0,0,0,.22);font:700 10.5px 'Outfit',sans-serif">1 ODD ONE</div>
+</div>
+<div style="position:relative">
+<div style="font:800 30px/1.05 'Outfit',sans-serif;letter-spacing:-.02em">Tap to read<br>your card</div>
+<div style="display:flex;align-items:center;gap:7px;font-size:12.5px;opacity:.9;margin-top:10px">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M3 3l18 18M10.6 10.7a2 2 0 002.8 2.8M6.1 6.3C4 7.7 2 12 2 12s3.5 6 10 6c1.6 0 3-.4 4.2-1M9.9 6.2A8.7 8.7 0 0112 6c6.5 0 10 6 10 6s-.9 1.5-2.5 3"/></svg>
+Don't let them see the screen</div>
+</div>
+</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ qQuestion }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:8px 22px 34px;min-height:0;animation:v2Flip .36s">
+<div style="flex:1;border-radius:32px;padding:26px;background:linear-gradient(160deg,#221a4d,#181334 60%,#2a1640);border:1px solid var(--stroke2);display:flex;flex-direction:column;position:relative;overflow:hidden;min-height:0">
+<div style="position:absolute;inset:auto -30px -60px auto;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(124,92,255,.5),transparent 70%)"></div>
+<div style="display:flex;align-items:center;gap:8px;position:relative">
+<div style="padding:6px 12px;border-radius:999px;background:rgba(124,92,255,.24);color:var(--vio2);font:700 10.5px 'Outfit',sans-serif;letter-spacing:.06em">YOUR QUESTION</div>
+<div style="margin-left:auto;font-size:11px;color:var(--dim)">Round 1 of 3</div>
+</div>
+<div style="font:800 76px/.7 'Outfit',sans-serif;color:rgba(255,255,255,.14);margin:14px 0 -14px;position:relative">“</div>
+<div style="font:800 33px/1.12 'Outfit',sans-serif;letter-spacing:-.025em;position:relative">Name a fruit that is green.</div>
+<div style="display:flex;align-items:center;gap:9px;margin-top:18px;padding:13px 15px;border-radius:20px;background:rgba(244,114,182,.13);border:1px solid rgba(244,114,182,.25);position:relative">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--pink)" stroke-width="2.2" style="flex:none"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.4"/></svg>
+<div style="font-size:12.5px;line-height:1.4">One of you got a <b>different</b> question. It might be you.</div>
+</div>
+<div style="flex:1;min-height:14px"></div>
+<div style="position:relative">
+<div style="font-size:11px;color:var(--dim);margin-bottom:9px">Reading now</div>
+<div style="display:flex;gap:7px">
+<sc-for list="{{ readers }}" as="r" hint-placeholder-count="5">
+<div style="width:36px;height:36px;border-radius:50%;background:{{ r.grad }};display:grid;place-items:center;font:800 14px 'Outfit',sans-serif;color:#fff;animation:v2Dots 1.6s ease-in-out infinite;animation-delay:{{ r.delay }}">{{ r.mark }}</div>
+</sc-for>
+</div>
+</div>
+</div>
+<button onClick="{{ toAnswer }}" style="appearance:none;margin-top:14px;display:flex;align-items:center;gap:12px;padding:18px 24px;border-radius:999px;border:0;background:var(--gradv);box-shadow:var(--glow);cursor:pointer;font:700 16px 'Outfit',sans-serif;color:#fff">Got it — let me answer
+<svg style="margin-left:auto" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg></button>
+</div>
+</sc-if>
+
+<sc-if value="{{ qAnswer }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:12px 22px 40px;animation:v2Up .25s">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+<div style="font-size:12.5px;color:var(--dim);margin-right:auto">Name a fruit that is green.</div>
+<div style="padding:6px 12px;border-radius:999px;background:rgba(244,114,182,.16);color:var(--pink);font:700 12px 'Outfit',sans-serif;animation:v2Pulse 1.6s infinite">0:22</div>
+</div>
+<div style="border-radius:26px;background:var(--panel);border:1px solid var(--stroke2);padding:20px">
+<div style="font-size:11.5px;color:var(--dim);margin-bottom:8px">Your answer</div>
+<input value="{{ myAnswer }}" onChange="{{ setAnswer }}" style="width:100%;appearance:none;background:transparent;border:0;outline:none;color:var(--ink);font:800 30px 'Outfit',sans-serif">
+<div style="height:2px;background:var(--gradv);border-radius:999px;margin-top:10px"></div>
+</div>
+<div style="font-size:11px;color:var(--dim);margin:18px 0 9px">Quick picks</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<sc-for list="{{ suggestions }}" as="q" hint-placeholder-count="4">
+<button onClick="{{ q.pick }}" style="appearance:none;padding:11px 16px;border-radius:999px;background:var(--panel);border:1px solid var(--stroke);color:var(--ink);cursor:pointer;font:600 13px 'Plus Jakarta Sans',sans-serif" style-hover="border-color:var(--vio2);background:var(--panel2)">{{ q.t }}</button>
+</sc-for>
+</div>
+<div style="display:flex;gap:8px;margin-top:20px;align-items:center">
+<sc-for list="{{ answerDots }}" as="d" hint-placeholder-count="5">
+<div style="width:36px;height:36px;border-radius:50%;background:{{ d.bg }};border:2px solid {{ d.border }};display:grid;place-items:center;font:800 13px 'Outfit',sans-serif;color:{{ d.color }};animation:v2Pop .4s both">{{ d.mark }}</div>
+</sc-for>
+<div style="font-size:11.5px;color:var(--dim);margin-left:4px">4 of 5 in</div>
+</div>
+<div style="flex:1;min-height:14px"></div>
+<div style="display:flex;align-items:center;gap:10px;padding:13px 15px;border-radius:20px;background:rgba(124,92,255,.12);border:1px solid rgba(124,92,255,.28);margin-bottom:12px">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--vio2)" stroke-width="2.2" style="flex:none"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+<div style="font-size:12px;color:var(--dim)">Answers stay hidden until everyone has locked in.</div>
+</div>
+<button onClick="{{ toCompare }}" style="appearance:none;padding:18px 24px;border-radius:999px;border:0;background:var(--gradv);box-shadow:var(--glow);cursor:pointer;font:700 16px 'Outfit',sans-serif;color:#fff">Lock it in</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ qCompare }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:12px 22px 40px">
+<div style="font:800 24px 'Outfit',sans-serif;letter-spacing:-.01em">All five at once</div>
+<div style="font-size:13px;color:var(--dim);margin:6px 0 16px">Nobody could copy.</div>
+<div style="display:flex;flex-direction:column;gap:9px">
+<sc-for list="{{ answerCards }}" as="a" hint-placeholder-count="5">
+<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:20px;background:var(--panel);border:1px solid {{ a.border }};animation:v2Slide .42s both;animation-delay:{{ a.delay }}">
+<div style="width:38px;height:38px;flex:none;border-radius:50%;background:{{ a.grad }};display:grid;place-items:center;font:800 15px 'Outfit',sans-serif;color:#fff">{{ a.mark }}</div>
+<div style="margin-right:auto">
+<div style="font-size:11.5px;color:var(--dim)">{{ a.name }}</div>
+<div style="font:700 18px 'Outfit',sans-serif">{{ a.text }}</div>
+</div>
+<sc-if value="{{ a.mine }}" hint-placeholder-val="{{ false }}"><div style="padding:6px 12px;border-radius:999px;background:rgba(124,92,255,.22);color:var(--vio2);font:700 10.5px 'Outfit',sans-serif">YOURS</div></sc-if>
+</div>
+</sc-for>
+</div>
+<div style="flex:1;min-height:16px"></div>
+<button onClick="{{ toDiscuss }}" style="appearance:none;padding:18px 24px;border-radius:999px;border:0;background:var(--gradv);box-shadow:var(--glow);cursor:pointer;font:700 16px 'Outfit',sans-serif;color:#fff">Start discussion</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ qDiscuss }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;padding:12px 22px 40px">
+<div style="font-size:12px;color:var(--dim);align-self:flex-start">Talk it out</div>
+<div style="position:relative;width:216px;height:216px;margin:16px 0 8px;display:grid;place-items:center;animation:v2Breathe 2s ease-in-out infinite">
+<div style="position:absolute;inset:0;border-radius:50%;background:conic-gradient(#7c5cff {{ ringPct }}, rgba(255,255,255,.12) 0)"></div>
+<div style="position:absolute;inset:15px;border-radius:50%;background:var(--bg)"></div>
+<div style="font:800 60px 'Outfit',sans-serif;letter-spacing:-.03em;position:relative">{{ secsLabel }}</div>
+</div>
+<div style="width:100%;display:flex;flex-direction:column;gap:7px;margin-top:8px">
+<sc-for list="{{ answerCards }}" as="a" hint-placeholder-count="5">
+<div style="display:flex;align-items:center;gap:11px;padding:9px 13px;border-radius:18px;background:var(--panel)">
+<div style="width:30px;height:30px;flex:none;border-radius:50%;background:{{ a.grad }};display:grid;place-items:center;font:800 12px 'Outfit',sans-serif;color:#fff">{{ a.mark }}</div>
+<div style="font-size:12.5px;color:var(--dim);margin-right:auto">{{ a.name }}</div>
+<div style="font:700 14px 'Outfit',sans-serif">{{ a.text }}</div>
+</div>
+</sc-for>
+</div>
+<div style="flex:1;min-height:14px"></div>
+<button onClick="{{ toVote }}" style="appearance:none;width:100%;padding:17px 24px;border-radius:999px;background:var(--panel);border:1px solid var(--stroke2);cursor:pointer;font:700 15px 'Outfit',sans-serif;color:var(--ink)">Skip to vote</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ qVote }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:12px 22px 40px;animation:v2Up .25s">
+<div style="font-size:11.5px;color:var(--pink)">Vote</div>
+<div style="font:800 27px/1.1 'Outfit',sans-serif;letter-spacing:-.02em;margin:8px 0 18px">Who had the<br>different question?</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<sc-for list="{{ voteCards }}" as="v" hint-placeholder-count="4">
+<button onClick="{{ v.cast }}" style="appearance:none;border-radius:24px;padding:16px;cursor:pointer;background:{{ v.bg }};border:2px solid {{ v.border }};display:flex;flex-direction:column;gap:12px;align-items:flex-start;color:var(--ink)">
+<div style="width:52px;height:52px;border-radius:50%;background:{{ v.grad }};display:grid;place-items:center;font:800 20px 'Outfit',sans-serif;color:#fff">{{ v.mark }}</div>
+<div style="font:700 15px 'Outfit',sans-serif">{{ v.name }}</div>
+</button>
+</sc-for>
+</div>
+<div style="flex:1;min-height:16px"></div>
+<sc-if value="{{ hasVoted }}" hint-placeholder-val="{{ false }}">
+<div style="padding:16px 18px;border-radius:22px;background:rgba(124,92,255,.18);border:1px solid var(--vio);animation:v2Pop .25s">
+<div style="font:700 14.5px 'Outfit',sans-serif">You voted {{ voteTarget }}</div>
+<div style="font-size:12px;color:var(--dim);margin-top:3px">Waiting on the others…</div>
+</div>
+</sc-if>
+<sc-if value="{{ notVoted }}" hint-placeholder-val="{{ true }}">
+<div style="font-size:12px;color:var(--dim2)">One tap. No takebacks.</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ qOut }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:12px 22px 40px;animation:v2Up .3s">
+<div style="border-radius:30px;padding:26px;background:linear-gradient(150deg,#f472b6,#7c5cff);box-shadow:var(--glow);color:#fff;position:relative;overflow:hidden">
+<div style="position:absolute;inset:auto -20px -50px auto;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.12)"></div>
+<div style="width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.22);display:grid;place-items:center;font:800 24px 'Outfit',sans-serif;margin-bottom:16px">◐</div>
+<div style="font:800 34px/1 'Outfit',sans-serif;letter-spacing:-.02em">Karthik<br>voted out</div>
+<div style="font-size:13.5px;opacity:.92;margin-top:12px">He said tomato. He was a civilian.</div>
+</div>
+<div style="display:flex;gap:12px;margin-top:18px;padding:16px 18px;border-radius:22px;background:var(--panel);border:1px solid var(--stroke)">
+<div style="width:34px;height:34px;flex:none;border-radius:50%;background:var(--gradv);display:grid;place-items:center;font:800 14px 'Outfit',sans-serif;color:#fff">{{ myMark }}</div>
+<div>
+<div style="font:700 15px 'Outfit',sans-serif">You were the odd one out</div>
+<div style="font-size:12.5px;color:var(--dim);margin-top:3px">Your question asked for green. Apple covered you.</div>
+</div>
+</div>
+<div style="flex:1;min-height:20px"></div>
+<button onClick="{{ finishQuiz }}" style="appearance:none;display:flex;align-items:center;gap:12px;padding:18px 24px;border-radius:999px;border:0;background:var(--gradv);box-shadow:var(--glow);cursor:pointer;font:700 16px 'Outfit',sans-serif;color:#fff">Scoreboard
+<svg style="margin-left:auto" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg></button>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ atC4 }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="08 Connect 4" style="flex:1;display:flex;flex-direction:column;padding:62px 0 40px;position:relative;z-index:1">
+<div style="display:flex;align-items:center;gap:10px;padding:0 22px 16px">
+<div style="padding:7px 14px;border-radius:999px;background:var(--panel);border:1px solid var(--stroke);font:600 11.5px 'Plus Jakarta Sans',sans-serif;color:var(--dim);margin-right:auto;white-space:nowrap">Connect 4 · Bo3</div>
+<div style="padding:7px 13px;border-radius:999px;background:rgba(163,230,53,.16);color:var(--lime);font:700 12px 'Outfit',sans-serif">1 – 0</div>
+<button onClick="{{ toLobby }}" style="appearance:none;width:40px;height:40px;border-radius:14px;background:var(--panel);border:1px solid var(--stroke);cursor:pointer;color:var(--ink);display:grid;place-items:center">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+</div>
+
+<div style="display:flex;gap:10px;padding:0 22px 16px">
+<div style="flex:1;display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:20px;background:{{ youPanel }};border:1px solid {{ youBorder }}">
+<div style="width:34px;height:34px;border-radius:50%;background:var(--gradv);display:grid;place-items:center;font:800 14px 'Outfit',sans-serif;color:#fff">{{ myMark }}</div>
+<div>
+<div style="font:700 13px 'Outfit',sans-serif">{{ myName }}</div>
+<div style="font-size:10.5px;color:var(--dim)">{{ youTag }}</div>
+</div>
+</div>
+<div style="flex:1;display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:20px;background:{{ botPanel }};border:1px solid {{ botBorder }}">
+<div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#22d3ee,#a3e635);display:grid;place-items:center;font:800 14px 'Outfit',sans-serif;color:#0b1020">B</div>
+<div>
+<div style="font:700 13px 'Outfit',sans-serif">Bot</div>
+<div style="font-size:10.5px;color:var(--dim)">{{ botTag }}</div>
+</div>
+</div>
+</div>
+
+<div style="padding:0 16px">
+<div style="display:flex;gap:6px;padding:12px;border-radius:28px;background:var(--panel);border:1px solid var(--stroke)">
+<sc-for list="{{ cols }}" as="col" hint-placeholder-count="7">
+<button onClick="{{ col.drop }}" style="appearance:none;flex:1;background:transparent;border:0;border-radius:18px;padding:0;cursor:pointer;display:flex;flex-direction:column;gap:6px" style-hover="background:rgba(124,92,255,.16)">
+<sc-for list="{{ col.cells }}" as="cell" hint-placeholder-count="6">
+<div style="aspect-ratio:1;border-radius:50%;background:{{ cell.fill }};box-shadow:{{ cell.ring }};animation:{{ cell.anim }}"></div>
+</sc-for>
+</button>
+</sc-for>
+</div>
+</div>
+
+<div style="display:flex;align-items:center;gap:10px;padding:18px 22px 0">
+<div style="width:10px;height:10px;border-radius:50%;background:{{ statusDot }};animation:v2Pulse 1.2s infinite"></div>
+<div style="font:700 14.5px 'Outfit',sans-serif">{{ c4Status }}</div>
+</div>
+
+<div style="flex:1;min-height:12px"></div>
+<sc-if value="{{ hasWinner }}" hint-placeholder-val="{{ false }}">
+<div style="padding:0 22px;animation:v2Up .25s">
+<div style="border-radius:26px;padding:20px;background:var(--panel);border:1px solid var(--stroke2)">
+<div style="font:800 26px 'Outfit',sans-serif;letter-spacing:-.02em">{{ winHead }}</div>
+<div style="font-size:13px;color:var(--dim);margin:6px 0 16px">{{ winNote }}</div>
+<div style="display:flex;gap:10px">
+<button onClick="{{ resetC4 }}" style="appearance:none;flex:1;padding:15px;border-radius:999px;background:var(--panel2);border:0;cursor:pointer;color:var(--ink);font:700 14px 'Outfit',sans-serif">Rematch</button>
+<button onClick="{{ finishC4 }}" style="appearance:none;flex:1;padding:15px;border-radius:999px;background:var(--gradv);border:0;cursor:pointer;color:#fff;font:700 14px 'Outfit',sans-serif;box-shadow:var(--glow)">Scoreboard</button>
+</div>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ noWinner }}" hint-placeholder-val="{{ true }}">
+<div style="padding:0 22px;font-size:12px;color:var(--dim2)">Tap a column to drop. Four in a line wins — across, down or diagonal.</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ atResults }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="09 Results" style="flex:1;display:flex;flex-direction:column;padding:64px 0 40px;position:relative;z-index:1;animation:v2Up .3s;min-height:0">
+<sc-if value="{{ showConfetti }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;overflow:hidden;pointer-events:none">
+<sc-for list="{{ confetti }}" as="c" hint-placeholder-count="12">
+<div style="position:absolute;top:-20px;left:{{ c.left }};width:{{ c.size }};height:{{ c.size }};border-radius:3px;background:{{ c.bg }};animation:{{ c.anim }}"></div>
+</sc-for>
+</div>
+</sc-if>
+<div style="padding:0 22px;position:relative">
+<div style="font-size:11.5px;color:var(--vio2)">{{ rGame }}</div>
+<div style="font:800 40px/1 'Outfit',sans-serif;letter-spacing:-.03em;margin:10px 0 8px">{{ rHead }}</div>
+<div style="font-size:14px;color:var(--dim)">{{ rKicker }}</div>
+</div>
+<div style="flex:1;overflow-y:auto;padding:18px 22px 0;min-height:0">
+<div style="display:flex;flex-direction:column;gap:9px">
+<sc-for list="{{ rRows }}" as="r" hint-placeholder-count="5">
+<div style="display:flex;align-items:center;gap:13px;padding:13px 15px;border-radius:22px;background:{{ r.bg }};border:1px solid {{ r.border }};color:{{ r.color }};box-shadow:{{ r.shadow }};animation:v2Slide .4s both;animation-delay:{{ r.delay }}">
+<div style="font:800 12px 'Outfit',sans-serif;opacity:.6;min-width:16px">{{ r.pos }}</div>
+<div style="width:40px;height:40px;flex:none;border-radius:50%;background:{{ r.grad }};display:grid;place-items:center;font:800 16px 'Outfit',sans-serif;color:#fff">{{ r.mark }}</div>
+<div style="margin-right:auto">
+<div style="font:700 15.5px 'Outfit',sans-serif">{{ r.n }}</div>
+<div style="font-size:11.5px;opacity:.75;margin-top:2px">{{ r.d }}</div>
+</div>
+<div style="font:800 17px 'Outfit',sans-serif">{{ r.s }}</div>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;gap:10px;margin-top:16px;padding:14px 16px;border-radius:20px;background:var(--panel)">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--vio2)" stroke-width="2.2" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"/><path d="M12 8v.01M12 11v5"/></svg>
+<p style="font-size:12.5px;color:var(--dim);margin:0">{{ rNote }}</p>
+</div>
+</div>
+<div style="padding:16px 22px 0">
+<button onClick="{{ playAgain }}" style="appearance:none;width:100%;display:flex;align-items:center;gap:12px;padding:18px 24px;border-radius:999px;border:0;background:var(--gradv);box-shadow:var(--glow);cursor:pointer;font:700 16px 'Outfit',sans-serif;color:#fff">Play again
+<svg style="margin-left:auto" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M20 12a8 8 0 11-2.3-5.7M20 4v4h-4"/></svg></button>
+<div style="display:flex;gap:10px;margin-top:10px">
+<button onClick="{{ changeGame }}" style="appearance:none;flex:1;padding:15px;border-radius:999px;background:var(--panel);border:1px solid var(--stroke2);cursor:pointer;color:var(--ink);font:700 13.5px 'Outfit',sans-serif">Change game</button>
+<button onClick="{{ leaveLobby }}" style="appearance:none;flex:1;padding:15px;border-radius:999px;background:transparent;border:0;cursor:pointer;color:var(--pink);font:700 13.5px 'Outfit',sans-serif">Leave lobby</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ atProfile }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="10 Profile" style="flex:1;display:flex;flex-direction:column;padding:64px 0 0;position:relative;z-index:1;animation:v2Up .3s;min-height:0">
+<div style="display:flex;align-items:center;gap:12px;padding:0 22px 16px">
+<button onClick="{{ toHome }}" style="appearance:none;width:42px;height:42px;border-radius:14px;background:var(--panel);border:1px solid var(--stroke);cursor:pointer;color:var(--ink);display:grid;place-items:center">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 5l-7 7 7 7"/></svg></button>
+<div style="font:700 17px 'Outfit',sans-serif;margin-right:auto">Profile</div>
+<button onClick="{{ toSettings }}" style="appearance:none;width:42px;height:42px;border-radius:14px;background:var(--panel);border:1px solid var(--stroke);cursor:pointer;color:var(--ink);display:grid;place-items:center">
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 00.34 1.87a2 2 0 01-2.83 2.83a1.7 1.7 0 00-2.87 1.2a2 2 0 01-4 0a1.7 1.7 0 00-2.9-1.2a2 2 0 01-2.83-2.83A1.7 1.7 0 002.6 15a2 2 0 010-4a1.7 1.7 0 001.2-2.9a2 2 0 012.83-2.83A1.7 1.7 0 009 4.6a2 2 0 014 0a1.7 1.7 0 002.9 1.2a2 2 0 012.83 2.83A1.7 1.7 0 0021.4 11a2 2 0 010 4z"/></svg></button>
+</div>
+<div style="flex:1;overflow-y:auto;padding:0 22px 20px;min-height:0">
+<div style="display:flex;align-items:center;gap:16px">
+<div style="width:82px;height:82px;border-radius:50%;background:{{ myGrad }};display:grid;place-items:center;font:800 34px 'Outfit',sans-serif;color:#fff;box-shadow:var(--glow)">{{ myMark }}</div>
+<div>
+<div style="font:800 24px 'Outfit',sans-serif;letter-spacing:-.01em">{{ myName }}</div>
+<div style="font-size:12.5px;color:var(--dim);margin-top:4px">Joined March 2026</div>
+</div>
+</div>
+<div style="display:flex;gap:10px;margin-top:20px">
+<sc-for list="{{ bigStats }}" as="b" hint-placeholder-count="3">
+<div style="flex:1;padding:15px 14px;border-radius:22px;background:var(--panel);border:1px solid var(--stroke)">
+<div style="font:800 22px 'Outfit',sans-serif;color:{{ b.tint }}">{{ b.v }}</div>
+<div style="font-size:11px;color:var(--dim);margin-top:3px">{{ b.k }}</div>
+</div>
+</sc-for>
+</div>
+<div style="font-size:12px;color:var(--dim);margin:24px 0 12px">Odd one vs civilian</div>
+<div style="display:flex;flex-direction:column;gap:14px">
+<sc-for list="{{ bars }}" as="b" hint-placeholder-count="2">
+<div>
+<div style="display:flex;font-size:12.5px;margin-bottom:7px"><span style="margin-right:auto;color:var(--dim)">{{ b.k }}</span><span style="font-weight:700">{{ b.v }}</span></div>
+<div style="height:12px;border-radius:999px;background:var(--panel2);overflow:hidden"><div style="width:{{ b.v }};height:100%;border-radius:999px;background:{{ b.grad }}"></div></div>
+</div>
+</sc-for>
+</div>
+<div style="font-size:12px;color:var(--dim);margin:24px 0 12px">Per game</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ stats }}" as="s" hint-placeholder-count="6">
+<div style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:20px;background:var(--panel)">
+<div style="width:38px;height:38px;flex:none;border-radius:14px;background:{{ s.grad }}"></div>
+<div style="margin-right:auto">
+<div style="font:700 14px 'Outfit',sans-serif">{{ s.name }}</div>
+<div style="font-size:11px;color:var(--dim2);margin-top:2px">{{ s.record }}</div>
+</div>
+<div style="font:800 15px 'Outfit',sans-serif;color:{{ s.tint }}">{{ s.rate }}</div>
+</div>
+</sc-for>
+</div>
+<div style="font-size:12px;color:var(--dim);margin:24px 0 12px">Recent</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ history }}" as="h" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:18px;background:var(--panel)">
+<div style="font:700 13.5px 'Outfit',sans-serif;margin-right:auto">{{ h.game }}</div>
+<div style="font-size:11px;color:var(--dim2)">{{ h.when }}</div>
+<div style="padding:5px 11px;border-radius:999px;background:{{ h.bg }};color:{{ h.tint }};font:700 10.5px 'Outfit',sans-serif">{{ h.result }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="flex:none;margin:8px 18px 30px;padding:8px;border-radius:999px;background:var(--panel);border:1px solid var(--stroke);display:grid;grid-template-columns:repeat(4,1fr);gap:4px;backdrop-filter:blur(14px)">
+<button onClick="{{ tHome.go }}" style="appearance:none;border:0;border-radius:999px;padding:12px 0;cursor:pointer;background:{{ tHome.bg }};color:{{ tHome.color }};display:flex;flex-direction:column;align-items:center;gap:4px;font:600 9.5px 'Plus Jakarta Sans',sans-serif">
+<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M4 11l8-7 8 7v8a2 2 0 01-2 2H6a2 2 0 01-2-2z"/></svg>Home</button>
+<button onClick="{{ tPlay.go }}" style="appearance:none;border:0;border-radius:999px;padding:12px 0;cursor:pointer;background:{{ tPlay.bg }};color:{{ tPlay.color }};display:flex;flex-direction:column;align-items:center;gap:4px;font:600 9.5px 'Plus Jakarta Sans',sans-serif">
+<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><rect x="2" y="7" width="20" height="11" rx="5.5"/><path d="M7 12.5h3M8.5 11v3M16 11.5v.01M18 13.5v.01"/></svg>Play</button>
+<button onClick="{{ tFriends.go }}" style="appearance:none;border:0;border-radius:999px;padding:12px 0;cursor:pointer;background:{{ tFriends.bg }};color:{{ tFriends.color }};display:flex;flex-direction:column;align-items:center;gap:4px;font:600 9.5px 'Plus Jakarta Sans',sans-serif">
+<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0113 0M17 11a3 3 0 100-6M18.5 20a6.5 6.5 0 00-2-4.6"/></svg>Friends</button>
+<button onClick="{{ tYou.go }}" style="appearance:none;border:0;border-radius:999px;padding:12px 0;cursor:pointer;background:{{ tYou.bg }};color:{{ tYou.color }};display:flex;flex-direction:column;align-items:center;gap:4px;font:600 9.5px 'Plus Jakarta Sans',sans-serif">
+<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></svg>You</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ atFriends }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="12 Friends" style="flex:1;display:flex;flex-direction:column;padding:64px 0 0;position:relative;z-index:1;animation:v2Up .3s;min-height:0">
+<div style="display:flex;align-items:center;gap:12px;padding:0 22px 14px">
+<button onClick="{{ toHome }}" style="appearance:none;width:42px;height:42px;border-radius:14px;background:var(--panel);border:1px solid var(--stroke);cursor:pointer;color:var(--ink);display:grid;place-items:center">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 5l-7 7 7 7"/></svg></button>
+<div style="font:700 17px 'Outfit',sans-serif;margin-right:auto">Friends</div>
+<button onClick="{{ toFriends }}" style="appearance:none;height:42px;padding:0 16px;border-radius:999px;background:var(--gradv);border:0;cursor:pointer;color:#fff;font:700 12.5px 'Outfit',sans-serif;box-shadow:var(--glow);display:flex;align-items:center;gap:7px">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Add</button>
+</div>
+<div style="padding:0 22px 14px">
+<div style="display:flex;align-items:center;gap:11px;padding:13px 16px;border-radius:20px;background:var(--panel);border:1px solid var(--stroke)">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--dim2)" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="M16.5 16.5L21 21"/></svg>
+<input placeholder="Search name or #tag" style="flex:1;min-width:0;appearance:none;background:transparent;border:0;outline:none;color:var(--ink);font:500 14px 'Plus Jakarta Sans',sans-serif">
+</div>
+</div>
+<div style="flex:1;overflow-y:auto;padding:0 22px 16px;min-height:0">
+<div style="font-size:12px;color:var(--dim);margin:4px 0 10px">Requests · 2</div>
+<div style="display:flex;flex-direction:column;gap:9px">
+<sc-for list="{{ requests }}" as="q" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:22px;background:rgba(124,92,255,.13);border:1px solid rgba(124,92,255,.3)">
+<div style="width:44px;height:44px;flex:none;border-radius:50%;background:{{ q.grad }};display:grid;place-items:center;font:800 17px 'Outfit',sans-serif;color:#fff">{{ q.mark }}</div>
+<div style="margin-right:auto">
+<div style="font:700 14.5px 'Outfit',sans-serif">{{ q.name }}</div>
+<div style="font-size:11.5px;color:var(--dim);margin-top:2px">{{ q.mutual }}</div>
+</div>
+<button onClick="{{ q.accept }}" style="appearance:none;padding:10px 16px;border-radius:999px;background:var(--gradv);border:0;cursor:pointer;color:#fff;font:700 12px 'Outfit',sans-serif">Accept</button>
+</div>
+</sc-for>
+</div>
+<div style="font-size:12px;color:var(--dim);margin:22px 0 10px">All friends · 6</div>
+<div style="display:flex;flex-direction:column;gap:9px">
+<sc-for list="{{ friends }}" as="f" hint-placeholder-count="6">
+<div style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:22px;background:var(--panel);border:1px solid var(--stroke)">
+<button onClick="{{ f.open }}" style="appearance:none;background:transparent;border:0;padding:0;cursor:pointer;display:flex;align-items:center;gap:12px;flex:1;text-align:left;color:var(--ink)">
+<div style="width:46px;height:46px;flex:none;border-radius:50%;background:{{ f.grad }};display:grid;place-items:center;font:800 18px 'Outfit',sans-serif;color:#fff;position:relative">{{ f.mark }}
+<div style="position:absolute;bottom:0;right:0;width:13px;height:13px;border-radius:50%;background:{{ f.dot }};border:2.5px solid var(--bg)"></div></div>
+<div>
+<div style="display:flex;align-items:center;gap:7px">
+<div style="font:700 14.5px 'Outfit',sans-serif">{{ f.name }}</div>
+<sc-if value="{{ f.hasUnread }}" hint-placeholder-val="{{ false }}"><div style="min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--pink);color:#2b0716;font:800 10px 'Outfit',sans-serif;display:grid;place-items:center">{{ f.unread }}</div></sc-if>
+</div>
+<div style="font-size:11.5px;color:var(--dim);margin-top:2px">{{ f.status }}</div>
+</div>
+</button>
+<button onClick="{{ f.open }}" style="appearance:none;width:38px;height:38px;flex:none;border-radius:13px;background:var(--panel2);border:0;cursor:pointer;color:var(--ink);display:grid;place-items:center" style-hover="background:var(--vio);color:#fff">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 12a8 8 0 01-8 8H8l-5 3 1.5-5A8 8 0 1121 12z"/></svg></button>
+<button onClick="{{ f.invite }}" style="appearance:none;height:38px;padding:0 14px;flex:none;border-radius:999px;background:rgba(163,230,53,.16);border:0;cursor:pointer;color:var(--lime);font:700 11.5px 'Outfit',sans-serif">Invite</button>
+</div>
+</sc-for>
+</div>
+</div>
+<sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:22px;right:22px;bottom:112px;padding:14px 18px;border-radius:20px;background:var(--gradv);box-shadow:var(--glow);color:#fff;font:700 13.5px 'Outfit',sans-serif;animation:v2Slide .25s;z-index:5">{{ toast }}</div>
+</sc-if>
+<div style="flex:none;margin:8px 18px 30px;padding:8px;border-radius:999px;background:var(--panel);border:1px solid var(--stroke);display:grid;grid-template-columns:repeat(4,1fr);gap:4px;backdrop-filter:blur(14px)">
+<button onClick="{{ tHome.go }}" style="appearance:none;border:0;border-radius:999px;padding:12px 0;cursor:pointer;background:{{ tHome.bg }};color:{{ tHome.color }};display:flex;flex-direction:column;align-items:center;gap:4px;font:600 9.5px 'Plus Jakarta Sans',sans-serif">
+<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M4 11l8-7 8 7v8a2 2 0 01-2 2H6a2 2 0 01-2-2z"/></svg>Home</button>
+<button onClick="{{ tPlay.go }}" style="appearance:none;border:0;border-radius:999px;padding:12px 0;cursor:pointer;background:{{ tPlay.bg }};color:{{ tPlay.color }};display:flex;flex-direction:column;align-items:center;gap:4px;font:600 9.5px 'Plus Jakarta Sans',sans-serif">
+<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><rect x="2" y="7" width="20" height="11" rx="5.5"/><path d="M7 12.5h3M8.5 11v3M16 11.5v.01M18 13.5v.01"/></svg>Play</button>
+<button onClick="{{ tFriends.go }}" style="appearance:none;border:0;border-radius:999px;padding:12px 0;cursor:pointer;background:{{ tFriends.bg }};color:{{ tFriends.color }};display:flex;flex-direction:column;align-items:center;gap:4px;font:600 9.5px 'Plus Jakarta Sans',sans-serif">
+<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0113 0M17 11a3 3 0 100-6M18.5 20a6.5 6.5 0 00-2-4.6"/></svg>Friends</button>
+<button onClick="{{ tYou.go }}" style="appearance:none;border:0;border-radius:999px;padding:12px 0;cursor:pointer;background:{{ tYou.bg }};color:{{ tYou.color }};display:flex;flex-direction:column;align-items:center;gap:4px;font:600 9.5px 'Plus Jakarta Sans',sans-serif">
+<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></svg>You</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ atDm }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="13 Message thread" style="flex:1;display:flex;flex-direction:column;padding:64px 0 0;position:relative;z-index:1;animation:v2Up .3s;min-height:0">
+<div style="display:flex;align-items:center;gap:12px;padding:0 22px 14px;border-bottom:1px solid var(--stroke)">
+<button onClick="{{ toFriends }}" style="appearance:none;width:42px;height:42px;border-radius:14px;background:var(--panel);border:1px solid var(--stroke);cursor:pointer;color:var(--ink);display:grid;place-items:center">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 5l-7 7 7 7"/></svg></button>
+<div style="width:42px;height:42px;flex:none;border-radius:50%;background:{{ dmGrad }};display:grid;place-items:center;font:800 17px 'Outfit',sans-serif;color:#fff">{{ dmMark }}</div>
+<div style="margin-right:auto">
+<div style="font:700 15.5px 'Outfit',sans-serif">{{ dmWith }}</div>
+<div style="font-size:11px;color:var(--dim)">{{ dmStatus }}</div>
+</div>
+<button onClick="{{ dmInvite }}" style="appearance:none;height:38px;padding:0 15px;border-radius:999px;background:rgba(163,230,53,.16);border:0;cursor:pointer;color:var(--lime);font:700 12px 'Outfit',sans-serif">Invite</button>
+</div>
+<div style="flex:1;overflow-y:auto;padding:18px 22px 8px;min-height:0;display:flex;flex-direction:column;gap:9px">
+<sc-for list="{{ messages }}" as="m" hint-placeholder-count="3">
+<div style="align-self:{{ m.align }};max-width:76%;padding:12px 16px;border-radius:{{ m.radius }};background:{{ m.bg }};color:{{ m.color }};font:500 14px/1.4 'Plus Jakarta Sans',sans-serif;animation:v2Slide .3s both;animation-delay:{{ m.delay }}">{{ m.text }}</div>
+</sc-for>
+<sc-if value="{{ dmTyping }}" hint-placeholder-val="{{ false }}">
+<div style="align-self:flex-start;display:flex;gap:5px;padding:14px 16px;border-radius:20px 20px 20px 6px;background:var(--panel)">
+<div style="width:7px;height:7px;border-radius:50%;background:var(--dim);animation:v2Dots 1s infinite"></div>
+<div style="width:7px;height:7px;border-radius:50%;background:var(--dim);animation:v2Dots 1s .15s infinite"></div>
+<div style="width:7px;height:7px;border-radius:50%;background:var(--dim);animation:v2Dots 1s .3s infinite"></div>
+</div>
+</sc-if>
+</div>
+<div style="padding:0 22px 8px;display:flex;gap:8px;overflow-x:auto">
+<sc-for list="{{ quickReplies }}" as="q" hint-placeholder-count="3">
+<button onClick="{{ q.send }}" style="appearance:none;flex:none;padding:9px 15px;border-radius:999px;background:var(--panel);border:1px solid var(--stroke);color:var(--dim);cursor:pointer;font:600 12px 'Plus Jakarta Sans',sans-serif" style-hover="color:var(--ink);border-color:var(--vio2)">{{ q.t }}</button>
+</sc-for>
+</div>
+<div style="display:flex;align-items:center;gap:10px;padding:10px 18px 34px">
+<div style="flex:1;display:flex;align-items:center;gap:10px;padding:13px 18px;border-radius:999px;background:var(--panel);border:1px solid var(--stroke)">
+<input value="{{ dmInput }}" onChange="{{ setDm }}" placeholder="Message…" style="flex:1;min-width:0;appearance:none;background:transparent;border:0;outline:none;color:var(--ink);font:500 14px 'Plus Jakarta Sans',sans-serif">
+</div>
+<button onClick="{{ sendDm }}" style="appearance:none;width:50px;height:50px;flex:none;border-radius:50%;background:var(--gradv);border:0;cursor:pointer;box-shadow:var(--glow);display:grid;place-items:center">
+<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M4 12l16-8-7 8 7 8z"/></svg></button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ atSettings }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="11 Settings" style="flex:1;display:flex;flex-direction:column;padding:64px 0 0;position:relative;z-index:1;animation:v2Up .3s;min-height:0">
+<div style="display:flex;align-items:center;gap:12px;padding:0 22px 16px">
+<button onClick="{{ toHome }}" style="appearance:none;width:42px;height:42px;border-radius:14px;background:var(--panel);border:1px solid var(--stroke);cursor:pointer;color:var(--ink);display:grid;place-items:center">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 5l-7 7 7 7"/></svg></button>
+<div style="font:700 17px 'Outfit',sans-serif">Settings</div>
+</div>
+<div style="flex:1;overflow-y:auto;padding:0 22px 20px;min-height:0">
+<div style="font-size:12px;color:var(--dim);margin-bottom:12px">Appearance</div>
+<div style="display:flex;gap:12px">
+<button onClick="{{ setDark }}" style="appearance:none;flex:1;padding:16px;border-radius:24px;background:#100e19;border:2px solid {{ darkBorder }};cursor:pointer;text-align:left;color:#f5f3ff">
+<div style="display:flex;gap:4px;margin-bottom:12px"><div style="width:30px;height:9px;border-radius:999px;background:linear-gradient(90deg,#7c5cff,#c084fc)"></div><div style="width:14px;height:9px;border-radius:999px;background:rgba(255,255,255,.3)"></div></div>
+<div style="font:700 14px 'Outfit',sans-serif">Night</div>
+<div style="font-size:11px;opacity:.6;margin-top:3px">Default. Built for the room.</div>
+</button>
+<button onClick="{{ setLight }}" style="appearance:none;flex:1;padding:16px;border-radius:24px;background:#f4f2ff;border:2px solid {{ lightBorder }};cursor:pointer;text-align:left;color:#1a1630">
+<div style="display:flex;gap:4px;margin-bottom:12px"><div style="width:30px;height:9px;border-radius:999px;background:linear-gradient(90deg,#7c5cff,#c084fc)"></div><div style="width:14px;height:9px;border-radius:999px;background:rgba(26,22,48,.25)"></div></div>
+<div style="font:700 14px 'Outfit',sans-serif">Day</div>
+<div style="font-size:11px;opacity:.6;margin-top:3px">For daylight and dentists.</div>
+</button>
+</div>
+<div style="font-size:12px;color:var(--dim);margin:24px 0 12px">Preferences</div>
+<div style="display:flex;flex-direction:column;gap:9px">
+<sc-for list="{{ prefs }}" as="p" hint-placeholder-count="4">
+<div style="display:flex;align-items:center;gap:13px;padding:13px 15px;border-radius:20px;background:var(--panel);border:1px solid var(--stroke)">
+<div style="width:38px;height:38px;flex:none;border-radius:14px;background:{{ p.iconBg }};display:grid;place-items:center;color:{{ p.iconColor }};font:800 15px 'Outfit',sans-serif">{{ p.glyph }}</div>
+<div style="margin-right:auto">
+<div style="font:600 14px 'Plus Jakarta Sans',sans-serif">{{ p.name }}</div>
+<div style="font-size:11px;color:var(--dim2);margin-top:2px">{{ p.hint }}</div>
+</div>
+<button onClick="{{ p.toggle }}" style="appearance:none;width:56px;height:32px;flex:none;border-radius:999px;background:{{ p.track }};border:0;cursor:pointer;display:flex;align-items:center;padding:3px">
+<div style="width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.3);margin-left:{{ p.knob }};transition:margin-left .18s"></div>
+</button>
+</div>
+</sc-for>
+</div>
+<button onClick="{{ toSplash }}" style="appearance:none;width:100%;margin-top:22px;padding:16px;border-radius:999px;background:rgba(244,114,182,.14);border:0;cursor:pointer;color:var(--pink);font:700 14.5px 'Outfit',sans-serif">Sign out</button>
+</div>
+<div style="flex:none;margin:8px 18px 30px;padding:8px;border-radius:999px;background:var(--panel);border:1px solid var(--stroke);display:grid;grid-template-columns:repeat(4,1fr);gap:4px;backdrop-filter:blur(14px)">
+<button onClick="{{ tHome.go }}" style="appearance:none;border:0;border-radius:999px;padding:12px 0;cursor:pointer;background:{{ tHome.bg }};color:{{ tHome.color }};display:flex;flex-direction:column;align-items:center;gap:4px;font:600 9.5px 'Plus Jakarta Sans',sans-serif">
+<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><path d="M4 11l8-7 8 7v8a2 2 0 01-2 2H6a2 2 0 01-2-2z"/></svg>Home</button>
+<button onClick="{{ tPlay.go }}" style="appearance:none;border:0;border-radius:999px;padding:12px 0;cursor:pointer;background:{{ tPlay.bg }};color:{{ tPlay.color }};display:flex;flex-direction:column;align-items:center;gap:4px;font:600 9.5px 'Plus Jakarta Sans',sans-serif">
+<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><rect x="2" y="7" width="20" height="11" rx="5.5"/><path d="M7 12.5h3M8.5 11v3M16 11.5v.01M18 13.5v.01"/></svg>Play</button>
+<button onClick="{{ tFriends.go }}" style="appearance:none;border:0;border-radius:999px;padding:12px 0;cursor:pointer;background:{{ tFriends.bg }};color:{{ tFriends.color }};display:flex;flex-direction:column;align-items:center;gap:4px;font:600 9.5px 'Plus Jakarta Sans',sans-serif">
+<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0113 0M17 11a3 3 0 100-6M18.5 20a6.5 6.5 0 00-2-4.6"/></svg>Friends</button>
+<button onClick="{{ tYou.go }}" style="appearance:none;border:0;border-radius:999px;padding:12px 0;cursor:pointer;background:{{ tYou.bg }};color:{{ tYou.color }};display:flex;flex-direction:column;align-items:center;gap:4px;font:600 9.5px 'Plus Jakarta Sans',sans-serif">
+<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></svg>You</button>
+</div>
+</div>
+</sc-if>
+
+</div>
+</x-import>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;splash&quot;,&quot;login&quot;,&quot;onboard&quot;,&quot;home&quot;,&quot;config&quot;,&quot;lobby&quot;,&quot;quiz&quot;,&quot;c4&quot;,&quot;results&quot;,&quot;profile&quot;,&quot;settings&quot;],&quot;default&quot;:&quot;splash&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;liveJoins&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;}}">
+const GRADS = [
+  'linear-gradient(135deg,#7c5cff,#c084fc)', 'linear-gradient(135deg,#f472b6,#fb7185)',
+  'linear-gradient(135deg,#22d3ee,#3b82f6)', 'linear-gradient(135deg,#a3e635,#22d3ee)',
+  'linear-gradient(135deg,#fbbf24,#f472b6)', 'linear-gradient(135deg,#818cf8,#22d3ee)',
+  'linear-gradient(135deg,#fb7185,#fbbf24)', 'linear-gradient(135deg,#c084fc,#22d3ee)'
+];
+const MARKS = ['\u25C6', '\u25B2', '\u25A0', '\u25CF', '\u25D0', '\u2726', '\u25E7', '\u2630'];
+const LIB = [
+  ['Imposter Word', 'Deduction', '4–10 players', 'linear-gradient(150deg,#7c5cff,#c084fc)'],
+  ['Imposter Video', 'Deduction', '4–8 players', 'linear-gradient(150deg,#c084fc,#f472b6)'],
+  ['Imposter Quiz', 'Deduction', '4–10 players', 'linear-gradient(150deg,#6366f1,#a855f7)'],
+  ["Liar's Bar", 'Deduction', '3–6 players', 'linear-gradient(150deg,#f472b6,#fb7185)'],
+  ['Guess Who I Am', 'Deduction', '3–8 players', 'linear-gradient(150deg,#8b5cf6,#22d3ee)'],
+  ['UNO', 'Board', '2–6 players', 'linear-gradient(150deg,#fbbf24,#fb7185)'],
+  ['Ludo', 'Board', '2–4 players', 'linear-gradient(150deg,#22d3ee,#3b82f6)'],
+  ['Snakes & Ladders', 'Board', '2–4 players', 'linear-gradient(150deg,#a3e635,#14b8a6)'],
+  ['Chess', 'Board', '2 players', 'linear-gradient(150deg,#94a3b8,#475569)'],
+  ['Carrom', 'Board', '2–4 players', 'linear-gradient(150deg,#fb923c,#fbbf24)'],
+  ['Connect 4', 'Board', '2 players', 'linear-gradient(150deg,#38bdf8,#818cf8)'],
+  ['3D Tank War', 'Arcade', '2–8 players', 'linear-gradient(150deg,#a3e635,#65a30d)'],
+  ['Gravity Flip', 'Arcade', '2–4 players', 'linear-gradient(150deg,#22d3ee,#a3e635)']
+];
+const CATS = [['Deduction', '#7c5cff'], ['Board', '#22d3ee'], ['Arcade', '#a3e635']];
+const OTHERS = [['Divya', '\u25B2', 1], ['Rohan', '\u25A0', 2], ['Meera', '\u25CF', 3], ['Karthik', '\u25D0', 4]];
+const ANSWERS = [['Divya', 'Strawberry'], ['Rohan', 'Apple'], ['Meera', 'Cherry'], ['Karthik', 'Tomato']];
+const VIO = '#7c5cff', VIO2 = '#c084fc', LIME = '#a3e635', PINK = '#f472b6', CYAN = '#22d3ee', AMBER = '#fbbf24';
+const GRADV = 'linear-gradient(135deg,#7c5cff,#c084fc)';
+const GRADBOT = 'linear-gradient(135deg,#22d3ee,#a3e635)';
+const FRIENDS = [
+  ['Divya', '\u25B2', 1, 'In a lobby · UNO', LIME],
+  ['Rohan', '\u25A0', 2, 'Online', LIME],
+  ['Meera', '\u25CF', 3, 'Playing Chess', AMBER],
+  ['Karthik', '\u25D0', 4, 'Last seen 2h ago', 'rgba(255,255,255,.3)'],
+  ['Sanjay', '\u2726', 5, 'Online', LIME],
+  ['Nithya', '\u25E7', 6, 'Last seen yesterday', 'rgba(255,255,255,.3)']
+];
+const SEED = {
+  Divya: [['them', 'we playing tonight or what'], ['me', 'yes. quiz first, i want revenge'], ['them', 'you were SO obviously the odd one 😐']],
+  Rohan: [['them', 'add me when you open a room']],
+  Meera: [['me', 'chess after this?'], ['them', 'only if you promise not to rage quit']],
+  Karthik: [['them', 'tomato IS a fruit']],
+  Sanjay: [['them', 'code?']],
+  Nithya: [['me', 'game night friday?']]
+};
+const REPLIES = ['ok ok sending code', 'give me 2 min', 'joining now', 'who else is in?', 'i call not-imposter'];
+
+class Component extends DCLogic {
+  state = {
+    scr: this.props.startScreen ?? 'splash',
+    theme: this.props.theme ?? 'dark',
+    myName: 'Arjun', mark: 0,
+    joinOpen: false, codeInput: '',
+    cat: 'Deduction', game: 'Imposter Quiz', filter: 'All',
+    mode: 'mix', diff: 'Normal',
+    dmWith: null, dmInput: '', threads: JSON.parse(JSON.stringify(SEED)), typing: false, toast: null,
+    lastIdx: -1,
+    opt: { timer: 60, odd: 1, discuss: 45, players: 4, turn: 20, lives: 3, match: 5, stack: true, safe: true, spin: false },
+    pref: { sound: true, haptic: true, push: true, fast: false },
+    joined: 1, copied: false,
+    qp: 'reveal', myAnswer: 'Apple', vote: null,
+    board: Array(42).fill(null), turn: 'you', winner: null, winLine: [],
+    secs: 45, result: null
+  };
+
+  componentWillUnmount() { clearInterval(this._t); [this._j1, this._j2, this._j3].forEach(clearTimeout); }
+  go(scr) { this.setState({ scr }); }
+
+  enterLobby() {
+    this.setState({ scr: 'lobby', joined: 1, copied: false });
+    if (this.props.liveJoins === false) { this.setState({ joined: 5 }); return; }
+    [this._j1, this._j2, this._j3].forEach(clearTimeout);
+    this._j1 = setTimeout(() => this.setState({ joined: 2 }), 900);
+    this._j2 = setTimeout(() => this.setState({ joined: 4 }), 2000);
+    this._j3 = setTimeout(() => this.setState({ joined: 5 }), 3400);
+  }
+
+  startGame() {
+    if (this.state.game === 'Connect 4' || this.state.cat !== 'Deduction') {
+      this.setState({ scr: 'c4', board: Array(42).fill(null), turn: 'you', winner: null, winLine: [] });
+    } else this.setState({ scr: 'quiz', qp: 'reveal', vote: null, secs: this.state.opt.discuss });
+  }
+
+  setQp(qp) {
+    clearInterval(this._t);
+    this.setState({ qp });
+    if (qp === 'discuss') {
+      this.setState({ secs: this.state.opt.discuss });
+      this._t = setInterval(() => {
+        const s = this.state.secs - 1;
+        if (s <= 0) { clearInterval(this._t); this.setState({ secs: 0, qp: 'vote' }); }
+        else this.setState({ secs: s });
+      }, 1000);
+    }
+  }
+  castVote(name) { this.setState({ vote: name }); setTimeout(() => this.setState({ qp: 'out' }), 1100); }
+  finishQuiz() {
+    const me = this.state.myName;
+    this.setState({
+      scr: 'results',
+      result: {
+        game: 'Imposter Quiz', head: 'You survived', kicker: 'You were the odd one out',
+        note: 'Karthik said tomato. The table voted him out 3–2.',
+        rows: [
+          { n: me, d: 'Odd one · survived', s: '+3', win: true, mark: MARKS[this.state.mark], gi: 0 },
+          { n: 'Divya', d: 'Voted Karthik', s: '+0', mark: '\u25B2', gi: 1 },
+          { n: 'Rohan', d: 'Voted Karthik', s: '+0', mark: '\u25A0', gi: 2 },
+          { n: 'Meera', d: 'Voted ' + me, s: '+0', mark: '\u25CF', gi: 3 },
+          { n: 'Karthik', d: 'Voted out', s: '+0', mark: '\u25D0', gi: 4 }
+        ]
+      }
+    });
+  }
+
+  lowest(b, col) { for (let r = 5; r >= 0; r--) if (!b[r * 7 + col]) return r; return -1; }
+  win(b, p) {
+    const dirs = [[0, 1], [1, 0], [1, 1], [1, -1]];
+    for (let r = 0; r < 6; r++) for (let c = 0; c < 7; c++) for (const [dr, dc] of dirs) {
+      const line = [];
+      for (let k = 0; k < 4; k++) {
+        const rr = r + dr * k, cc = c + dc * k;
+        if (rr < 0 || rr > 5 || cc < 0 || cc > 6 || b[rr * 7 + cc] !== p) { line.length = 0; break; }
+        line.push(rr * 7 + cc);
+      }
+      if (line.length === 4) return line;
+    }
+    return null;
+  }
+  place(b, col, p) { const r = this.lowest(b, col); if (r < 0) return null; const n = b.slice(); n[r * 7 + col] = p; return n; }
+  drop(col) {
+    if (this.state.winner || this.state.turn !== 'you') return;
+    const r = this.lowest(this.state.board, col);
+    if (r < 0) return;
+    const n = this.place(this.state.board, col, 'you');
+    const idx = r * 7 + col;
+    const w = this.win(n, 'you');
+    if (w) { this.setState({ board: n, winner: 'you', winLine: w, lastIdx: idx }); return; }
+    if (!n.includes(null)) { this.setState({ board: n, winner: 'draw', lastIdx: idx }); return; }
+    this.setState({ board: n, turn: 'bot', lastIdx: idx });
+    setTimeout(() => this.bot(), 640);
+  }
+  bot() {
+    const b = this.state.board;
+    const cols = [3, 2, 4, 1, 5, 0, 6].filter(c => this.lowest(b, c) >= 0);
+    if (!cols.length) { this.setState({ winner: 'draw' }); return; }
+    let pick = null;
+    for (const c of cols) { const n = this.place(b, c, 'bot'); if (n && this.win(n, 'bot')) { pick = c; break; } }
+    if (pick === null) for (const c of cols) { const n = this.place(b, c, 'you'); if (n && this.win(n, 'you')) { pick = c; break; } }
+    if (pick === null) pick = cols[Math.random() < 0.7 ? 0 : Math.min(1, cols.length - 1)];
+    const idx = this.lowest(b, pick) * 7 + pick;
+    const n = this.place(b, pick, 'bot');
+    const w = this.win(n, 'bot');
+    if (w) { this.setState({ board: n, winner: 'bot', winLine: w, lastIdx: idx }); return; }
+    this.setState({ board: n, turn: 'you', lastIdx: idx, winner: n.includes(null) ? null : 'draw' });
+  }
+  finishC4() {
+    const w = this.state.winner, me = this.state.myName;
+    this.setState({
+      scr: 'results',
+      result: {
+        game: 'Connect 4',
+        head: w === 'you' ? 'You won' : w === 'bot' ? 'You lost' : 'A draw',
+        kicker: w === 'you' ? 'Four in a row' : w === 'bot' ? 'The bot got there first' : 'Board full, nobody lined up',
+        note: w === 'you' ? 'Rematch before they change their mind.' : 'Rematch and take it back.',
+        rows: [
+          { n: me, d: 'Violet', s: w === 'you' ? '+2' : '+0', win: w === 'you', mark: MARKS[this.state.mark], gi: 0 },
+          { n: 'Bot', d: 'Cyan', s: w === 'bot' ? '+2' : '+0', win: w === 'bot', mark: 'B', gi: 2 }
+        ]
+      }
+    });
+  }
+
+  flash(msg) { this.setState({ toast: msg }); clearTimeout(this._tt); this._tt = setTimeout(() => this.setState({ toast: null }), 1900); }
+  openDm(name) { this.setState({ scr: 'dm', dmWith: name, dmInput: '' }); }
+  sendDm(text) {
+    const who = this.state.dmWith; if (!who || !text) return;
+    const t = { ...this.state.threads };
+    t[who] = (t[who] || []).concat([['me', text]]);
+    this.setState({ threads: t, dmInput: '', typing: true });
+    clearTimeout(this._rt);
+    this._rt = setTimeout(() => {
+      const t2 = { ...this.state.threads };
+      t2[who] = (t2[who] || []).concat([['them', REPLIES[Math.floor(Math.random() * REPLIES.length)]]]);
+      this.setState({ threads: t2, typing: false });
+    }, 1400);
+  }
+
+  stepper(key, name, hint, min, max, step, fmt) {
+    const v = this.state.opt[key];
+    return { name, hint, val: fmt(v),
+      dec: () => this.setState({ opt: { ...this.state.opt, [key]: Math.max(min, v - step) } }),
+      inc: () => this.setState({ opt: { ...this.state.opt, [key]: Math.min(max, v + step) } }) };
+  }
+  sw(on) { return { track: on ? GRADV : 'rgba(255,255,255,.16)', knob: on ? '26px' : '2px' }; }
+  rule(key, name, hint) {
+    const on = !!this.state.opt[key];
+    return { key, name, hint, ...this.sw(on), toggle: () => this.setState({ opt: { ...this.state.opt, [key]: !on } }) };
+  }
+
+  renderVals() {
+    const s = this.state, o = s.opt, dark = s.theme === 'dark';
+    const seatCount = s.cat === 'Deduction' ? 5 : Math.max(2, o.players);
+    const myGrad = GRADS[s.mark % GRADS.length];
+
+    const humans = s.mode === 'bots' ? 1 : Math.min(s.joined, seatCount);
+    const seats = [];
+    for (let i = 0; i < seatCount; i++) {
+      if (i < humans) {
+        const host = i === 0;
+        const p = host ? { name: s.myName, mark: MARKS[s.mark], gi: s.mark } : { name: OTHERS[(i - 1) % 4][0], mark: OTHERS[(i - 1) % 4][1], gi: OTHERS[(i - 1) % 4][2] };
+        seats.push({ name: p.name, mark: p.mark, isHost: host, isBot: false, isEmpty: false,
+          grad: GRADS[p.gi % GRADS.length], ring: host ? '3px solid ' + AMBER : '3px solid transparent',
+          markColor: '#fff', color: 'var(--ink)', sub: host ? 'You' : 'Ready',
+          tap: host ? () => this.go('profile') : () => this.openDm(p.name) });
+      } else if (s.mode !== 'friends') {
+        seats.push({ name: 'Bot ' + (i - humans + 1), mark: 'B', isHost: false, isBot: true, isEmpty: false,
+          grad: GRADBOT, ring: '3px solid transparent', markColor: '#0b1020', color: 'var(--ink)',
+          sub: s.diff, tap: () => this.flash('Bot difficulty: ' + s.diff) });
+      } else {
+        seats.push({ name: 'Invite', mark: '+', isHost: false, isBot: false, isEmpty: true,
+          grad: 'transparent', ring: '2px dashed var(--stroke2)', markColor: 'var(--dim2)',
+          color: 'var(--dim2)', sub: 'Tap to add', tap: () => this.go('friends') });
+      }
+    }
+    const filled = seats.filter(x => !x.isEmpty).length;
+
+    const catGames = LIB.filter(g => g[1] === s.cat).map(g => ({
+      name: g[0], meta: g[2], grad: g[3], sel: s.game === g[0],
+      bg: s.game === g[0] ? 'rgba(124,92,255,.16)' : 'var(--panel)',
+      border: s.game === g[0] ? VIO : 'var(--stroke)',
+      dot: s.game === g[0] ? VIO : 'var(--stroke2)',
+      dotFill: s.game === g[0] ? VIO : 'transparent',
+      pick: () => this.setState({ game: g[0] })
+    }));
+
+    let steppers = [], rules = [], optLabel = 'Options';
+    if (s.cat === 'Deduction') {
+      optLabel = 'Round options';
+      steppers = [
+        this.stepper('timer', 'Answer timer', 'Time to write your answer', 15, 120, 15, v => v + 's'),
+        this.stepper('odd', 'Odd ones out', 'Players with the other question', 1, 3, 1, v => String(v)),
+        this.stepper('discuss', 'Discussion', 'Before voting opens', 30, 180, 15, v => v + 's')
+      ];
+      rules = [this.rule('spin', 'Category packs', 'General, food, cinema')];
+    } else if (s.cat === 'Board') {
+      optLabel = 'Table rules';
+      steppers = [
+        this.stepper('players', 'Players', 'Seats at the table', 2, 6, 1, v => String(v)),
+        this.stepper('turn', 'Turn timer', 'Auto-skip after', 10, 60, 5, v => v + 's')
+      ];
+      rules = [this.rule('stack', 'Stacking', 'Answer a +2 with a +2'), this.rule('safe', 'Safe zones', 'No captures on marked cells')];
+    } else {
+      optLabel = 'Match setup';
+      steppers = [
+        this.stepper('match', 'Match length', 'Minutes per round', 2, 10, 1, v => v + ' min'),
+        this.stepper('lives', 'Lives', 'Respawns per player', 1, 5, 1, v => String(v))
+      ];
+      rules = [this.rule('spin', 'Random arena', 'Map picked at drop-in')];
+    }
+
+    const chips = s.cat === 'Deduction'
+      ? [{ t: o.timer + 's answer' }, { t: o.odd + ' odd one' }, { t: o.discuss + 's discussion' }, { t: 'General pack' }]
+      : s.cat === 'Board'
+        ? [{ t: o.players + ' players' }, { t: o.turn + 's turns' }, { t: o.stack ? 'Stacking on' : 'Stacking off' }, { t: o.safe ? 'Safe zones' : 'No safe zones' }]
+        : [{ t: o.match + ' min' }, { t: o.lives + ' lives' }, { t: 'Rooftops arena' }];
+
+    const canStart = filled >= Math.min(s.cat === 'Deduction' ? 4 : 2, seatCount);
+    const oppName = s.mode === 'friends' ? 'Divya' : 'Bot';
+    const dmList = s.threads[s.dmWith] || [];
+    const fr = FRIENDS.find(f => f[0] === s.dmWith);
+    const nav = (n, label, go) => ({ n, label, go });
+    const visible = s.filter === 'All' ? LIB : LIB.filter(g => g[1] === s.filter);
+
+    return {
+      theme: s.theme, isDark: dark,
+      atSplash: s.scr === 'splash', atLogin: s.scr === 'login', atOnboard: s.scr === 'onboard',
+      atHome: s.scr === 'home', atConfig: s.scr === 'config', atLobby: s.scr === 'lobby',
+      atQuiz: s.scr === 'quiz', atC4: s.scr === 'c4', atResults: s.scr === 'results',
+      atProfile: s.scr === 'profile', atSettings: s.scr === 'settings',
+      atFriends: s.scr === 'friends', atDm: s.scr === 'dm',
+      toFriends: () => this.go('friends'),
+      toast: s.toast, hasToast: !!s.toast,
+
+      modes: [
+        { k: 'friends', name: 'Friends only', hint: 'Invite real players' },
+        { k: 'mix', name: 'Friends + bots', hint: 'Bots fill empty seats' },
+        { k: 'bots', name: 'Vs bots', hint: 'Start instantly, solo' }
+      ].map(m => ({
+        name: m.name, hint: m.hint, sel: s.mode === m.k,
+        bg: s.mode === m.k ? 'rgba(124,92,255,.18)' : 'var(--panel)',
+        border: s.mode === m.k ? VIO : 'var(--stroke)',
+        dot: s.mode === m.k ? VIO : 'var(--stroke2)',
+        dotFill: s.mode === m.k ? VIO : 'transparent',
+        pick: () => this.setState({ mode: m.k })
+      })),
+      showDiff: s.mode !== 'friends',
+      diffs: ['Easy', 'Normal', 'Sharp'].map(d => ({
+        name: d, bg: s.diff === d ? GRADV : 'var(--panel)',
+        border: s.diff === d ? 'transparent' : 'var(--stroke)',
+        color: s.diff === d ? '#fff' : 'var(--dim)',
+        pick: () => this.setState({ diff: d })
+      })),
+      modeChip: s.mode === 'friends' ? 'Friends only' : s.mode === 'bots' ? 'Vs bots · ' + s.diff : 'Friends + bots · ' + s.diff,
+
+      friends: FRIENDS.map(f => ({
+        name: f[0], mark: f[1], grad: GRADS[f[2] % GRADS.length], status: f[3], dot: f[4],
+        open: () => this.openDm(f[0]),
+        invite: () => this.flash('Invite sent to ' + f[0]),
+        unread: f[0] === 'Divya' ? '2' : '', hasUnread: f[0] === 'Divya'
+      })),
+      requests: [
+        { name: 'Aditya', mark: '\u25C8', grad: GRADS[6], mutual: '3 mutual friends', accept: () => this.flash('Aditya added') },
+        { name: 'Priya', mark: '\u25B3', grad: GRADS[4], mutual: '1 mutual friend', accept: () => this.flash('Priya added') }
+      ],
+      dmWith: s.dmWith, dmMark: fr ? fr[1] : '', dmGrad: fr ? GRADS[fr[2] % GRADS.length] : GRADV,
+      dmStatus: fr ? fr[3] : '', dmInput: s.dmInput,
+      setDm: e => this.setState({ dmInput: e.target.value }),
+      sendDm: () => this.sendDm(s.dmInput.trim()),
+      dmTyping: s.typing, dmQuiet: !s.typing,
+      dmInvite: () => this.flash('Lobby invite sent to ' + s.dmWith),
+      quickReplies: ['Join my lobby', 'One more?', 'Code incoming'].map(q => ({ t: q, send: () => this.sendDm(q) })),
+      messages: dmList.map((m, i) => ({
+        text: m[1], mine: m[0] === 'me', theirs: m[0] !== 'me',
+        bg: m[0] === 'me' ? GRADV : 'var(--panel)',
+        color: m[0] === 'me' ? '#fff' : 'var(--ink)',
+        align: m[0] === 'me' ? 'flex-end' : 'flex-start',
+        radius: m[0] === 'me' ? '20px 20px 6px 20px' : '20px 20px 20px 6px',
+        delay: Math.min(i * 60, 400) + 'ms'
+      })),
+
+      toSplash: () => this.go('splash'), toLogin: () => this.go('login'), toOnboard: () => this.go('onboard'),
+      toHome: () => this.setState({ scr: 'home', joinOpen: false }), toConfig: () => this.go('config'),
+      toLobby: () => this.enterLobby(), toProfile: () => this.go('profile'), toSettings: () => this.go('settings'),
+      startGame: () => this.startGame(),
+
+      navA: [
+        nav('01', 'Splash', () => this.go('splash')), nav('02', 'Sign in', () => this.go('login')),
+        nav('03', 'Onboarding', () => this.go('onboard')), nav('04', 'Home', () => this.go('home')),
+        nav('05', 'Game setup', () => this.go('config')), nav('06', 'Lobby', () => this.enterLobby()),
+        nav('10', 'Profile', () => this.go('profile')), nav('11', 'Settings', () => this.go('settings')),
+        nav('12', 'Friends', () => this.go('friends')), nav('13', 'Messages', () => this.openDm('Divya'))
+      ],
+      navB: [
+        nav('07', 'Imposter Quiz', () => this.setState({ scr: 'quiz', qp: 'reveal', vote: null })),
+        nav('08', 'Connect 4 · plays', () => this.setState({ scr: 'c4', board: Array(42).fill(null), turn: 'you', winner: null, winLine: [] })),
+        nav('09', 'Results', () => { if (!s.result) this.finishQuiz(); else this.go('results'); })
+      ],
+
+      myName: s.myName, myMark: MARKS[s.mark], myGrad,
+      setName: e => this.setState({ myName: e.target.value }),
+      marks: MARKS.map((g, i) => ({ g, grad: GRADS[i % GRADS.length], pick: () => this.setState({ mark: i }),
+        ring: s.mark === i ? '0 0 0 3px var(--bg), 0 0 0 6px ' + VIO2 : 'none' })),
+
+      joinOpen: s.joinOpen, joinClosed: !s.joinOpen,
+      openJoin: () => this.setState({ joinOpen: true }),
+      codeInput: s.codeInput, setCode: e => this.setState({ codeInput: e.target.value.toUpperCase() }),
+
+      filters: ['All', 'Deduction', 'Board', 'Arcade'].map(f => ({
+        name: f, pick: () => this.setState({ filter: f }),
+        bg: s.filter === f ? GRADV : 'var(--panel)',
+        border: s.filter === f ? 'transparent' : 'var(--stroke)',
+        color: s.filter === f ? '#fff' : 'var(--dim)'
+      })),
+      lib: visible.map(g => ({ name: g[0], cat: g[1], meta: g[2], grad: g[3],
+        pick: () => this.setState({ scr: 'config', cat: g[1], game: g[0] }) })),
+
+      cats: CATS.map(c => ({
+        name: c[0], sel: s.cat === c[0],
+        isDed: c[0] === 'Deduction', isBoard: c[0] === 'Board', isArc: c[0] === 'Arcade',
+        bg: s.cat === c[0] ? 'rgba(124,92,255,.16)' : 'var(--panel)',
+        border: s.cat === c[0] ? c[1] : 'var(--stroke)',
+        color: 'var(--ink)',
+        iconBg: s.cat === c[0] ? c[1] : 'var(--panel2)',
+        iconColor: s.cat === c[0] ? '#fff' : 'var(--dim)',
+        pick: () => this.setState({ cat: c[0], game: LIB.filter(g => g[1] === c[0])[0][0] })
+      })),
+      catGames, steppers, rules, optLabel,
+
+      room: 'K7QX2M', copied: s.copied, notCopied: !s.copied,
+      copyCode: () => { this.setState({ copied: true }); setTimeout(() => this.setState({ copied: false }), 1600); },
+      seats, chips, gameName: s.game,
+      joinedLabel: s.mode === 'friends'
+        ? filled + ' of ' + seatCount + ' joined'
+        : humans + (humans === 1 ? ' player · ' : ' players · ') + (seatCount - humans) + (seatCount - humans === 1 ? ' bot' : ' bots'),
+      cantStart: !canStart,
+      startLabel: canStart ? 'Start game' : 'Waiting for players',
+      startBg: canStart ? GRADV : 'var(--panel)',
+      startShadow: canStart ? 'var(--glow)' : 'none',
+      startColor: canStart ? '#fff' : 'var(--dim)',
+      startOpacity: canStart ? '1' : '.75',
+
+      qReveal: s.qp === 'reveal', qQuestion: s.qp === 'q', qAnswer: s.qp === 'answer', qCompare: s.qp === 'compare',
+      qDiscuss: s.qp === 'discuss', qVote: s.qp === 'vote', qOut: s.qp === 'out',
+      qHud: { reveal: 'R1 · Deal', q: 'R1 · Your card', answer: 'R1 · Answer', compare: 'R1 · Reveal', discuss: 'R1 · Discuss', vote: 'R1 · Vote', out: 'R1 · Result' }[s.qp],
+      toQ: () => this.setQp('q'), toAnswer: () => this.setQp('answer'), toCompare: () => this.setQp('compare'),
+      toDiscuss: () => this.setQp('discuss'), toVote: () => this.setQp('vote'),
+      myAnswer: s.myAnswer, setAnswer: e => this.setState({ myAnswer: e.target.value }),
+      answerDots: OTHERS.map(p => ({ mark: p[1], bg: GRADS[p[2] % GRADS.length], border: 'transparent', color: '#fff' }))
+        .concat([{ mark: MARKS[s.mark], bg: 'transparent', border: 'var(--stroke2)', color: 'var(--dim2)' }]),
+      answerCards: ANSWERS.map((a, i) => ({ name: a[0], text: a[1], mark: OTHERS[i][1], grad: GRADS[OTHERS[i][2] % GRADS.length], border: 'var(--stroke)', mine: false, delay: (i * 110) + 'ms' }))
+        .concat([{ name: s.myName, text: s.myAnswer || '—', mark: MARKS[s.mark], grad: myGrad, border: VIO, mine: true, delay: '440ms' }]),
+      voteCards: OTHERS.map(p => ({
+        name: p[0], mark: p[1], grad: GRADS[p[2] % GRADS.length],
+        bg: s.vote === p[0] ? 'rgba(124,92,255,.18)' : 'var(--panel)',
+        border: s.vote === p[0] ? VIO : 'transparent',
+        cast: () => this.castVote(p[0])
+      })),
+      hasVoted: !!s.vote, notVoted: !s.vote, voteTarget: s.vote,
+      secsLabel: '0:' + String(s.secs).padStart(2, '0'),
+      finishQuiz: () => this.finishQuiz(),
+
+      cols: Array.from({ length: 7 }, (_, c) => ({
+        drop: () => this.drop(c),
+        cells: Array.from({ length: 6 }, (_, r) => {
+          const idx = r * 7 + c, v = s.board[idx], wi = s.winLine.indexOf(idx);
+          return {
+            fill: v === 'you' ? GRADV : v === 'bot' ? GRADBOT : 'rgba(255,255,255,.05)',
+            ring: wi >= 0 ? '0 0 0 3px ' + AMBER : v ? '0 4px 10px rgba(0,0,0,.35)' : 'inset 0 0 0 1px var(--stroke)',
+            anim: wi >= 0 ? 'v2Wave 1.1s ease-in-out ' + (wi * 0.11) + 's infinite'
+              : idx === s.lastIdx ? 'v2Drop .4s cubic-bezier(.3,1.35,.5,1)' : 'none'
+          };
+        })
+      })),
+      ringPct: Math.round(100 * (1 - s.secs / Math.max(1, o.discuss))) + '%',
+      answerRing: 'conic-gradient(' + VIO + ' 62%, rgba(255,255,255,.12) 0)',
+      oppName,
+      suggestions: ['Apple', 'Guava', 'Lime', 'Grapes'].map(t => ({ t, pick: () => this.setState({ myAnswer: t }) })),
+      readers: OTHERS.map((p, i) => ({ mark: p[1], grad: GRADS[p[2] % GRADS.length], delay: (i * 160) + 'ms' }))
+        .concat([{ mark: MARKS[s.mark], grad: myGrad, delay: '640ms' }]),
+      showConfetti: !!((s.result || {}).rows || [])[0] && !!s.result.rows[0].win,
+      confetti: Array.from({ length: 12 }, (_, i) => ({
+        left: (4 + i * 8) + '%', bg: [VIO, VIO2, LIME, PINK, CYAN, AMBER][i % 6],
+        anim: 'v2Fall ' + (2.2 + (i % 4) * 0.5) + 's linear ' + (i * 0.18) + 's infinite',
+        size: (i % 3 === 0 ? 10 : 7) + 'px'
+      })),
+      youPanel: !s.winner && s.turn === 'you' ? 'rgba(124,92,255,.18)' : 'var(--panel)',
+      youBorder: !s.winner && s.turn === 'you' ? VIO : 'var(--stroke)',
+      botPanel: !s.winner && s.turn === 'bot' ? 'rgba(34,211,238,.16)' : 'var(--panel)',
+      botBorder: !s.winner && s.turn === 'bot' ? CYAN : 'var(--stroke)',
+      youTag: !s.winner && s.turn === 'you' ? 'Your turn' : 'Violet',
+      botTag: !s.winner && s.turn === 'bot' ? 'Thinking…' : 'Cyan',
+      statusDot: s.winner ? AMBER : s.turn === 'you' ? VIO2 : CYAN,
+      c4Status: s.winner ? 'Board closed' : s.turn === 'you' ? 'Your move — tap a column' : 'Bot is thinking',
+      hasWinner: !!s.winner, noWinner: !s.winner,
+      winHead: s.winner === 'you' ? 'Four in a row' : s.winner === 'bot' ? 'Bot got four' : 'Draw',
+      winNote: s.winner === 'you' ? 'Clean. Take the scoreboard.' : s.winner === 'bot' ? 'It saw the diagonal.' : 'Board full.',
+      finishC4: () => this.finishC4(),
+      resetC4: () => this.setState({ board: Array(42).fill(null), turn: 'you', winner: null, winLine: [] }),
+
+      rGame: (s.result || {}).game || '', rHead: (s.result || {}).head || '',
+      rKicker: (s.result || {}).kicker || '', rNote: (s.result || {}).note || '',
+      rRows: ((s.result || {}).rows || []).map((x, i) => ({
+        pos: String(i + 1), n: x.n, d: x.d, s: x.s, mark: x.mark, grad: GRADS[(x.gi || 0) % GRADS.length],
+        bg: x.win ? 'rgba(124,92,255,.20)' : 'var(--panel)',
+        border: x.win ? VIO : 'var(--stroke)',
+        color: 'var(--ink)', shadow: x.win ? 'var(--glow)' : 'none', delay: (i * 80) + 'ms'
+      })),
+      playAgain: () => this.startGame(), changeGame: () => this.go('config'),
+      leaveLobby: () => this.setState({ scr: 'home', joinOpen: false }),
+
+      bigStats: [
+        { k: 'Matches', v: '142', tint: 'var(--ink)' },
+        { k: 'Win rate', v: '61%', tint: VIO2 },
+        { k: 'Friends', v: '18', tint: LIME }
+      ],
+      bars: [
+        { k: 'Odd one — survived', v: '71%', grad: GRADV },
+        { k: 'Civilian — caught them', v: '54%', grad: 'linear-gradient(90deg,#22d3ee,#a3e635)' }
+      ],
+      stats: [
+        { name: 'Imposter Quiz', record: '38W · 14L', rate: '73%', tint: VIO2, grad: LIB[2][3] },
+        { name: 'Guess Who I Am', record: '11W · 9L', rate: '55%', tint: 'var(--ink)', grad: LIB[4][3] },
+        { name: "Liar's Bar", record: '7W · 12L', rate: '37%', tint: 'var(--dim)', grad: LIB[3][3] },
+        { name: 'UNO', record: '19W · 21L', rate: '48%', tint: 'var(--ink)', grad: LIB[5][3] },
+        { name: 'Chess', record: '4W · 16L', rate: '20%', tint: 'var(--dim)', grad: LIB[8][3] },
+        { name: 'Connect 4', record: '9W · 3L', rate: '75%', tint: LIME, grad: LIB[10][3] }
+      ],
+      history: [
+        { game: 'Imposter Quiz', when: 'Tonight', result: 'SURVIVED', tint: VIO2, bg: 'rgba(124,92,255,.18)' },
+        { game: 'Connect 4', when: 'Tonight', result: 'WON', tint: LIME, bg: 'rgba(163,230,53,.16)' },
+        { game: 'Ludo', when: 'Yesterday', result: 'LOST', tint: PINK, bg: 'rgba(244,114,182,.14)' },
+        { game: "Liar's Bar", when: 'Sunday', result: 'LOST', tint: PINK, bg: 'rgba(244,114,182,.14)' }
+      ],
+      prefs: [
+        { key: 'sound', name: 'Sound effects', hint: 'Dice, cards, buzzers', glyph: '\u266A', iconBg: 'rgba(124,92,255,.18)', iconColor: VIO2 },
+        { key: 'haptic', name: 'Haptics', hint: 'Buzz on your turn', glyph: '\u25CE', iconBg: 'rgba(34,211,238,.16)', iconColor: CYAN },
+        { key: 'push', name: 'Lobby invites', hint: 'Push when friends open a room', glyph: '\u2709', iconBg: 'rgba(163,230,53,.16)', iconColor: LIME },
+        { key: 'fast', name: 'Fast reveal', hint: 'Skip vote animations', glyph: '\u00BB', iconBg: 'rgba(244,114,182,.16)', iconColor: PINK }
+      ].map(p => {
+        const on = !!s.pref[p.key];
+        return { ...p, ...this.sw(on), toggle: () => this.setState({ pref: { ...s.pref, [p.key]: !on } }) };
+      }),
+      setDark: () => this.setState({ theme: 'dark' }), setLight: () => this.setState({ theme: 'light' }),
+      darkBorder: dark ? VIO2 : 'transparent', lightBorder: dark ? 'transparent' : VIO,
+
+      tHome: { bg: s.scr === 'home' ? GRADV : 'transparent', color: s.scr === 'home' ? '#fff' : 'var(--dim2)', go: () => this.setState({ scr: 'home', joinOpen: false }) },
+      tPlay: { bg: s.scr === 'config' ? GRADV : 'transparent', color: s.scr === 'config' ? '#fff' : 'var(--dim2)', go: () => this.go('config') },
+      tFriends: { bg: (s.scr === 'friends' || s.scr === 'dm') ? GRADV : 'transparent', color: (s.scr === 'friends' || s.scr === 'dm') ? '#fff' : 'var(--dim2)', go: () => this.go('friends') },
+      tYou: { bg: (s.scr === 'profile' || s.scr === 'settings') ? GRADV : 'transparent', color: (s.scr === 'profile' || s.scr === 'settings') ? '#fff' : 'var(--dim2)', go: () => this.go('profile') }
+    };
+  }
+}
+
+</script>
+</body>
+</html>

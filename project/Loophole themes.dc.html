@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/modernist-9ede8b48-aae5-40b1-82bb-8d93f38dbbcd/styles.css">
+<script src="_ds/modernist-9ede8b48-aae5-40b1-82bb-8d93f38dbbcd/_ds_bundle.js"></script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0;background:#0a0912;color:#f5f3ff}
+a{color:#c084fc}a:hover{color:#e9d5ff}
+@keyframes thUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes thPulse{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes thGlow{0%,100%{box-shadow:0 0 0 0 rgba(168,85,247,.5)}60%{box-shadow:0 0 0 12px rgba(168,85,247,0)}}
+@keyframes thSpin{to{transform:rotate(360deg)}}
+.rail{scrollbar-width:none}
+.rail::-webkit-scrollbar{width:0;height:0}
+</style>
+</helmet>
+
+<div style="padding:34px 40px 60px;font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:radial-gradient(1100px 520px at 15% -10%,#241b4d,#0a0912 62%);min-height:100vh">
+<div style="display:flex;align-items:flex-end;gap:26px;flex-wrap:wrap;margin-bottom:26px">
+<div>
+<div style="font:800 26px 'Outfit',sans-serif;letter-spacing:-.02em">Theme decision</div>
+<div style="font-size:13px;color:rgba(245,243,255,.5);margin-top:6px">Same three modules, two directions. Pick one and I'll roll it through the whole app.</div>
+</div>
+<div style="display:flex;gap:8px;margin-left:auto;padding:6px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1)">
+<sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+<button onClick="{{ t.pick }}" style="appearance:none;padding:11px 20px;border-radius:999px;border:0;cursor:pointer;background:{{ t.bg }};color:{{ t.color }};font:700 13px 'Outfit',sans-serif">{{ t.name }}</button>
+</sc-for>
+</div>
+</div>
+
+<div style="display:flex;gap:34px;align-items:flex-start;flex-wrap:wrap">
+
+<div style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px">
+<div style="width:26px;height:26px;border-radius:9px;background:linear-gradient(135deg,#7c5cff,#c084fc);display:grid;place-items:center;font:800 12px 'Outfit',sans-serif;color:#fff">A</div>
+<div>
+<div style="font:700 15px 'Outfit',sans-serif">Soft gradient</div>
+<div style="font-size:11.5px;color:rgba(245,243,255,.45)">What the app uses now — friendly, airy, one violet gradient</div>
+</div>
+</div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" dark="{{ isDark }}" width="{{ deviceW }}" height="{{ deviceH }}" hint-size="372px,806px">
+<div style="height:100%;display:flex;flex-direction:column;overflow:hidden;background:#100e19;color:#f5f3ff;font-family:'Plus Jakarta Sans',system-ui,sans-serif;position:relative">
+<div style="position:absolute;top:-110px;right:-80px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(124,92,255,.5),transparent 70%);pointer-events:none"></div>
+
+<sc-if value="{{ atGames }}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="A · Game cards" style="flex:1;display:flex;flex-direction:column;padding:58px 0 26px;position:relative;min-height:0;animation:thUp .3s">
+<div style="display:flex;align-items:center;gap:12px;padding:0 20px 16px">
+<div style="margin-right:auto">
+<div style="font:800 21px 'Outfit',sans-serif;letter-spacing:-.02em">Game library</div>
+<div style="font-size:11.5px;color:rgba(245,243,255,.5);margin-top:3px">14 games · tap to set up</div>
+</div>
+<button onClick="{{ slideA }}" style="appearance:none;width:38px;height:38px;border-radius:13px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);cursor:pointer;color:#f5f3ff;display:grid;place-items:center">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 5l7 7-7 7"/></svg></button>
+</div>
+<div style="font-size:10.5px;letter-spacing:.1em;color:rgba(245,243,255,.4);padding:0 20px 9px">FEATURED</div>
+<div data-rail="a" class="rail" style="display:flex;gap:12px;overflow-x:auto;padding:0 20px 4px;scroll-snap-type:x mandatory;scroll-behavior:smooth">
+<sc-for list="{{ featured }}" as="g" hint-placeholder-count="4">
+<button onClick="{{ g.pick }}" style="appearance:none;flex:none;width:210px;scroll-snap-align:center;border:0;padding:0;background:transparent;cursor:pointer;text-align:left;color:#f5f3ff">
+<div style="height:132px;border-radius:24px;background:{{ g.grad }};position:relative;overflow:hidden;box-shadow:0 16px 34px rgba(0,0,0,.42)">
+<div style="position:absolute;inset:0;background:linear-gradient(180deg,transparent 35%,rgba(0,0,0,.5))"></div>
+<div style="position:absolute;top:12px;left:12px;width:42px;height:42px;border-radius:15px;background:rgba(255,255,255,.22);display:grid;place-items:center">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ g.d }}"/></svg></div>
+<div style="position:absolute;top:14px;right:12px;padding:5px 10px;border-radius:999px;background:rgba(0,0,0,.34);font:700 9.5px 'Outfit',sans-serif">{{ g.cat }}</div>
+<div style="position:absolute;bottom:12px;left:14px;right:14px">
+<div style="font:800 17px 'Outfit',sans-serif">{{ g.name }}</div>
+<div style="font-size:11px;opacity:.85;margin-top:2px">{{ g.meta }}</div>
+</div>
+</div>
+</button>
+</sc-for>
+</div>
+<div style="font-size:10.5px;letterspacing:.1em;color:rgba(245,243,255,.4);padding:20px 20px 9px">ALL GAMES</div>
+<div style="flex:1;overflow-y:auto;padding:0 20px 6px;min-height:0">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+<sc-for list="{{ games }}" as="g" hint-placeholder-count="8">
+<button onClick="{{ g.pick }}" style="appearance:none;padding:14px;border-radius:20px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.1);cursor:pointer;text-align:left;color:#f5f3ff;display:flex;flex-direction:column;gap:10px" style-hover="background:rgba(255,255,255,.1)">
+<div style="width:40px;height:40px;border-radius:14px;background:{{ g.grad }};display:grid;place-items:center">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ g.d }}"/></svg></div>
+<div>
+<div style="font:700 13.5px 'Outfit',sans-serif">{{ g.name }}</div>
+<div style="font-size:10.5px;color:rgba(245,243,255,.45);margin-top:2px">{{ g.meta }}</div>
+</div>
+</button>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ atProfile }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="A · Profile" style="flex:1;display:flex;flex-direction:column;padding:58px 0 26px;position:relative;min-height:0;animation:thUp .3s">
+<div style="display:flex;align-items:center;gap:12px;padding:0 20px 14px">
+<div style="width:38px;height:38px;border-radius:13px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);display:grid;place-items:center">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#f5f3ff" stroke-width="2.4"><path d="M15 5l-7 7 7 7"/></svg></div>
+<div style="font:700 15px 'Outfit',sans-serif;margin-right:auto">Divya</div>
+<button style="appearance:none;height:36px;padding:0 14px;border-radius:999px;background:rgba(163,230,53,.16);border:0;color:#a3e635;font:700 11.5px 'Outfit',sans-serif;cursor:pointer">Challenge</button>
+</div>
+<div style="flex:1;overflow-y:auto;padding:0 20px 8px;min-height:0">
+<div style="display:flex;align-items:center;gap:15px">
+<div style="width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,#f472b6,#fb7185);display:grid;place-items:center;font:800 30px 'Outfit',sans-serif;color:#fff;box-shadow:0 10px 30px rgba(244,114,182,.4)">▲</div>
+<div>
+<div style="font:800 23px 'Outfit',sans-serif;letter-spacing:-.01em">Divya</div>
+<div style="font-size:12px;color:rgba(245,243,255,.5);margin-top:4px">Best liar in the group chat</div>
+<div style="display:flex;gap:6px;margin-top:8px">
+<div style="padding:5px 11px;border-radius:999px;background:rgba(163,230,53,.16);color:#a3e635;font:700 10px 'Outfit',sans-serif">ONLINE</div>
+<div style="padding:5px 11px;border-radius:999px;background:rgba(255,255,255,.08);color:rgba(245,243,255,.6);font:700 10px 'Outfit',sans-serif">142 GAMES</div>
+</div>
+</div>
+</div>
+<div style="display:flex;gap:9px;margin-top:20px">
+<sc-for list="{{ trio }}" as="t" hint-placeholder-count="3">
+<div style="flex:1;padding:14px;border-radius:20px;background:rgba(255,255,255,.055);border:1px solid rgba(255,255,255,.1)">
+<div style="font:800 20px 'Outfit',sans-serif;color:{{ t.tint }}">{{ t.v }}</div>
+<div style="font-size:10.5px;color:rgba(245,243,255,.45);margin-top:3px">{{ t.k }}</div>
+</div>
+</sc-for>
+</div>
+<div style="font-size:11.5px;color:rgba(245,243,255,.5);margin:22px 0 10px">Badges</div>
+<div style="display:flex;gap:9px;flex-wrap:wrap">
+<sc-for list="{{ badges }}" as="b" hint-placeholder-count="5">
+<div style="width:56px;display:flex;flex-direction:column;align-items:center;gap:6px">
+<div style="width:52px;height:52px;border-radius:18px;background:{{ b.bg }};display:grid;place-items:center;color:{{ b.tint }}">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ b.d }}"/></svg></div>
+<div style="font-size:9px;color:rgba(245,243,255,.45);text-align:center;line-height:1.2">{{ b.name }}</div>
+</div>
+</sc-for>
+</div>
+<div style="font-size:11.5px;color:rgba(245,243,255,.5);margin:22px 0 10px">Per game</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<sc-for list="{{ perGame }}" as="p" hint-placeholder-count="4">
+<div>
+<div style="display:flex;font-size:12px;margin-bottom:6px"><span style="margin-right:auto">{{ p.name }}</span><span style="font-weight:700;color:{{ p.tint }}">{{ p.rate }}</span></div>
+<div style="height:10px;border-radius:999px;background:rgba(255,255,255,.09);overflow:hidden"><div style="width:{{ p.rate }};height:100%;border-radius:999px;background:{{ p.grad }}"></div></div>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ atBoard }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="A · Leaderboard" style="flex:1;display:flex;flex-direction:column;padding:58px 0 26px;position:relative;min-height:0;animation:thUp .3s">
+<div style="padding:0 20px 14px">
+<div style="font:800 21px 'Outfit',sans-serif;letter-spacing:-.02em">Leaderboard</div>
+<div style="font-size:11.5px;color:rgba(245,243,255,.5);margin-top:3px">This month · all games</div>
+</div>
+<div style="display:flex;gap:7px;padding:0 20px 16px">
+<sc-for list="{{ scopes }}" as="sc" hint-placeholder-count="3">
+<button onClick="{{ sc.pick }}" style="appearance:none;padding:9px 16px;border-radius:999px;border:1px solid {{ sc.borderA }};background:{{ sc.bgA }};color:{{ sc.colorA }};cursor:pointer;font:700 12px 'Outfit',sans-serif">{{ sc.name }}</button>
+</sc-for>
+</div>
+<div style="display:flex;align-items:flex-end;gap:10px;padding:0 20px 18px">
+<sc-for list="{{ podium }}" as="p" hint-placeholder-count="3">
+<div style="flex:1;padding:14px 10px;border-radius:22px;background:{{ p.bgA }};border:1px solid {{ p.borderA }};display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:{{ p.lift }}">
+<div style="width:{{ p.size }};height:{{ p.size }};border-radius:50%;background:{{ p.grad }};display:grid;place-items:center;font:800 18px 'Outfit',sans-serif;color:#fff">{{ p.mark }}</div>
+<div style="font:800 12.5px 'Outfit',sans-serif">{{ p.name }}</div>
+<div style="font-size:10px;color:rgba(245,243,255,.5)">{{ p.pts }}</div>
+<div style="padding:3px 9px;border-radius:999px;background:{{ p.rankBg }};color:{{ p.rankColor }};font:800 9.5px 'Outfit',sans-serif">{{ p.rank }}</div>
+</div>
+</sc-for>
+</div>
+<div style="flex:1;overflow-y:auto;padding:0 20px;min-height:0">
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ ranks }}" as="r" hint-placeholder-count="6">
+<div style="display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:18px;background:rgba(255,255,255,.055)">
+<div style="font:800 12px 'Outfit',sans-serif;color:rgba(245,243,255,.45);min-width:16px">{{ r.n }}</div>
+<div style="width:34px;height:34px;flex:none;border-radius:50%;background:{{ r.grad }};display:grid;place-items:center;font:800 13px 'Outfit',sans-serif;color:#fff">{{ r.mark }}</div>
+<div style="margin-right:auto">
+<div style="font:700 13px 'Outfit',sans-serif">{{ r.name }}</div>
+<div style="font-size:10.5px;color:rgba(245,243,255,.45);margin-top:2px">{{ r.sub }}</div>
+</div>
+<div style="font:800 12.5px 'Outfit',sans-serif;color:#c084fc">{{ r.pts }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="padding:12px 20px 0">
+<div style="display:flex;align-items:center;gap:11px;padding:13px;border-radius:20px;background:linear-gradient(135deg,#7c5cff,#c084fc);box-shadow:0 10px 26px rgba(124,92,255,.45);color:#fff">
+<div style="font:800 12px 'Outfit',sans-serif">12</div>
+<div style="width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.24);display:grid;place-items:center;font:800 13px 'Outfit',sans-serif">◆</div>
+<div style="margin-right:auto">
+<div style="font:700 13px 'Outfit',sans-serif">You</div>
+<div style="font-size:10.5px;opacity:.85;margin-top:2px">3 wins from top 10</div>
+</div>
+<div style="font:800 12.5px 'Outfit',sans-serif">1,840</div>
+</div>
+</div>
+</div>
+</sc-if>
+</div>
+</x-import>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:10px">
+<div style="width:26px;height:26px;border-radius:9px;background:linear-gradient(135deg,#a855f7,#6d28d9);display:grid;place-items:center;font:800 12px 'Outfit',sans-serif;color:#fff;box-shadow:0 0 16px rgba(168,85,247,.6)">B</div>
+<div>
+<div style="font:700 15px 'Outfit',sans-serif">Neon tiers</div>
+<div style="font-size:11.5px;color:rgba(245,243,255,.45)">FortDice-style — levels, XP, ranks, sharper glow</div>
+</div>
+</div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" dark="{{ isDark }}" width="{{ deviceW }}" height="{{ deviceH }}" hint-size="372px,806px">
+<div style="height:100%;display:flex;flex-direction:column;overflow:hidden;background:#0b0616;color:#efe9fb;font-family:'Plus Jakarta Sans',system-ui,sans-serif;position:relative">
+<div style="position:absolute;top:0;left:0;right:0;height:220px;background:radial-gradient(120% 100% at 50% 0%,rgba(168,85,247,.28),transparent 70%);pointer-events:none"></div>
+
+<sc-if value="{{ atGames }}" hint-placeholder-val="{{ true }}">
+<sc-if value="{{ bLib }}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="B · Game cards" style="flex:1;display:flex;flex-direction:column;padding:58px 0 26px;position:relative;min-height:0;animation:thUp .3s">
+<div style="display:flex;align-items:center;gap:10px;padding:0 20px 14px">
+<div style="font:800 11px 'Outfit',sans-serif;letter-spacing:.16em;color:#a855f7;margin-right:auto">GAME LIBRARY</div>
+<div style="padding:5px 11px;border-radius:6px;background:rgba(168,85,247,.16);border:1px solid rgba(168,85,247,.4);font:800 9.5px 'Outfit',sans-serif;color:#d8b4fe;white-space:nowrap">14 TITLES</div>
+<button onClick="{{ slideB }}" style="appearance:none;width:34px;height:34px;border-radius:10px;background:rgba(168,85,247,.14);border:1px solid rgba(168,85,247,.35);cursor:pointer;color:#d8b4fe;display:grid;place-items:center">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9 5l7 7-7 7"/></svg></button>
+</div>
+<div data-rail="b" class="rail" style="display:flex;gap:12px;overflow-x:auto;padding:0 20px 6px;scroll-snap-type:x mandatory;scroll-behavior:smooth">
+<sc-for list="{{ featured }}" as="g" hint-placeholder-count="4">
+<button onClick="{{ g.pick }}" style="appearance:none;flex:none;width:204px;scroll-snap-align:center;border:1px solid rgba(168,85,247,.35);border-radius:16px;padding:0;background:#150c26;cursor:pointer;text-align:left;color:#efe9fb;overflow:hidden;box-shadow:0 0 22px rgba(168,85,247,.16)">
+<div style="height:104px;background:{{ g.dim }};position:relative;display:grid;place-items:center">
+<div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);background-size:18px 18px"></div>
+<svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="{{ g.neon }}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="position:relative;filter:drop-shadow(0 0 8px {{ g.neon }})"><path d="{{ g.d }}"/></svg>
+<div style="position:absolute;top:10px;left:10px;padding:4px 9px;border-radius:5px;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.12);font:800 8.5px 'Outfit',sans-serif;letter-spacing:.1em;color:{{ g.neon }}">{{ g.catUp }}</div>
+</div>
+<div style="padding:12px 14px 14px">
+<div style="font:800 15px 'Outfit',sans-serif">{{ g.name }}</div>
+<div style="display:flex;align-items:center;gap:6px;margin-top:7px">
+<div style="font-size:10px;color:rgba(239,233,251,.5);margin-right:auto">{{ g.meta }}</div>
+<div style="font:800 9.5px 'Outfit',sans-serif;color:{{ g.neon }}">{{ g.lvl }}</div>
+</div>
+<div style="height:3px;border-radius:999px;background:rgba(255,255,255,.1);margin-top:8px;overflow:hidden"><div style="width:{{ g.xp }};height:100%;background:{{ g.neon }};box-shadow:0 0 8px {{ g.neon }}"></div></div>
+</div>
+</button>
+</sc-for>
+</div>
+<div style="padding:20px 20px 0">
+<button onClick="{{ openAll }}" style="appearance:none;width:100%;display:flex;align-items:center;gap:12px;padding:15px 16px;border-radius:14px;background:#150c26;border:1px solid rgba(168,85,247,.4);cursor:pointer;color:#efe9fb;text-align:left;box-shadow:0 0 20px rgba(168,85,247,.12)" style-hover="border-color:#a855f7;box-shadow:0 0 26px rgba(168,85,247,.28)">
+<div style="width:38px;height:38px;flex:none;border-radius:11px;background:rgba(168,85,247,.16);border:1px solid rgba(168,85,247,.35);display:grid;place-items:center">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#d8b4fe" stroke-width="2" stroke-linecap="round"><path d="M4 5h6v6H4zM14 5h6v6h-6zM4 15h6v6H4zM14 15h6v6h-6z"/></svg></div>
+<div style="margin-right:auto">
+<div style="font:800 13.5px 'Outfit',sans-serif">All games</div>
+<div style="font-size:10px;color:rgba(239,233,251,.45);margin-top:2px">14 titles · 3 categories</div>
+</div>
+<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2.4"><path d="M9 5l7 7-7 7"/></svg>
+</button>
+</div>
+<div style="padding:14px 20px 0">
+<div style="display:flex;align-items:center;gap:10px;padding:13px 15px;border-radius:14px;background:rgba(163,230,53,.09);border:1px solid rgba(163,230,53,.28)">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#a3e635" stroke-width="2" style="flex:none"><path d="M12 3a9 9 0 100 18 9 9 0 000-18zM12 8v4l3 2"/></svg>
+<div style="font-size:11px;color:rgba(239,233,251,.72);line-height:1.4">Divya is in a lobby right now · <span style="color:#a3e635;font-weight:700">tap to join</span></div>
+</div>
+</div>
+<div style="flex:1;min-height:10px"></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ bAll }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="B · All games" style="flex:1;display:flex;flex-direction:column;padding:58px 0 26px;position:relative;min-height:0;animation:thUp .28s">
+<div style="display:flex;align-items:center;gap:10px;padding:0 20px 14px">
+<button onClick="{{ closeAll }}" style="appearance:none;width:34px;height:34px;border-radius:10px;background:rgba(168,85,247,.14);border:1px solid rgba(168,85,247,.35);cursor:pointer;color:#d8b4fe;display:grid;place-items:center">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 5l-7 7 7 7"/></svg></button>
+<div style="font:800 14px 'Outfit',sans-serif;margin-right:auto">All games</div>
+<div style="font:700 10px 'Outfit',sans-serif;color:rgba(239,233,251,.45);white-space:nowrap">{{ bCatLabel }}</div>
+</div>
+<div style="display:flex;gap:6px;padding:0 20px 14px;overflow-x:auto" class="rail">
+<sc-for list="{{ bCats }}" as="c" hint-placeholder-count="4">
+<button onClick="{{ c.pick }}" style="appearance:none;flex:none;display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:999px;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.color }};cursor:pointer;font:700 11.5px 'Outfit',sans-serif;white-space:nowrap">{{ c.name }}
+<span style="font-size:9.5px;opacity:.7">{{ c.count }}</span></button>
+</sc-for>
+</div>
+<div style="flex:1;overflow-y:auto;padding:0 20px 6px;min-height:0">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">
+<sc-for list="{{ bGames }}" as="g" hint-placeholder-count="8">
+<button onClick="{{ g.pick }}" style="appearance:none;padding:13px;border-radius:14px;background:#150c26;border:1px solid rgba(255,255,255,.08);cursor:pointer;text-align:left;color:#efe9fb;display:flex;flex-direction:column;gap:11px" style-hover="border-color:rgba(168,85,247,.6);box-shadow:0 0 18px rgba(168,85,247,.2)">
+<div style="width:40px;height:40px;border-radius:12px;background:{{ g.dim }};border:1px solid rgba(255,255,255,.08);display:grid;place-items:center">
+<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="{{ g.neon }}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 0 6px {{ g.neon }})"><path d="{{ g.d }}"/></svg></div>
+<div style="width:100%;min-width:0">
+<div style="font:800 12.5px 'Outfit',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ g.name }}</div>
+<div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+<div style="font-size:9.5px;color:rgba(239,233,251,.42);margin-right:auto">{{ g.meta }}</div>
+<div style="font:800 8.5px 'Outfit',sans-serif;color:{{ g.neon }}">{{ g.lvl }}</div>
+</div>
+<div style="height:3px;border-radius:999px;background:rgba(255,255,255,.09);margin-top:7px;overflow:hidden"><div style="width:{{ g.xp }};height:100%;background:{{ g.neon }}"></div></div>
+</div>
+</button>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+</sc-if>
+
+<sc-if value="{{ atProfile }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="B · Profile" style="flex:1;display:flex;flex-direction:column;padding:58px 0 26px;position:relative;min-height:0;animation:thUp .3s">
+<div style="display:flex;align-items:center;gap:10px;padding:0 20px 10px">
+<div style="width:34px;height:34px;border-radius:10px;background:rgba(168,85,247,.14);border:1px solid rgba(168,85,247,.35);display:grid;place-items:center">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d8b4fe" stroke-width="2.4"><path d="M15 5l-7 7 7 7"/></svg></div>
+<div style="font:800 11px 'Outfit',sans-serif;letter-spacing:.16em;color:#a855f7;margin-right:auto">PLAYER CARD</div>
+<div style="width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);display:grid;place-items:center">
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#efe9fb" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg></div>
+</div>
+<div style="flex:1;overflow-y:auto;padding:0 20px 8px;min-height:0;display:flex;flex-direction:column;align-items:center">
+<div style="position:relative;width:112px;height:112px;display:grid;place-items:center;margin-top:6px">
+<div style="position:absolute;inset:0;border-radius:50%;background:conic-gradient(#a855f7 68%,rgba(255,255,255,.1) 0)"></div>
+<div style="position:absolute;inset:5px;border-radius:50%;background:#0b0616"></div>
+<div style="position:relative;width:92px;height:92px;border-radius:50%;background:linear-gradient(150deg,#f472b6,#7c3aed);display:grid;place-items:center;font:800 34px 'Outfit',sans-serif;color:#fff">▲</div>
+<div style="position:absolute;bottom:-6px;padding:4px 12px;border-radius:6px;background:#a855f7;font:800 9.5px 'Outfit',sans-serif;color:#fff;box-shadow:0 0 14px rgba(168,85,247,.7)">LVL 24</div>
+</div>
+<div style="font:800 22px 'Outfit',sans-serif;margin-top:18px">Divya</div>
+<div style="font-size:11.5px;color:#c4b5fd;margin-top:5px">Odd One specialist · Chennai</div>
+<div style="width:100%;margin-top:16px;padding:12px 14px;border-radius:12px;background:#150c26;border:1px solid rgba(255,255,255,.08)">
+<div style="display:flex;font-size:10px;color:rgba(239,233,251,.5)"><span style="margin-right:auto">PROGRESS TO LVL 25</span><span style="color:#d8b4fe;font-weight:700">12,450 / 15,000 XP</span></div>
+<div style="height:6px;border-radius:999px;background:rgba(255,255,255,.09);margin-top:8px;overflow:hidden"><div style="width:68%;height:100%;background:linear-gradient(90deg,#7c3aed,#a855f7);box-shadow:0 0 10px rgba(168,85,247,.8)"></div></div>
+</div>
+<div style="display:flex;gap:8px;width:100%;margin-top:12px">
+<sc-for list="{{ trio }}" as="t" hint-placeholder-count="3">
+<div style="flex:1;padding:12px 10px;border-radius:12px;background:#150c26;border:1px solid rgba(255,255,255,.08);text-align:center">
+<div style="font:800 19px 'Outfit',sans-serif;color:#efe9fb">{{ t.v }}</div>
+<div style="font-size:9px;letter-spacing:.1em;color:rgba(239,233,251,.42);margin-top:4px">{{ t.kUp }}</div>
+</div>
+</sc-for>
+</div>
+<div style="width:100%;display:flex;align-items:baseline;margin:20px 0 10px">
+<div style="font:800 10px 'Outfit',sans-serif;letter-spacing:.14em;color:rgba(239,233,251,.5);margin-right:auto">ACHIEVEMENTS</div>
+<div style="font-size:10px;color:#a855f7">View all</div>
+</div>
+<div style="width:100%;display:flex;gap:8px;justify-content:space-between">
+<sc-for list="{{ badges }}" as="b" hint-placeholder-count="5">
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px">
+<div style="width:46px;height:46px;border-radius:12px;background:#150c26;border:1px solid {{ b.neonBorder }};display:grid;place-items:center;color:{{ b.neon }}">
+<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 0 6px {{ b.neon }})"><path d="{{ b.d }}"/></svg></div>
+<div style="font-size:8.5px;color:rgba(239,233,251,.42);text-align:center;line-height:1.2">{{ b.name }}</div>
+</div>
+</sc-for>
+</div>
+<div style="width:100%;font:800 10px 'Outfit',sans-serif;letter-spacing:.14em;color:rgba(239,233,251,.5);margin:22px 0 4px">PERFORMANCE MATRIX</div>
+<div style="width:100%;display:grid;place-items:center;padding:6px 0 4px">
+<svg width="210" height="180" viewBox="0 0 220 190">
+<polygon points="110,18 197,68 164,166 56,166 23,68" fill="none" stroke="rgba(255,255,255,.10)" stroke-width="1"></polygon>
+<polygon points="110,60 154,86 137,136 83,136 66,86" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="1"></polygon>
+<line x1="110" y1="92" x2="110" y2="18" stroke="rgba(255,255,255,.08)"></line>
+<line x1="110" y1="92" x2="197" y2="68" stroke="rgba(255,255,255,.08)"></line>
+<line x1="110" y1="92" x2="164" y2="166" stroke="rgba(255,255,255,.08)"></line>
+<line x1="110" y1="92" x2="56" y2="166" stroke="rgba(255,255,255,.08)"></line>
+<line x1="110" y1="92" x2="23" y2="68" stroke="rgba(255,255,255,.08)"></line>
+<polygon points="{{ radar }}" fill="rgba(168,85,247,.34)" stroke="#a855f7" stroke-width="2"></polygon>
+<text x="110" y="10" fill="rgba(239,233,251,.5)" font-size="8" font-family="Outfit" text-anchor="middle">BLUFF</text>
+<text x="206" y="66" fill="rgba(239,233,251,.5)" font-size="8" font-family="Outfit" text-anchor="middle">SPEED</text>
+<text x="170" y="180" fill="rgba(239,233,251,.5)" font-size="8" font-family="Outfit" text-anchor="middle">VOTES</text>
+<text x="50" y="180" fill="rgba(239,233,251,.5)" font-size="8" font-family="Outfit" text-anchor="middle">SURVIVAL</text>
+<text x="14" y="66" fill="rgba(239,233,251,.5)" font-size="8" font-family="Outfit" text-anchor="middle">BOARD</text>
+</svg>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ atBoard }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="B · Leaderboard" style="flex:1;display:flex;flex-direction:column;padding:58px 0 26px;position:relative;min-height:0;animation:thUp .3s">
+<div style="display:flex;align-items:center;gap:10px;padding:0 20px 14px">
+<div style="width:34px;height:34px;border-radius:10px;background:rgba(168,85,247,.14);border:1px solid rgba(168,85,247,.35);display:grid;place-items:center">
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d8b4fe" stroke-width="2.4"><path d="M15 5l-7 7 7 7"/></svg></div>
+<div style="font:800 14px 'Outfit',sans-serif;margin-right:auto">Global Rankings</div>
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0z"/></svg>
+</div>
+<div style="display:flex;gap:6px;padding:0 20px 16px">
+<sc-for list="{{ scopes }}" as="sc" hint-placeholder-count="3">
+<button onClick="{{ sc.pick }}" style="appearance:none;flex:1;padding:9px 0;border-radius:999px;border:1px solid {{ sc.borderB }};background:{{ sc.bgB }};color:{{ sc.colorB }};cursor:pointer;font:700 11.5px 'Outfit',sans-serif">{{ sc.name }}</button>
+</sc-for>
+</div>
+<div style="display:flex;align-items:flex-end;justify-content:center;gap:14px;padding:0 20px 20px">
+<sc-for list="{{ podium }}" as="p" hint-placeholder-count="3">
+<div style="display:flex;flex-direction:column;align-items:center;gap:7px;margin-bottom:{{ p.lift }}">
+<div style="position:relative;width:{{ p.ringB }};height:{{ p.ringB }};display:grid;place-items:center">
+<div style="position:absolute;inset:0;border-radius:50%;border:2px solid {{ p.neon }};box-shadow:0 0 16px {{ p.neon }}"></div>
+<div style="width:calc(100% - 10px);height:calc(100% - 10px);border-radius:50%;background:{{ p.grad }};display:grid;place-items:center;font:800 17px 'Outfit',sans-serif;color:#fff">{{ p.mark }}</div>
+<div style="position:absolute;bottom:-8px;padding:3px 8px;border-radius:5px;background:{{ p.neon }};color:#150c26;font:800 8.5px 'Outfit',sans-serif">{{ p.rank }}</div>
+</div>
+<div style="font:800 11.5px 'Outfit',sans-serif;margin-top:6px">{{ p.name }}</div>
+<div style="font-size:9.5px;color:rgba(239,233,251,.45);white-space:nowrap">{{ p.pts }} XP</div>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;align-items:center;padding:0 20px 10px">
+<div style="font:800 9.5px 'Outfit',sans-serif;letter-spacing:.16em;color:rgba(239,233,251,.45);margin-right:auto">TOP PERFORMERS</div>
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(239,233,251,.45)" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h6"/></svg>
+</div>
+<div style="flex:1;overflow-y:auto;padding:0 20px;min-height:0">
+<div style="display:flex;flex-direction:column;gap:7px">
+<sc-for list="{{ ranks }}" as="r" hint-placeholder-count="6">
+<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:#150c26;border:1px solid rgba(255,255,255,.07)">
+<div style="font:800 11px 'Outfit',sans-serif;color:rgba(239,233,251,.4);min-width:14px">{{ r.n }}</div>
+<div style="width:32px;height:32px;flex:none;border-radius:50%;background:{{ r.grad }};display:grid;place-items:center;font:800 12px 'Outfit',sans-serif;color:#fff">{{ r.mark }}</div>
+<div style="flex:1;min-width:0">
+<div style="display:flex;align-items:baseline;gap:6px">
+<div style="font:800 12px 'Outfit',sans-serif;margin-right:auto">{{ r.name }}</div>
+<div style="font:700 10px 'Outfit',sans-serif;color:#d8b4fe">{{ r.pts }} XP</div>
+</div>
+<div style="height:4px;border-radius:999px;background:rgba(255,255,255,.09);margin-top:6px;overflow:hidden"><div style="width:{{ r.bar }};height:100%;background:linear-gradient(90deg,#7c3aed,#a855f7);box-shadow:0 0 8px rgba(168,85,247,.7)"></div></div>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+<div style="padding:12px 20px 0">
+<div style="display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;background:rgba(168,85,247,.14);border:1px solid #a855f7;box-shadow:0 0 20px rgba(168,85,247,.3)">
+<div style="font:800 11px 'Outfit',sans-serif;color:#d8b4fe;min-width:14px">12</div>
+<div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#c084fc);display:grid;place-items:center;font:800 12px 'Outfit',sans-serif;color:#fff">◆</div>
+<div style="flex:1;min-width:0">
+<div style="display:flex;align-items:baseline;gap:6px">
+<div style="font:800 12px 'Outfit',sans-serif;margin-right:auto">You</div>
+<div style="font:700 9px 'Outfit',sans-serif;color:#a3e635">LEVEL UP SOON</div>
+</div>
+<div style="height:4px;border-radius:999px;background:rgba(255,255,255,.12);margin-top:6px;overflow:hidden"><div style="width:62%;height:100%;background:#a3e635;box-shadow:0 0 8px rgba(163,230,53,.7)"></div></div>
+</div>
+</div>
+</div>
+</div>
+</sc-if>
+</div>
+</x-import>
+</div>
+
+</div>
+
+<div style="margin-top:30px;padding:18px 22px;border-radius:20px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);max-width:820px">
+<div style="font:700 14px 'Outfit',sans-serif;margin-bottom:8px">What differs, besides colour</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;font-size:12.5px;line-height:1.55;color:rgba(245,243,255,.62)">
+<div><b style="color:#c084fc">A · Soft gradient</b><br>Win rate and games played. Flat standing, no progression. Big soft cards, one accent, low density — reads instantly across a table.</div>
+<div><b style="color:#d8b4fe">B · Neon tiers</b><br>Levels, XP bars, tier rings, radar matrix. Competitive framing that rewards grinding, denser rows, harder edges (12–16px radius) and neon glow.</div>
+</div>
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;module&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;games&quot;,&quot;profi&quot;,&quot;leade&quot;],&quot;default&quot;:&quot;games&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Compare&quot;}}">
+const GAMES = [
+  ['Imposter Word', 'Deduction', '4–10', 'M4 6h16M12 6v12M8 18h8'],
+  ['Imposter Video', 'Deduction', '4–8', 'M5 4l14 8-14 8z'],
+  ['Imposter Quiz', 'Deduction', '4–10', 'M9 9a3 3 0 114 2.8V13M12 17v.01M3 12a9 9 0 1018 0 9 9 0 00-18 0'],
+  ["Liar's Bar", 'Deduction', '3–6', 'M6 3h12l-1.5 8a4.5 4.5 0 01-9 0L6 3zM12 15v6M8 21h8'],
+  ['Guess Who I Am', 'Deduction', '3–8', 'M12 3a4 4 0 100 8 4 4 0 000-8zM4 21a8 8 0 0116 0M18 5h4M20 3v4'],
+  ['GeoGuesser', 'Deduction', '2–8', 'M3 12a9 9 0 1018 0 9 9 0 00-18 0M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18'],
+  ['UNO', 'Board', '2–6', 'M8 4h8a2 2 0 012 2v12a2 2 0 01-2 2H8a2 2 0 01-2-2V6a2 2 0 012-2zM12 8v8M9.5 12h5'],
+  ['Ludo', 'Board', '2–4', 'M4 4h16v16H4zM7.6 7.6h2.2v2.2H7.6zM10.9 10.9h2.2v2.2h-2.2zM14.2 14.2h2.2v2.2h-2.2z'],
+  ['Snakes & Ladders', 'Board', '2–4', 'M6 21V3M14 21V3M6 8h8M6 13h8M6 18h8M18 5c2 3-2 5 0 8s-2 5 0 8'],
+  ['Chess', 'Board', '2', 'M12 3v4M10 5h4M6 21h12l1-9-4 3-3-5-3 5-4-3z'],
+  ['Carrom', 'Board', '2–4', 'M4 4h16v16H4zM14.4 12a2.4 2.4 0 11-4.8 0 2.4 2.4 0 014.8 0M6.8 6.8h1.8v1.8H6.8zM15.4 15.4h1.8v1.8h-1.8z'],
+  ['Connect 4', 'Board', '2', 'M4 5h16v14H4zM9.2 9.6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0M13.5 9.6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0M17.8 14.4a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0M9.2 14.4a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0'],
+  ['3D Tank War', 'Arcade', '2–8', 'M3 15h14v-4H3zM7 11V8h6v3M17 13h4M5 19h10'],
+  ['Gravity Flip', 'Arcade', '2–4', 'M12 3v8M9 8l3 3 3-3M6 21h12M12 14v3']
+];
+const GRADS = {
+  Deduction: 'linear-gradient(150deg,#7c5cff,#c084fc)',
+  Board: 'linear-gradient(150deg,#22d3ee,#3b82f6)',
+  Arcade: 'linear-gradient(150deg,#a3e635,#14b8a6)'
+};
+const NEON = { Deduction: '#a855f7', Board: '#22d3ee', Arcade: '#a3e635' };
+const DIM = { Deduction: '#1a1030', Board: '#0d1e2b', Arcade: '#131f14' };
+const FEAT = ['Imposter Quiz', 'GeoGuesser', 'Connect 4', 'UNO', "Liar's Bar"];
+const LVL = { 'Imposter Quiz': 'LVL 12', GeoGuesser: 'NEW', 'Connect 4': 'LVL 7', UNO: 'LVL 4', "Liar's Bar": 'LVL 9' };
+const XP = { 'Imposter Quiz': '72%', GeoGuesser: '4%', 'Connect 4': '45%', UNO: '28%', "Liar's Bar": '61%' };
+const PODIUM = [
+  ['Rohan', '\u25A0', '2nd', '42,800', 2, '#c0c0d8'],
+  ['Divya', '\u25B2', '1st', '50,200', 1, '#fbbf24'],
+  ['Meera', '\u25CF', '3rd', '38,150', 3, '#fb923c']
+];
+const RANKS = [
+  [4, 'Sanjay', '\u2726', '35,900', '78%', 'Imposter Quiz · 21 wins'],
+  [5, 'Nithya', '\u25E7', '32,400', '70%', 'Ludo · 18 wins'],
+  [6, 'Karthik', '\u25D0', '31,050', '66%', 'Chess · 12 wins'],
+  [7, 'Aditya', '\u25C8', '28,300', '60%', 'UNO · 15 wins'],
+  [8, 'Priya', '\u25B3', '26,700', '55%', 'GeoGuesser · 9 wins'],
+  [9, 'Vikram', '\u2727', '24,100', '50%', "Liar's Bar · 11 wins"]
+];
+
+class Component extends DCLogic {
+  state = { mod: this.props.module ?? 'games', scope: 'Global', bView: 'lib', bCat: 'All' };
+  slide(key) {
+    const el = document.querySelector('[data-rail="' + key + '"]');
+    if (!el) return;
+    const step = key === 'a' ? 222 : 216;
+    const next = el.scrollLeft + step;
+    el.scrollTo({ left: next >= el.scrollWidth - el.clientWidth - 8 ? 0 : next, behavior: 'smooth' });
+  }
+
+  renderVals() {
+    const s = this.state;
+    const mk = g => ({
+      name: g[0], cat: g[1], catUp: g[1].toUpperCase(), meta: g[2] + ' players', d: g[3],
+      grad: GRADS[g[1]], neon: NEON[g[1]], dim: DIM[g[1]],
+      lvl: LVL[g[0]] || 'LVL 1', xp: XP[g[0]] || '10%',
+      pick: () => {}
+    });
+    return {
+      isDark: true, deviceW: 372, deviceH: 806,
+      tabs: ['Games', 'Profile', 'Leaderboard'].map(t => {
+        const k = t.toLowerCase().slice(0, 5);
+        const on = s.mod === k;
+        return { name: t, bg: on ? 'linear-gradient(135deg,#7c5cff,#c084fc)' : 'transparent', color: on ? '#fff' : 'rgba(245,243,255,.6)', pick: () => this.setState({ mod: k }) };
+      }),
+      atGames: s.mod === 'games', atProfile: s.mod === 'profi', atBoard: s.mod === 'leade',
+
+      games: GAMES.map(mk),
+      bGames: (s.bCat === 'All' ? GAMES : GAMES.filter(g => g[1] === s.bCat)).map(mk),
+      featured: FEAT.map(n => mk(GAMES.find(g => g[0] === n))),
+      bLib: s.bView === 'lib', bAll: s.bView === 'all',
+      openAll: () => this.setState({ bView: 'all' }), closeAll: () => this.setState({ bView: 'lib' }),
+      bCats: ['All', 'Deduction', 'Board', 'Arcade'].map(c => {
+        const on = s.bCat === c;
+        return { name: c, pick: () => this.setState({ bCat: c }),
+          bg: on ? 'rgba(168,85,247,.9)' : 'transparent',
+          border: on ? '#a855f7' : 'rgba(255,255,255,.12)',
+          color: on ? '#fff' : 'rgba(239,233,251,.55)',
+          count: c === 'All' ? '14' : String(GAMES.filter(g => g[1] === c).length) };
+      }),
+      bCatLabel: s.bCat === 'All' ? '14 titles' : s.bCat + ' · ' + GAMES.filter(g => g[1] === s.bCat).length,
+      slideA: () => this.slide('a'), slideB: () => this.slide('b'),
+
+      trio: [
+        { k: 'Matches', kUp: 'MATCHES', v: '142', tint: '#f5f3ff' },
+        { k: 'Win rate', kUp: 'WIN RATE', v: '68%', tint: '#c084fc' },
+        { k: 'Odd one', kUp: 'ODD ONE', v: '4.2', tint: '#a3e635' }
+      ],
+      badges: [
+        { name: 'Straight face', bg: 'rgba(168,85,247,.16)', tint: '#c084fc', neon: '#a855f7', neonBorder: 'rgba(168,85,247,.5)', d: 'M12 3l2.4 6.2H21l-5.2 4 1.9 6.3L12 15.8 6.3 19.5l1.9-6.3-5.2-4h6.6z' },
+        { name: 'Fast talker', bg: 'rgba(34,211,238,.16)', tint: '#22d3ee', neon: '#22d3ee', neonBorder: 'rgba(34,211,238,.5)', d: 'M13 2L4 14h6l-1 8 9-12h-6z' },
+        { name: 'Vote magnet', bg: 'rgba(244,114,182,.16)', tint: '#f472b6', neon: '#f472b6', neonBorder: 'rgba(244,114,182,.5)', d: 'M12 20s-7-4.6-7-9a4 4 0 017-2.6A4 4 0 0119 11c0 4.4-7 9-7 9z' },
+        { name: 'Board shark', bg: 'rgba(163,230,53,.16)', tint: '#a3e635', neon: '#a3e635', neonBorder: 'rgba(163,230,53,.5)', d: 'M4 4h16v16H4zM8.5 8.5v.01M15.5 15.5v.01M12 12v.01' },
+        { name: 'Night owl', bg: 'rgba(251,191,36,.16)', tint: '#fbbf24', neon: '#fbbf24', neonBorder: 'rgba(251,191,36,.5)', d: 'M20 14a8 8 0 11-9.9-9.9A6.5 6.5 0 0020 14z' }
+      ],
+      perGame: [
+        { name: 'Imposter Quiz', rate: '73%', tint: '#c084fc', grad: 'linear-gradient(90deg,#7c5cff,#c084fc)' },
+        { name: 'GeoGuesser', rate: '58%', tint: '#22d3ee', grad: 'linear-gradient(90deg,#22d3ee,#3b82f6)' },
+        { name: 'UNO', rate: '48%', tint: '#f5f3ff', grad: 'linear-gradient(90deg,#fbbf24,#fb7185)' },
+        { name: 'Chess', rate: '20%', tint: 'rgba(245,243,255,.6)', grad: 'linear-gradient(90deg,#94a3b8,#475569)' }
+      ],
+      radar: '110,30 186,72 152,152 74,148 38,74',
+
+      scopes: ['Global', 'Friends', 'Region'].map(n => {
+        const on = s.scope === n;
+        return {
+          name: n, pick: () => this.setState({ scope: n }),
+          bgA: on ? 'linear-gradient(135deg,#7c5cff,#c084fc)' : 'rgba(255,255,255,.055)',
+          borderA: on ? 'transparent' : 'rgba(255,255,255,.1)',
+          colorA: on ? '#fff' : 'rgba(245,243,255,.55)',
+          bgB: on ? 'rgba(168,85,247,.9)' : 'transparent',
+          borderB: on ? '#a855f7' : 'rgba(255,255,255,.12)',
+          colorB: on ? '#fff' : 'rgba(239,233,251,.55)'
+        };
+      }),
+      podium: PODIUM.map(p => ({
+        name: p[0], mark: p[1], rank: p[2], pts: p[3],
+        grad: p[4] === 1 ? 'linear-gradient(150deg,#f472b6,#7c3aed)' : p[4] === 2 ? 'linear-gradient(150deg,#22d3ee,#3b82f6)' : 'linear-gradient(150deg,#fbbf24,#fb7185)',
+        neon: p[5], lift: p[4] === 1 ? '18px' : '0px',
+        size: p[4] === 1 ? '52px' : '44px', ringB: p[4] === 1 ? '68px' : '56px',
+        bgA: p[4] === 1 ? 'rgba(251,191,36,.12)' : 'rgba(255,255,255,.055)',
+        borderA: p[4] === 1 ? 'rgba(251,191,36,.5)' : 'rgba(255,255,255,.1)',
+        rankBg: p[4] === 1 ? '#fbbf24' : 'rgba(255,255,255,.12)',
+        rankColor: p[4] === 1 ? '#241a03' : 'rgba(245,243,255,.7)'
+      })),
+      ranks: RANKS.map(r => ({
+        n: r[0], name: r[1], mark: r[2], pts: r[3], bar: r[4], sub: r[5],
+        grad: GRADS[r[0] % 3 === 0 ? 'Board' : r[0] % 3 === 1 ? 'Deduction' : 'Arcade']
+      }))
+    };
+  }
+}
+
+</script>
+</body>
+</html>
