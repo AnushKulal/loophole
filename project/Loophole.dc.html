@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/modernist-9ede8b48-aae5-40b1-82bb-8d93f38dbbcd/styles.css">
+<script src="_ds/modernist-9ede8b48-aae5-40b1-82bb-8d93f38dbbcd/_ds_bundle.js"></script>
+<style>
+:root{--ground:#141312;--surface:#201e1d;--surface2:#2d2b2b;--ink:#f3f2f2;--dim:rgba(243,242,242,.55);--line:rgba(243,242,242,.22);--line2:rgba(243,242,242,.42);--acc:#ec3013;--acc-hot:#ff563c;--on-acc:#f3f2f2}
+[data-theme="light"]{--ground:#f3f2f2;--surface:#eae9e9;--surface2:#d7d3d3;--ink:#201e1d;--dim:rgba(32,30,29,.6);--line:rgba(32,30,29,.18);--line2:rgba(32,30,29,.42);--acc:#ec3013;--acc-hot:#dd2b0f;--on-acc:#f3f2f2}
+body{margin:0;background:#f3f2f2;color:#201e1d}
+a{color:#ec3013}a:hover{color:#ae1800}
+@keyframes lhUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes lhPop{0%{transform:scale(.82)}60%{transform:scale(1.04)}100%{transform:scale(1)}}
+@keyframes lhPulse{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes lhDrop{from{transform:translateY(-260%)}to{transform:none}}
+@keyframes lhFlip{from{transform:rotateY(90deg)}to{transform:none}}
+@keyframes lhBlink{0%,100%{background:var(--acc)}50%{background:transparent}}
+::-webkit-scrollbar{width:0;height:0}
+</style>
+</helmet>
+
+<div style="display:flex;gap:44px;align-items:flex-start;padding:40px 44px;font-family:'Archivo',system-ui,sans-serif;min-height:100vh">
+
+<div style="width:210px;flex:none;position:sticky;top:40px">
+<div style="font:800 20px/1 'Archivo',sans-serif;letter-spacing:-.02em">LOOPHOLE</div>
+<div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(32,30,29,.55);margin-top:6px">Clickable prototype</div>
+<hr class="hr" style="background:rgba(32,30,29,.4)">
+<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#ec3013;margin-bottom:8px">Shell A · meta</div>
+<div style="display:flex;flex-direction:column">
+<sc-for list="{{ navA }}" as="s" hint-placeholder-count="6">
+<button onClick="{{ s.go }}" style="appearance:none;background:transparent;border:0;border-top:1px solid rgba(32,30,29,.18);padding:9px 0;text-align:left;font:400 13px 'Archivo',sans-serif;color:#201e1d;cursor:pointer;display:flex;gap:8px;align-items:baseline" style-hover="color:#ec3013"><span style="font:800 10px ui-monospace,monospace;color:rgba(32,30,29,.4)">{{ s.n }}</span>{{ s.label }}</button>
+</sc-for>
+</div>
+<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#ec3013;margin:20px 0 8px">Shell B · in-game</div>
+<div style="display:flex;flex-direction:column">
+<sc-for list="{{ navB }}" as="s" hint-placeholder-count="3">
+<button onClick="{{ s.go }}" style="appearance:none;background:transparent;border:0;border-top:1px solid rgba(32,30,29,.18);padding:9px 0;text-align:left;font:400 13px 'Archivo',sans-serif;color:#201e1d;cursor:pointer;display:flex;gap:8px;align-items:baseline" style-hover="color:#ec3013"><span style="font:800 10px ui-monospace,monospace;color:rgba(32,30,29,.4)">{{ s.n }}</span>{{ s.label }}</button>
+</sc-for>
+</div>
+<hr class="hr" style="background:rgba(32,30,29,.4);margin-top:20px">
+<p style="font-size:11.5px;line-height:1.5;color:rgba(32,30,29,.55);margin:0">Connect 4 is fully playable against the bot. Everything else is tap-through.</p>
+</div>
+
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" dark="{{ isDark }}" hint-size="402px,874px">
+<div data-theme="{{ theme }}" style="min-height:100%;display:flex;flex-direction:column;background:var(--ground);color:var(--ink);font-family:'Archivo',system-ui,sans-serif">
+
+<sc-if value="{{ atSplash }}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="01 Splash" onClick="{{ toLogin }}" style="flex:1;display:flex;flex-direction:column;justify-content:space-between;background:var(--acc);color:var(--on-acc);padding:96px 26px 60px;cursor:pointer">
+<div>
+<div style="font:800 76px/.86 'Archivo',sans-serif;letter-spacing:-.045em">LOOP<br>HOLE</div>
+<div style="height:2px;background:var(--on-acc);margin:22px 0 14px;width:76px"></div>
+<div style="font-size:15px;line-height:1.4;max-width:250px">Thirteen party games. One lobby. Somebody at this table is lying.</div>
+</div>
+<div style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;animation:lhPulse 2.4s infinite">Tap anywhere to start</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ atLogin }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="02 Sign in" style="flex:1;display:flex;flex-direction:column;padding:78px 26px 48px;animation:lhUp .3s">
+<div style="font:800 12px 'Archivo',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--acc-hot)">Loophole</div>
+<h1 style="font-size:40px;margin:14px 0 8px;color:var(--ink)">SIGN IN</h1>
+<p style="font-size:14.5px;color:var(--dim);margin:0 0 26px;max-width:270px">One field. Email or phone — we'll work out which and send a code if we need one.</p>
+<div class="field">
+<label style="color:var(--dim)">Email or phone</label>
+<input class="input" placeholder="you@example.com" style="background:var(--surface);border-color:var(--line2);color:var(--ink);min-height:52px;font-size:16px">
+</div>
+<button class="btn btn-primary btn-block" onClick="{{ toOnboard }}" style="min-height:52px;font-size:16px;padding-inline:16px;margin-top:14px">CONTINUE</button>
+<div style="display:flex;align-items:center;gap:12px;margin:26px 0">
+<div style="height:1px;background:var(--line);flex:1"></div>
+<div style="font-size:10px;letter-spacing:.14em;color:var(--dim)">OR</div>
+<div style="height:1px;background:var(--line);flex:1"></div>
+</div>
+<button class="btn btn-secondary btn-block" onClick="{{ toOnboard }}" style="min-height:52px;font-size:15px;border-color:var(--line2);color:var(--ink);padding-inline:16px;gap:12px">
+<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/></svg>Continue with Google</button>
+<div style="flex:1"></div>
+<p style="font-size:11.5px;color:var(--dim);margin:0">By continuing you accept that your friends will accuse you of things.</p>
+</div>
+</sc-if>
+
+<sc-if value="{{ atOnboard }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="03 Onboarding" style="flex:1;display:flex;flex-direction:column;padding:78px 26px 48px;animation:lhUp .3s">
+<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)">Step 2 of 2</div>
+<h1 style="font-size:36px;margin:12px 0 24px">WHO ARE YOU</h1>
+<div class="field">
+<label style="color:var(--dim)">Display name</label>
+<input class="input" value="{{ myName }}" onChange="{{ setName }}" style="background:var(--surface);border-color:var(--line2);color:var(--ink);min-height:52px;font-size:16px">
+</div>
+<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:26px 0 10px">Pick a mark</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+<sc-for list="{{ marks }}" as="m" hint-placeholder-count="8">
+<button onClick="{{ m.pick }}" style="appearance:none;aspect-ratio:1;background:var(--surface);border:2px solid {{ m.border }};color:{{ m.color }};font:800 26px 'Archivo',sans-serif;cursor:pointer;display:grid;place-items:center">{{ m.g }}</button>
+</sc-for>
+</div>
+<div style="flex:1;min-height:24px"></div>
+<button class="btn btn-primary btn-block" onClick="{{ toHome }}" style="min-height:56px;font-size:16px;padding-inline:16px">ENTER LOOPHOLE</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ atHome }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="04 Home" style="flex:1;display:flex;flex-direction:column;padding:66px 0 48px;animation:lhUp .3s">
+<div style="display:flex;align-items:center;padding:0 22px 14px">
+<div style="font:800 19px 'Archivo',sans-serif;letter-spacing:-.02em;margin-right:auto">LOOPHOLE</div>
+<button onClick="{{ toProfile }}" style="appearance:none;width:44px;height:44px;background:transparent;border:0;color:var(--ink);cursor:pointer;display:grid;place-items:center;font:800 18px 'Archivo',sans-serif">{{ myMark }}</button>
+<button onClick="{{ toSettings }}" style="appearance:none;width:44px;height:44px;background:transparent;border:0;color:var(--ink);cursor:pointer;display:grid;place-items:center">
+<svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 00.34 1.87l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.7 1.7 0 00-2.87 1.2V22a2 2 0 01-4 0v-.1A1.7 1.7 0 006 20.7l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.7 1.7 0 002.6 15H2.5a2 2 0 010-4h.1A1.7 1.7 0 003.3 8L3.24 8a2 2 0 012.83-2.83l.06.06A1.7 1.7 0 009 4.6V4.5a2 2 0 014 0v.1A1.7 1.7 0 0018 3.3l.06-.06a2 2 0 012.83 2.83l-.06.06A1.7 1.7 0 0021.4 9h.1a2 2 0 010 4h-.1a1.7 1.7 0 00-1.6 1z"/></svg></button>
+</div>
+<div style="height:2px;background:var(--line2)"></div>
+
+<div style="padding:22px">
+<button onClick="{{ toConfig }}" style="appearance:none;width:100%;background:var(--acc);color:var(--on-acc);border:0;cursor:pointer;text-align:left;padding:22px;display:flex;align-items:flex-end;gap:14px" style-hover="background:#dd2b0f">
+<div>
+<div style="font:800 30px/.95 'Archivo',sans-serif;letter-spacing:-.02em">CREATE<br>LOBBY</div>
+<div style="font-size:12.5px;margin-top:8px;opacity:.85">Pick a game, set the rules</div>
+</div>
+<svg style="margin-left:auto;margin-bottom:4px" width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 12h16M13 5l7 7-7 7"/></svg>
+</button>
+
+<div style="height:12px"></div>
+<sc-if value="{{ joinClosed }}" hint-placeholder-val="{{ true }}">
+<button onClick="{{ openJoin }}" style="appearance:none;width:100%;background:transparent;color:var(--ink);border:2px solid var(--line2);cursor:pointer;text-align:left;padding:18px 22px;display:flex;align-items:center;gap:12px;font:800 20px 'Archivo',sans-serif" style-hover="border-color:var(--ink)">JOIN WITH CODE
+<svg style="margin-left:auto" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 12h16M13 5l7 7-7 7"/></svg></button>
+</sc-if>
+<sc-if value="{{ joinOpen }}" hint-placeholder-val="{{ false }}">
+<div style="border:2px solid var(--acc);padding:18px;animation:lhUp .22s">
+<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:10px">Room code</div>
+<input class="input" value="{{ codeInput }}" onChange="{{ setCode }}" maxLength="6" placeholder="A1B2C3" style="background:var(--surface);border-color:var(--line2);color:var(--ink);min-height:56px;font:800 30px 'Archivo',sans-serif;letter-spacing:.22em;text-transform:uppercase;text-align:center">
+<button class="btn btn-primary btn-block" onClick="{{ toLobby }}" style="min-height:50px;font-size:15px;padding-inline:16px">JOIN LOBBY</button>
+</div>
+</sc-if>
+</div>
+
+<div style="height:2px;background:var(--line2);margin:0 0 0 22px"></div>
+<div style="display:flex;align-items:baseline;padding:16px 22px 12px">
+<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-right:auto">Game library · 13</div>
+<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--acc-hot)">Swipe</div>
+</div>
+<div style="display:flex;gap:10px;overflow-x:auto;padding:0 22px 4px;scroll-snap-type:x mandatory">
+<sc-for list="{{ lib }}" as="g" hint-placeholder-count="6">
+<button onClick="{{ g.pick }}" style="appearance:none;flex:none;width:134px;background:var(--surface);border:1px solid var(--line);cursor:pointer;text-align:left;padding:14px;display:flex;flex-direction:column;gap:0;scroll-snap-align:start;color:var(--ink)" style-hover="border-color:var(--acc)">
+<div style="height:34px;display:flex;align-items:center;color:{{ g.tint }}">
+<sc-if value="{{ g.isDed }}" hint-placeholder-val="{{ false }}"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 010 18z" fill="currentColor"/></svg></sc-if>
+<sc-if value="{{ g.isBoard }}" hint-placeholder-val="{{ false }}"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7" fill="none" stroke="currentColor" stroke-width="2"/><rect x="3" y="14" width="7" height="7" fill="none" stroke="currentColor" stroke-width="2"/><rect x="14" y="14" width="7" height="7"/></svg></sc-if>
+<sc-if value="{{ g.isArc }}" hint-placeholder-val="{{ false }}"><svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 16H3z"/></svg></sc-if>
+</div>
+<div style="font:800 15px/1.1 'Archivo',sans-serif;min-height:34px">{{ g.name }}</div>
+<div style="font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin-top:6px">{{ g.meta }}</div>
+</button>
+</sc-for>
+</div>
+
+<div style="flex:1;min-height:18px"></div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-top:2px solid var(--line2);margin:0 22px">
+<button onClick="{{ toProfile }}" style="appearance:none;background:transparent;border:0;border-right:1px solid var(--line);padding:16px 0;color:var(--ink);font:800 12px 'Archivo',sans-serif;letter-spacing:.06em;cursor:pointer;text-align:left" style-hover="color:var(--acc-hot)">FRIENDS<div style="font-weight:400;font-size:11px;color:var(--dim);margin-top:3px">4 online</div></button>
+<button onClick="{{ toProfile }}" style="appearance:none;background:transparent;border:0;border-right:1px solid var(--line);padding:16px 0 16px 14px;color:var(--ink);font:800 12px 'Archivo',sans-serif;letter-spacing:.06em;cursor:pointer;text-align:left" style-hover="color:var(--acc-hot)">STATS<div style="font-weight:400;font-size:11px;color:var(--dim);margin-top:3px">61% wins</div></button>
+<button onClick="{{ toSettings }}" style="appearance:none;background:transparent;border:0;padding:16px 0 16px 14px;color:var(--ink);font:800 12px 'Archivo',sans-serif;letter-spacing:.06em;cursor:pointer;text-align:left" style-hover="color:var(--acc-hot)">SETTINGS<div style="font-weight:400;font-size:11px;color:var(--dim);margin-top:3px">Dark mode</div></button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ atConfig }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="05 Pre-lobby config" style="flex:1;display:flex;flex-direction:column;padding-top:66px;animation:lhUp .3s">
+<div style="display:flex;align-items:center;gap:10px;padding:0 22px 14px">
+<button onClick="{{ toHome }}" style="appearance:none;width:40px;height:44px;margin-left:-10px;background:transparent;border:0;color:var(--ink);cursor:pointer;display:grid;place-items:center">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 12H4M11 5l-7 7 7 7"/></svg></button>
+<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)">New lobby · setup</div>
+</div>
+<div style="height:2px;background:var(--line2)"></div>
+
+<div style="flex:1;overflow-y:auto;padding:0 22px">
+<div style="display:flex;align-items:baseline;gap:10px;padding:20px 0 12px">
+<div style="font:800 11px 'Archivo',sans-serif;color:var(--acc-hot)">01</div>
+<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)">Category</div>
+</div>
+<div style="display:grid;gap:8px">
+<sc-for list="{{ cats }}" as="c" hint-placeholder-count="3">
+<label style="display:flex;align-items:center;gap:12px;padding:14px;background:var(--surface);border:2px solid {{ c.border }};cursor:pointer;min-height:56px">
+<input type="radio" name="cat" checked="{{ c.sel }}" onChange="{{ c.pick }}" style="position:absolute;opacity:0;width:0;height:0">
+<div style="width:22px;height:22px;flex:none;border:2px solid {{ c.dot }};background:{{ c.dotFill }}"></div>
+<div>
+<div style="font:800 15px 'Archivo',sans-serif">{{ c.name }}</div>
+<div style="font-size:11.5px;color:var(--dim);margin-top:2px">{{ c.desc }}</div>
+</div>
+</label>
+</sc-for>
+</div>
+
+<div style="height:2px;background:var(--line2);margin-top:22px"></div>
+<div style="display:flex;align-items:baseline;gap:10px;padding:18px 0 12px">
+<div style="font:800 11px 'Archivo',sans-serif;color:var(--acc-hot)">02</div>
+<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)">Game</div>
+</div>
+<div style="display:flex;flex-direction:column">
+<sc-for list="{{ catGames }}" as="g" hint-placeholder-count="5">
+<label style="display:flex;align-items:center;gap:12px;padding:15px 2px;border-top:1px solid var(--line);cursor:pointer;min-height:52px;color:{{ g.color }}">
+<input type="radio" name="game" checked="{{ g.sel }}" onChange="{{ g.pick }}" style="position:absolute;opacity:0;width:0;height:0">
+<div style="width:16px;height:16px;flex:none;border:2px solid {{ g.dot }};background:{{ g.dotFill }}"></div>
+<div style="font:800 16px 'Archivo',sans-serif;margin-right:auto">{{ g.name }}</div>
+<div style="font-size:11px;color:var(--dim)">{{ g.meta }}</div>
+</label>
+</sc-for>
+</div>
+
+<div style="height:2px;background:var(--line2);margin-top:22px"></div>
+<div style="display:flex;align-items:baseline;gap:10px;padding:18px 0 6px">
+<div style="font:800 11px 'Archivo',sans-serif;color:var(--acc-hot)">03</div>
+<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)">{{ optLabel }}</div>
+</div>
+<div style="display:flex;flex-direction:column">
+<sc-for list="{{ steppers }}" as="s" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line);min-height:60px">
+<div style="margin-right:auto">
+<div style="font:800 14px 'Archivo',sans-serif">{{ s.name }}</div>
+<div style="font-size:11px;color:var(--dim);margin-top:2px">{{ s.hint }}</div>
+</div>
+<button onClick="{{ s.dec }}" style="appearance:none;width:44px;height:44px;flex:none;background:transparent;border:1px solid var(--line2);color:var(--ink);font:800 20px 'Archivo',sans-serif;cursor:pointer" style-hover="border-color:var(--acc);color:var(--acc-hot)">–</button>
+<div style="min-width:66px;text-align:center;font:800 17px 'Archivo',sans-serif">{{ s.val }}</div>
+<button onClick="{{ s.inc }}" style="appearance:none;width:44px;height:44px;flex:none;background:transparent;border:1px solid var(--line2);color:var(--ink);font:800 20px 'Archivo',sans-serif;cursor:pointer" style-hover="border-color:var(--acc);color:var(--acc-hot)">+</button>
+</div>
+</sc-for>
+<sc-for list="{{ rules }}" as="r" hint-placeholder-count="2">
+<div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line);min-height:60px">
+<div style="margin-right:auto">
+<div style="font:800 14px 'Archivo',sans-serif">{{ r.name }}</div>
+<div style="font-size:11px;color:var(--dim);margin-top:2px">{{ r.hint }}</div>
+</div>
+<div class="seg" style="border-color:var(--line2)">
+<label class="seg-opt" style="min-height:44px;padding:0 14px"><input type="radio" name="{{ r.key }}" checked="{{ r.on }}" onChange="{{ r.turnOn }}">ON</label>
+<label class="seg-opt" style="min-height:44px;padding:0 14px;border-color:var(--line2)"><input type="radio" name="{{ r.key }}" checked="{{ r.off }}" onChange="{{ r.turnOff }}">OFF</label>
+</div>
+</div>
+</sc-for>
+</div>
+<div style="height:16px"></div>
+</div>
+
+<div style="border-top:2px solid var(--line2);padding:14px 22px 44px;background:var(--ground)">
+<div style="font-size:11px;color:var(--dim);margin-bottom:10px">{{ configSummary }}</div>
+<button class="btn btn-primary btn-block" onClick="{{ toLobby }}" style="min-height:56px;font-size:16px;padding-inline:18px;margin-top:0">CREATE LOBBY
+<svg style="margin-left:auto" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 12h16M13 5l7 7-7 7"/></svg></button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ atLobby }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="06 Lobby" style="flex:1;display:flex;flex-direction:column;padding:66px 0 44px;animation:lhUp .3s">
+<div style="display:flex;align-items:center;gap:10px;padding:0 22px 14px">
+<button onClick="{{ toConfig }}" style="appearance:none;width:40px;height:44px;margin-left:-10px;background:transparent;border:0;color:var(--ink);cursor:pointer;display:grid;place-items:center">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 12H4M11 5l-7 7 7 7"/></svg></button>
+<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-right:auto">Waiting room</div>
+<div style="font-size:11px;letter-spacing:.06em;color:var(--acc-hot)">{{ joinedLabel }}</div>
+</div>
+<div style="height:2px;background:var(--line2)"></div>
+
+<div style="padding:22px 22px 0">
+<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:8px">Room code · tap to share</div>
+<button onClick="{{ copyCode }}" style="appearance:none;width:100%;background:var(--surface);border:2px solid var(--line2);cursor:pointer;padding:16px 18px;display:flex;align-items:center;gap:12px;color:var(--ink)" style-hover="border-color:var(--acc)">
+<div style="font:800 42px/1 'Archivo',sans-serif;letter-spacing:.14em">{{ room }}</div>
+<sc-if value="{{ copied }}" hint-placeholder-val="{{ false }}"><span class="tag tag-accent" style="margin-left:auto;animation:lhPop .25s">COPIED</span></sc-if>
+<sc-if value="{{ notCopied }}" hint-placeholder-val="{{ true }}"><svg style="margin-left:auto" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7M12 3v12M8 7l4-4 4 4"/></svg></sc-if>
+</button>
+</div>
+
+<div style="padding:22px">
+<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:10px">Players</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
+<sc-for list="{{ seats }}" as="p" hint-placeholder-count="6">
+<div style="aspect-ratio:.9;background:{{ p.bg }};border:{{ p.border }};display:flex;flex-direction:column;justify-content:space-between;padding:10px;color:{{ p.color }};animation:lhPop .3s">
+<div style="font:800 26px 'Archivo',sans-serif">{{ p.mark }}</div>
+<div>
+<div style="font:800 12px 'Archivo',sans-serif;letter-spacing:.02em">{{ p.name }}</div>
+<div style="font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;opacity:.7">{{ p.role }}</div>
+</div>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="padding:0 22px">
+<div style="height:2px;background:var(--line2);margin-bottom:14px"></div>
+<div style="display:flex;align-items:baseline;margin-bottom:10px">
+<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-right:auto">{{ gameName }}</div>
+<button onClick="{{ toConfig }}" class="btn btn-ghost" style="font-size:11px;letter-spacing:.1em;color:var(--acc-hot)">EDIT</button>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:6px">
+<sc-for list="{{ chips }}" as="c" hint-placeholder-count="4">
+<button onClick="{{ toConfig }}" style="appearance:none;background:transparent;border:1px solid var(--line2);color:var(--ink);font:400 11.5px 'Archivo',sans-serif;padding:7px 11px;cursor:pointer" style-hover="border-color:var(--acc);color:var(--acc-hot)">{{ c.t }}</button>
+</sc-for>
+</div>
+</div>
+
+<div style="flex:1;min-height:20px"></div>
+<div style="padding:0 22px">
+<button class="btn btn-primary btn-block" onClick="{{ startGame }}" disabled="{{ cantStart }}" style="min-height:60px;font-size:17px;padding-inline:18px">{{ startLabel }}
+<svg style="margin-left:auto" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 12h16M13 5l7 7-7 7"/></svg></button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ atProfile }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="10 Profile" style="flex:1;display:flex;flex-direction:column;padding-top:66px;animation:lhUp .3s">
+<div style="display:flex;align-items:center;gap:10px;padding:0 22px 14px">
+<button onClick="{{ toHome }}" style="appearance:none;width:40px;height:44px;margin-left:-10px;background:transparent;border:0;color:var(--ink);cursor:pointer;display:grid;place-items:center">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 12H4M11 5l-7 7 7 7"/></svg></button>
+<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)">Profile</div>
+</div>
+<div style="height:2px;background:var(--line2)"></div>
+<div style="flex:1;overflow-y:auto;padding:22px">
+<div style="display:flex;align-items:flex-end;gap:14px">
+<div style="width:72px;height:72px;flex:none;background:var(--acc);color:var(--on-acc);display:grid;place-items:center;font:800 34px 'Archivo',sans-serif">{{ myMark }}</div>
+<div>
+<div style="font:800 28px/1 'Archivo',sans-serif">{{ myName }}</div>
+<div style="font-size:11.5px;color:var(--dim);margin-top:5px">142 matches · joined Mar 2026</div>
+</div>
+</div>
+<div style="height:2px;background:var(--line2);margin:22px 0 0"></div>
+<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);padding:16px 0 10px">As the odd one out</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div>
+<div style="display:flex;font-size:11.5px;margin-bottom:5px"><span style="margin-right:auto">Imposter — survived</span><span style="font-weight:800">71%</span></div>
+<div style="height:16px;background:var(--surface)"><div style="width:71%;height:100%;background:var(--acc)"></div></div>
+</div>
+<div>
+<div style="display:flex;font-size:11.5px;margin-bottom:5px"><span style="margin-right:auto">Civilian — caught the odd one</span><span style="font-weight:800">54%</span></div>
+<div style="height:16px;background:var(--surface)"><div style="width:54%;height:100%;background:var(--ink)"></div></div>
+</div>
+</div>
+<div style="height:2px;background:var(--line2);margin:22px 0 0"></div>
+<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);padding:16px 0 4px">Per game</div>
+<div style="display:flex;flex-direction:column">
+<sc-for list="{{ stats }}" as="s" hint-placeholder-count="6">
+<div style="display:flex;align-items:center;gap:10px;padding:13px 0;border-top:1px solid var(--line)">
+<div style="font:800 14px 'Archivo',sans-serif;margin-right:auto">{{ s.name }}</div>
+<div style="font-size:11.5px;color:var(--dim);min-width:62px;text-align:right">{{ s.record }}</div>
+<div style="font:800 14px 'Archivo',sans-serif;min-width:48px;text-align:right;color:{{ s.tint }}">{{ s.rate }}</div>
+</div>
+</sc-for>
+</div>
+<div style="height:2px;background:var(--line2);margin:22px 0 0"></div>
+<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);padding:16px 0 4px">Recent</div>
+<div style="display:flex;flex-direction:column">
+<sc-for list="{{ history }}" as="h" hint-placeholder-count="3">
+<div style="display:flex;align-items:baseline;gap:10px;padding:12px 0;border-top:1px solid var(--line)">
+<div style="font:800 13px 'Archivo',sans-serif;margin-right:auto">{{ h.game }}</div>
+<div style="font-size:11px;color:var(--dim)">{{ h.when }}</div>
+<div style="font:800 11px 'Archivo',sans-serif;letter-spacing:.08em;color:{{ h.tint }};min-width:44px;text-align:right">{{ h.result }}</div>
+</div>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ atSettings }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="11 Settings" style="flex:1;display:flex;flex-direction:column;padding-top:66px;animation:lhUp .3s">
+<div style="display:flex;align-items:center;gap:10px;padding:0 22px 14px">
+<button onClick="{{ toHome }}" style="appearance:none;width:40px;height:44px;margin-left:-10px;background:transparent;border:0;color:var(--ink);cursor:pointer;display:grid;place-items:center">
+<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 12H4M11 5l-7 7 7 7"/></svg></button>
+<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)">Settings</div>
+</div>
+<div style="height:2px;background:var(--line2)"></div>
+<div style="padding:22px">
+<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-bottom:10px">Appearance</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+<button onClick="{{ setDark }}" style="appearance:none;cursor:pointer;padding:16px;text-align:left;background:#141312;color:#f3f2f2;border:2px solid {{ darkBorder }};font:800 14px 'Archivo',sans-serif">DARK
+<div style="height:6px"></div><div style="display:flex;gap:3px"><div style="width:26px;height:8px;background:#ec3013"></div><div style="width:14px;height:8px;background:#f3f2f2"></div></div>
+<div style="font-weight:400;font-size:11px;opacity:.6;margin-top:8px">Default. Built for the room.</div></button>
+<button onClick="{{ setLight }}" style="appearance:none;cursor:pointer;padding:16px;text-align:left;background:#f3f2f2;color:#201e1d;border:2px solid {{ lightBorder }};font:800 14px 'Archivo',sans-serif">LIGHT
+<div style="height:6px"></div><div style="display:flex;gap:3px"><div style="width:26px;height:8px;background:#ec3013"></div><div style="width:14px;height:8px;background:#201e1d"></div></div>
+<div style="font-weight:400;font-size:11px;opacity:.6;margin-top:8px">For daylight and dentists.</div></button>
+</div>
+<div style="height:2px;background:var(--line2);margin:22px 0 0"></div>
+<div style="display:flex;flex-direction:column">
+<sc-for list="{{ prefs }}" as="p" hint-placeholder-count="5">
+<div style="display:flex;align-items:center;gap:12px;padding:14px 0;border-top:1px solid var(--line);min-height:58px">
+<div style="margin-right:auto">
+<div style="font:800 14px 'Archivo',sans-serif">{{ p.name }}</div>
+<div style="font-size:11px;color:var(--dim);margin-top:2px">{{ p.hint }}</div>
+</div>
+<div class="seg" style="border-color:var(--line2)">
+<label class="seg-opt" style="min-height:44px;padding:0 13px"><input type="radio" name="{{ p.key }}" defaultChecked="{{ p.on }}">ON</label>
+<label class="seg-opt" style="min-height:44px;padding:0 13px;border-color:var(--line2)"><input type="radio" name="{{ p.key }}" defaultChecked="{{ p.off }}">OFF</label>
+</div>
+</div>
+</sc-for>
+</div>
+<div style="height:2px;background:var(--line2);margin:6px 0 18px"></div>
+<button class="btn btn-secondary btn-block" onClick="{{ toSplash }}" style="min-height:52px;border-color:var(--line2);color:var(--acc-hot);padding-inline:16px;font-size:14px">SIGN OUT</button>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ atQuiz }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="07 Imposter Quiz" style="flex:1;display:flex;flex-direction:column;padding-top:60px">
+<div style="display:flex;align-items:center;gap:12px;padding:0 20px 12px">
+<div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-right:auto">{{ qHud }}</div>
+<div style="display:flex;gap:3px;align-items:center">
+<div style="width:7px;height:7px;background:var(--acc)"></div><div style="width:7px;height:7px;background:var(--line2)"></div><div style="width:7px;height:7px;background:var(--line2)"></div>
+</div>
+<button onClick="{{ toLobby }}" style="appearance:none;width:40px;height:40px;margin-right:-8px;background:transparent;border:0;color:var(--ink);cursor:pointer;display:grid;place-items:center">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+</div>
+<div style="height:2px;background:var(--line2)"></div>
+
+<sc-if value="{{ qReveal }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:26px 20px 40px">
+<div style="font-size:12px;color:var(--dim);margin-bottom:16px">Everyone got a question. One of you got a different one.</div>
+<button onClick="{{ toQ }}" style="appearance:none;flex:1;width:100%;background:var(--acc);border:0;color:var(--on-acc);cursor:pointer;display:flex;flex-direction:column;justify-content:space-between;padding:24px;text-align:left" style-hover="background:#dd2b0f">
+<div style="font:800 40px/1 'Archivo',sans-serif">?</div>
+<div>
+<div style="font:800 26px/1 'Archivo',sans-serif;letter-spacing:-.02em">TAP TO READ<br>YOUR CARD</div>
+<div style="font-size:12px;margin-top:10px;opacity:.85">Don't let them see the screen.</div>
+</div>
+</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ qQuestion }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:26px 20px 40px;animation:lhFlip .3s">
+<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--acc-hot);margin-bottom:10px">Your question</div>
+<div style="background:var(--surface);border-left:4px solid var(--acc);padding:22px">
+<div style="font:800 30px/1.1 'Archivo',sans-serif;letter-spacing:-.02em">Name a fruit that is green.</div>
+</div>
+<div style="display:flex;gap:10px;margin-top:16px;align-items:flex-start">
+<div style="width:2px;align-self:stretch;background:var(--line2)"></div>
+<p style="font-size:12.5px;color:var(--dim);margin:0">Answer as if everyone had your question. If yours is the odd one, blend in.</p>
+</div>
+<div style="flex:1;min-height:20px"></div>
+<button class="btn btn-primary btn-block" onClick="{{ toAnswer }}" style="min-height:56px;font-size:16px;padding-inline:18px">GOT IT</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ qAnswer }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:26px 20px 40px;animation:lhUp .25s">
+<div style="display:flex;align-items:baseline;margin-bottom:12px">
+<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-right:auto">Name a fruit that is green.</div>
+<div style="font:800 13px 'Archivo',sans-serif;color:var(--acc-hot);animation:lhPulse 1.6s infinite">0:22</div>
+</div>
+<div class="field">
+<label style="color:var(--dim)">Your answer</label>
+<input class="input" value="{{ myAnswer }}" onChange="{{ setAnswer }}" style="background:var(--surface);border-color:var(--line2);color:var(--ink);min-height:64px;font:800 24px 'Archivo',sans-serif">
+</div>
+<div style="display:flex;gap:6px;margin-top:18px">
+<div style="height:6px;flex:1;background:var(--acc)"></div><div style="height:6px;flex:1;background:var(--acc)"></div><div style="height:6px;flex:1;background:var(--acc)"></div><div style="height:6px;flex:1;background:var(--acc)"></div><div style="height:6px;flex:1;background:var(--line2)"></div>
+</div>
+<div style="font-size:11px;color:var(--dim);margin-top:8px">4 of 5 have answered</div>
+<div style="flex:1;min-height:20px"></div>
+<button class="btn btn-primary btn-block" onClick="{{ toCompare }}" style="min-height:56px;font-size:16px;padding-inline:18px">LOCK IT IN</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ qCompare }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:22px 20px 40px">
+<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)">All five, at once</div>
+<div style="font:800 22px/1.1 'Archivo',sans-serif;margin:8px 0 16px">Nobody could copy.</div>
+<div style="display:flex;flex-direction:column;gap:8px;animation:lhPop .32s">
+<sc-for list="{{ answerCards }}" as="a" hint-placeholder-count="5">
+<div style="display:flex;align-items:center;gap:12px;background:var(--surface);border:{{ a.border }};padding:14px">
+<div style="font:800 12px 'Archivo',sans-serif;letter-spacing:.04em;min-width:64px;color:var(--dim)">{{ a.name }}</div>
+<div style="font:800 20px 'Archivo',sans-serif;margin-right:auto">{{ a.text }}</div>
+<sc-if value="{{ a.mine }}" hint-placeholder-val="{{ false }}"><span class="tag tag-accent">YOURS</span></sc-if>
+</div>
+</sc-for>
+</div>
+<div style="flex:1;min-height:16px"></div>
+<button class="btn btn-primary btn-block" onClick="{{ toDiscuss }}" style="min-height:56px;font-size:16px;padding-inline:18px">START DISCUSSION</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ qDiscuss }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:26px 20px 40px">
+<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)">Talk it out</div>
+<div style="font:800 110px/.82 'Archivo',sans-serif;letter-spacing:-.05em;color:var(--acc);margin-top:10px;animation:lhPulse 2s infinite">{{ secsLabel }}</div>
+<div style="height:2px;background:var(--line2);margin:18px 0"></div>
+<div style="display:flex;flex-direction:column;gap:0">
+<sc-for list="{{ answerCards }}" as="a" hint-placeholder-count="5">
+<div style="display:flex;align-items:baseline;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)">
+<div style="font:800 13px 'Archivo',sans-serif;min-width:64px">{{ a.name }}</div>
+<div style="font-size:15px;color:var(--dim)">{{ a.text }}</div>
+</div>
+</sc-for>
+</div>
+<div style="flex:1;min-height:16px"></div>
+<button class="btn btn-secondary btn-block" onClick="{{ toVote }}" style="min-height:56px;font-size:15px;border-color:var(--line2);color:var(--ink);padding-inline:18px">SKIP TO VOTE</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ qVote }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:22px 20px 40px;animation:lhUp .25s">
+<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--acc-hot)">Vote</div>
+<div style="font:800 28px/1 'Archivo',sans-serif;margin:8px 0 16px">Who had the<br>different question?</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+<sc-for list="{{ voteCards }}" as="v" hint-placeholder-count="4">
+<button onClick="{{ v.cast }}" style="appearance:none;cursor:pointer;aspect-ratio:1.15;background:{{ v.bg }};border:{{ v.border }};color:{{ v.color }};display:flex;flex-direction:column;justify-content:space-between;padding:14px;text-align:left">
+<div style="font:800 28px 'Archivo',sans-serif">{{ v.mark }}</div>
+<div style="font:800 15px 'Archivo',sans-serif">{{ v.name }}</div>
+</button>
+</sc-for>
+</div>
+<div style="flex:1;min-height:16px"></div>
+<sc-if value="{{ hasVoted }}" hint-placeholder-val="{{ false }}">
+<div style="border:2px solid var(--acc);padding:16px;animation:lhPop .25s">
+<div style="font:800 14px 'Archivo',sans-serif">You voted {{ voteTarget }}</div>
+<div style="font-size:12px;color:var(--dim);margin-top:4px">Waiting on the others…</div>
+</div>
+</sc-if>
+<sc-if value="{{ notVoted }}" hint-placeholder-val="{{ true }}">
+<div style="font-size:12px;color:var(--dim)">One tap. No takebacks.</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ qOut }}" hint-placeholder-val="{{ false }}">
+<div style="flex:1;display:flex;flex-direction:column;padding:26px 20px 40px;animation:lhUp .3s">
+<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)">Votes in</div>
+<div style="background:var(--acc);color:var(--on-acc);padding:22px;margin-top:10px">
+<div style="font:800 40px/.95 'Archivo',sans-serif;letter-spacing:-.03em">KARTHIK<br>VOTED OUT</div>
+<div style="height:2px;background:var(--on-acc);width:60px;margin:16px 0 12px"></div>
+<div style="font-size:14px">He said tomato. He was a civilian.</div>
+</div>
+<div style="display:flex;gap:10px;margin-top:18px;align-items:flex-start">
+<div style="width:2px;align-self:stretch;background:var(--acc)"></div>
+<div>
+<div style="font:800 17px 'Archivo',sans-serif">You were the odd one out.</div>
+<p style="font-size:13px;color:var(--dim);margin:4px 0 0">Your question asked for green. Apple covered you.</p>
+</div>
+</div>
+<div style="flex:1;min-height:20px"></div>
+<button class="btn btn-primary btn-block" onClick="{{ finishQuiz }}" style="min-height:56px;font-size:16px;padding-inline:18px">SCOREBOARD
+<svg style="margin-left:auto" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M4 12h16M13 5l7 7-7 7"/></svg></button>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ atC4 }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="08 Connect 4" style="flex:1;display:flex;flex-direction:column;padding-top:60px">
+<div style="display:flex;align-items:center;gap:12px;padding:0 20px 12px">
+<div style="font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-right:auto">Connect 4 · best of 3</div>
+<div style="font:800 12px 'Archivo',sans-serif;color:var(--acc-hot)">1 – 0</div>
+<button onClick="{{ toLobby }}" style="appearance:none;width:40px;height:40px;margin-right:-8px;background:transparent;border:0;color:var(--ink);cursor:pointer;display:grid;place-items:center">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+</div>
+<div style="height:2px;background:var(--line2)"></div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border-bottom:1px solid var(--line)">
+<div style="padding:14px 20px;border-right:1px solid var(--line)">
+<div style="height:4px;background:{{ youBar }};margin-bottom:10px"></div>
+<div style="display:flex;align-items:center;gap:8px">
+<div style="width:18px;height:18px;background:var(--acc)"></div>
+<div style="font:800 14px 'Archivo',sans-serif">{{ myName }}</div>
+</div>
+</div>
+<div style="padding:14px 20px">
+<div style="height:4px;background:{{ botBar }};margin-bottom:10px"></div>
+<div style="display:flex;align-items:center;gap:8px">
+<div style="width:18px;height:18px;background:var(--ink)"></div>
+<div style="font:800 14px 'Archivo',sans-serif">Bot</div>
+</div>
+</div>
+</div>
+
+<div style="padding:18px 14px 0">
+<div style="display:flex;gap:5px;background:var(--surface);padding:8px;border:2px solid var(--line2)">
+<sc-for list="{{ cols }}" as="col" hint-placeholder-count="7">
+<button onClick="{{ col.drop }}" style="appearance:none;flex:1;background:transparent;border:0;padding:0;cursor:pointer;display:flex;flex-direction:column;gap:5px" style-hover="background:rgba(236,48,19,.12)">
+<sc-for list="{{ col.cells }}" as="cell" hint-placeholder-count="6">
+<div style="aspect-ratio:1;background:{{ cell.fill }};border:{{ cell.ring }};animation:lhPop .18s"></div>
+</sc-for>
+</button>
+</sc-for>
+</div>
+</div>
+
+<div style="padding:16px 20px 0;display:flex;align-items:center;gap:10px">
+<sc-if value="{{ yourTurn }}" hint-placeholder-val="{{ true }}"><div style="width:10px;height:10px;background:var(--acc);animation:lhBlink 1.2s infinite"></div></sc-if>
+<sc-if value="{{ botTurn }}" hint-placeholder-val="{{ false }}"><div style="width:10px;height:10px;background:var(--ink);animation:lhPulse 1s infinite"></div></sc-if>
+<div style="font:800 14px 'Archivo',sans-serif">{{ c4Status }}</div>
+</div>
+
+<div style="flex:1;min-height:12px"></div>
+<sc-if value="{{ hasWinner }}" hint-placeholder-val="{{ false }}">
+<div style="padding:0 20px 40px;animation:lhUp .25s">
+<div style="height:2px;background:var(--line2);margin-bottom:16px"></div>
+<div style="font:800 30px/1 'Archivo',sans-serif;letter-spacing:-.02em">{{ winHead }}</div>
+<div style="font-size:13px;color:var(--dim);margin:8px 0 16px">{{ winNote }}</div>
+<div style="display:flex;gap:8px">
+<button class="btn btn-secondary" onClick="{{ resetC4 }}" style="flex:1;min-height:54px;border-color:var(--line2);color:var(--ink);padding-inline:16px;font-size:14px">REMATCH</button>
+<button class="btn btn-primary" onClick="{{ finishC4 }}" style="flex:1;min-height:54px;padding-inline:16px;font-size:14px;margin-top:0">SCOREBOARD</button>
+</div>
+</div>
+</sc-if>
+<sc-if value="{{ noWinner }}" hint-placeholder-val="{{ true }}">
+<div style="padding:0 20px 40px">
+<div style="height:1px;background:var(--line);margin-bottom:12px"></div>
+<div style="font-size:11.5px;color:var(--dim)">Tap any column to drop. Four in a line — across, down or diagonal.</div>
+</div>
+</sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ atResults }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="09 Results" style="flex:1;display:flex;flex-direction:column;padding:66px 0 44px;animation:lhUp .3s">
+<div style="padding:0 22px">
+<div style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--acc-hot)">{{ rGame }}</div>
+<div style="font:800 46px/.92 'Archivo',sans-serif;letter-spacing:-.035em;margin:10px 0 8px">{{ rHead }}</div>
+<div style="font-size:14px;color:var(--dim)">{{ rKicker }}</div>
+</div>
+<div style="height:2px;background:var(--line2);margin:20px 0 0"></div>
+<div style="flex:1;overflow-y:auto;padding:16px 22px 0">
+<div style="display:flex;flex-direction:column;gap:6px">
+<sc-for list="{{ rRows }}" as="r" hint-placeholder-count="5">
+<div style="display:flex;align-items:center;gap:12px;background:{{ r.bg }};border:{{ r.border }};color:{{ r.color }};padding:13px 14px">
+<div style="font:800 11px ui-monospace,monospace;opacity:.55">{{ r.pos }}</div>
+<div style="margin-right:auto">
+<div style="font:800 16px 'Archivo',sans-serif">{{ r.n }}</div>
+<div style="font-size:11px;opacity:.7;margin-top:2px">{{ r.d }}</div>
+</div>
+<div style="font:800 18px 'Archivo',sans-serif">{{ r.s }}</div>
+</div>
+</sc-for>
+</div>
+<div style="display:flex;gap:10px;margin-top:16px;align-items:flex-start">
+<div style="width:2px;align-self:stretch;background:var(--acc)"></div>
+<p style="font-size:12.5px;color:var(--dim);margin:0">{{ rNote }}</p>
+</div>
+</div>
+<div style="padding:16px 22px 0;border-top:2px solid var(--line2)">
+<button class="btn btn-primary btn-block" onClick="{{ playAgain }}" style="min-height:56px;font-size:16px;padding-inline:18px;margin-top:0">PLAY AGAIN</button>
+<div style="display:flex;gap:8px;margin-top:8px">
+<button class="btn btn-secondary" onClick="{{ changeGame }}" style="flex:1;min-height:50px;border-color:var(--line2);color:var(--ink);padding-inline:14px;font-size:13.5px">CHANGE GAME</button>
+<button class="btn btn-secondary" onClick="{{ leaveLobby }}" style="flex:1;min-height:50px;border-color:transparent;color:var(--acc-hot);padding-inline:14px;font-size:13.5px">LEAVE LOBBY</button>
+</div>
+</div>
+</div>
+</sc-if>
+
+</div>
+</x-import>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;splash&quot;,&quot;login&quot;,&quot;onboard&quot;,&quot;home&quot;,&quot;config&quot;,&quot;lobby&quot;,&quot;quiz&quot;,&quot;c4&quot;,&quot;results&quot;,&quot;profile&quot;,&quot;settings&quot;],&quot;default&quot;:&quot;splash&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;},&quot;liveJoins&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Prototype&quot;}}">
+const MARKS = ['\u25C6','\u25B2','\u25A0','\u25CF','\u25D0','\u2716','\u25E7','\u2630'];
+const LIB = [
+  ['Imposter Word','Deduction','4–10 players'],
+  ['Imposter Video','Deduction','4–8 players'],
+  ['Imposter Quiz','Deduction','4–10 players'],
+  ["Liar's Bar",'Deduction','3–6 players'],
+  ['Guess Who I Am','Deduction','3–8 players'],
+  ['UNO','Board','2–6 players'],
+  ['Ludo','Board','2–4 players'],
+  ['Snakes & Ladders','Board','2–4 players'],
+  ['Chess','Board','2 players'],
+  ['Carrom','Board','2–4 players'],
+  ['Connect 4','Board','2 players'],
+  ['3D Tank War','Arcade','2–8 players'],
+  ['Gravity Flip','Arcade','2–4 players']
+];
+const CATS = [
+  ['Deduction','Lie, accuse, vote somebody out'],
+  ['Board','The classics, one per table'],
+  ['Arcade','Reflexes, not arguments']
+];
+const OTHERS = [['Divya','\u25B2'],['Rohan','\u25A0'],['Meera','\u25CF'],['Karthik','\u25D0']];
+const ANSWERS = [['Divya','Strawberry'],['Rohan','Apple'],['Meera','Cherry'],['Karthik','Tomato']];
+
+class Component extends DCLogic {
+  state = {
+    scr: this.props.startScreen ?? 'splash',
+    theme: this.props.theme ?? 'dark',
+    myName: 'Arjun', mark: 0,
+    joinOpen: false, codeInput: '',
+    cat: 'Deduction', game: 'Imposter Quiz',
+    opt: { timer: 60, odd: 1, discuss: 45, players: 4, turn: 20, lives: 3, match: 5, stack: true, safe: true, spin: false },
+    joined: 1, copied: false,
+    qp: 'reveal', myAnswer: 'Apple', vote: null,
+    board: Array(42).fill(null), turn: 'you', winner: null, winLine: [], lastCol: -1,
+    secs: 45,
+    result: null
+  };
+
+  componentWillUnmount() { clearInterval(this._t); clearTimeout(this._j1); clearTimeout(this._j2); clearTimeout(this._j3); }
+
+  go(scr) { this.setState({ scr }); }
+
+  enterLobby() {
+    this.setState({ scr: 'lobby', joined: 1, copied: false });
+    if (this.props.liveJoins === false) { this.setState({ joined: 5 }); return; }
+    clearTimeout(this._j1); clearTimeout(this._j2); clearTimeout(this._j3);
+    this._j1 = setTimeout(() => this.setState({ joined: 2 }), 900);
+    this._j2 = setTimeout(() => this.setState({ joined: 4 }), 2000);
+    this._j3 = setTimeout(() => this.setState({ joined: 5 }), 3400);
+  }
+
+  startGame() {
+    const g = this.state.game;
+    if (g === 'Connect 4') { this.setState({ scr: 'c4', board: Array(42).fill(null), turn: 'you', winner: null, winLine: [], lastCol: -1 }); }
+    else if (this.state.cat === 'Deduction') { this.setState({ scr: 'quiz', qp: 'reveal', vote: null, secs: this.state.opt.discuss }); }
+    else { this.setState({ scr: 'c4', board: Array(42).fill(null), turn: 'you', winner: null, winLine: [] }); }
+  }
+
+  // — deduction flow —
+  setQp(qp) {
+    clearInterval(this._t);
+    this.setState({ qp });
+    if (qp === 'discuss') {
+      this.setState({ secs: this.state.opt.discuss });
+      this._t = setInterval(() => {
+        const s = this.state.secs - 1;
+        if (s <= 0) { clearInterval(this._t); this.setState({ secs: 0, qp: 'vote' }); }
+        else this.setState({ secs: s });
+      }, 1000);
+    }
+  }
+  castVote(name) {
+    this.setState({ vote: name });
+    setTimeout(() => this.setState({ qp: 'out' }), 1100);
+  }
+  finishQuiz() {
+    this.setState({
+      scr: 'results',
+      result: {
+        game: 'Imposter Quiz', head: 'YOU SURVIVED', kicker: 'You were the odd one out',
+        note: 'Karthik said tomato. The table voted him out 3–2.',
+        rows: [
+          { n: this.state.myName, d: 'Odd one · survived', s: '+3', win: true },
+          { n: 'Divya', d: 'Civilian · voted Karthik', s: '+0' },
+          { n: 'Rohan', d: 'Civilian · voted Karthik', s: '+0' },
+          { n: 'Meera', d: 'Civilian · voted ' + this.state.myName, s: '+0' },
+          { n: 'Karthik', d: 'Civilian · voted out', s: '+0' }
+        ]
+      }
+    });
+  }
+
+  // — connect 4 —
+  lowest(b, col) { for (let r = 5; r >= 0; r--) if (!b[r * 7 + col]) return r; return -1; }
+  win(b, p) {
+    const dirs = [[0, 1], [1, 0], [1, 1], [1, -1]];
+    for (let r = 0; r < 6; r++) for (let c = 0; c < 7; c++) for (const [dr, dc] of dirs) {
+      const line = [];
+      for (let k = 0; k < 4; k++) {
+        const rr = r + dr * k, cc = c + dc * k;
+        if (rr < 0 || rr > 5 || cc < 0 || cc > 6 || b[rr * 7 + cc] !== p) { line.length = 0; break; }
+        line.push(rr * 7 + cc);
+      }
+      if (line.length === 4) return line;
+    }
+    return null;
+  }
+  place(b, col, p) { const r = this.lowest(b, col); if (r < 0) return null; const n = b.slice(); n[r * 7 + col] = p; return n; }
+  drop(col) {
+    if (this.state.winner || this.state.turn !== 'you') return;
+    const n = this.place(this.state.board, col, 'you');
+    if (!n) return;
+    const w = this.win(n, 'you');
+    if (w) { this.setState({ board: n, winner: 'you', winLine: w, lastCol: col }); return; }
+    if (!n.includes(null)) { this.setState({ board: n, winner: 'draw', lastCol: col }); return; }
+    this.setState({ board: n, turn: 'bot', lastCol: col });
+    setTimeout(() => this.bot(), 620);
+  }
+  bot() {
+    const b = this.state.board;
+    const cols = [3, 2, 4, 1, 5, 0, 6].filter(c => this.lowest(b, c) >= 0);
+    if (!cols.length) { this.setState({ winner: 'draw' }); return; }
+    let pick = null;
+    for (const c of cols) { const n = this.place(b, c, 'bot'); if (n && this.win(n, 'bot')) { pick = c; break; } }
+    if (pick === null) for (const c of cols) { const n = this.place(b, c, 'you'); if (n && this.win(n, 'you')) { pick = c; break; } }
+    if (pick === null) pick = cols[Math.random() < 0.7 ? 0 : Math.min(1, cols.length - 1)];
+    const n = this.place(b, pick, 'bot');
+    const w = this.win(n, 'bot');
+    if (w) { this.setState({ board: n, winner: 'bot', winLine: w, lastCol: pick }); return; }
+    this.setState({ board: n, turn: 'you', lastCol: pick, winner: n.includes(null) ? null : 'draw' });
+  }
+  finishC4() {
+    const w = this.state.winner;
+    const mine = this.state.board.filter(v => v === 'you').length;
+    this.setState({
+      scr: 'results',
+      result: {
+        game: 'Connect 4',
+        head: w === 'you' ? 'YOU WON' : w === 'bot' ? 'YOU LOST' : 'A DRAW',
+        kicker: w === 'you' ? 'Four in a row' : w === 'bot' ? 'The bot got there first' : 'Board full, nobody lined up',
+        note: mine + ' discs played. ' + (w === 'you' ? 'Rematch before they change their mind.' : 'Rematch.'),
+        rows: [
+          { n: this.state.myName, d: 'Red', s: w === 'you' ? '+2' : '+0', win: w === 'you' },
+          { n: 'Bot', d: 'Ink', s: w === 'bot' ? '+2' : '+0', win: w === 'bot' }
+        ]
+      }
+    });
+  }
+
+  stepper(key, name, hint, min, max, step, fmt) {
+    const v = this.state.opt[key];
+    return {
+      name, hint, val: fmt(v),
+      dec: () => this.setState({ opt: { ...this.state.opt, [key]: Math.max(min, v - step) } }),
+      inc: () => this.setState({ opt: { ...this.state.opt, [key]: Math.min(max, v + step) } })
+    };
+  }
+  rule(key, name, hint) {
+    const on = !!this.state.opt[key];
+    return { key, name, hint, on, off: !on,
+      turnOn: () => this.setState({ opt: { ...this.state.opt, [key]: true } }),
+      turnOff: () => this.setState({ opt: { ...this.state.opt, [key]: false } }) };
+  }
+
+  renderVals() {
+    const s = this.state, o = s.opt;
+    const acc = '#ec3013', hot = '#ff563c';
+    const dark = s.theme === 'dark';
+    const seatCount = s.cat === 'Deduction' ? 5 : Math.max(2, o.players);
+
+    const seats = [];
+    for (let i = 0; i < Math.max(6, seatCount); i++) {
+      if (i >= seatCount) break;
+      if (i < s.joined) {
+        const p = i === 0 ? { name: s.myName, mark: MARKS[s.mark] } : { name: OTHERS[(i - 1) % 4][0], mark: OTHERS[(i - 1) % 4][1] };
+        seats.push({
+          name: p.name, mark: p.mark, role: i === 0 ? 'Host · you' : 'Ready',
+          bg: i === 0 ? acc : 'var(--surface)',
+          color: i === 0 ? '#f3f2f2' : 'var(--ink)',
+          border: i === 0 ? '2px solid ' + acc : '1px solid var(--line)'
+        });
+      } else {
+        seats.push({ name: 'Empty', mark: '', role: 'Waiting', bg: 'transparent', color: 'var(--dim)', border: '1px dashed var(--line2)' });
+      }
+    }
+
+    const catGames = LIB.filter(g => g[1] === s.cat).map(g => ({
+      name: g[0], meta: g[2], sel: s.game === g[0],
+      color: s.game === g[0] ? 'var(--ink)' : 'var(--dim)',
+      dot: s.game === g[0] ? acc : 'var(--line2)',
+      dotFill: s.game === g[0] ? acc : 'transparent',
+      pick: () => this.setState({ game: g[0] })
+    }));
+
+    let steppers = [], rules = [], optLabel = 'Options';
+    if (s.cat === 'Deduction') {
+      optLabel = 'Round options';
+      steppers = [
+        this.stepper('timer', 'Answer timer', 'Time to write your answer', 15, 120, 15, v => v + 's'),
+        this.stepper('odd', 'Odd ones out', 'Players with the different question', 1, 3, 1, v => String(v)),
+        this.stepper('discuss', 'Discussion', 'Before voting opens', 30, 180, 15, v => v + 's')
+      ];
+      rules = [this.rule('spin', 'Category packs', 'General knowledge, food, cinema')];
+    } else if (s.cat === 'Board') {
+      optLabel = 'Table rules';
+      steppers = [
+        this.stepper('players', 'Players', 'Seats at the table', 2, 6, 1, v => String(v)),
+        this.stepper('turn', 'Turn timer', 'Auto-skip after', 10, 60, 5, v => v + 's')
+      ];
+      rules = [this.rule('stack', 'Stacking', 'Answer a +2 with a +2'), this.rule('safe', 'Safe zones', 'No captures on marked cells')];
+    } else {
+      optLabel = 'Match setup';
+      steppers = [
+        this.stepper('match', 'Match length', 'Minutes per round', 2, 10, 1, v => v + ' min'),
+        this.stepper('lives', 'Lives', 'Respawns per player', 1, 5, 1, v => String(v))
+      ];
+      rules = [this.rule('spin', 'Random arena', 'Map picked at drop-in')];
+    }
+
+    const chips = s.cat === 'Deduction'
+      ? [{ t: o.timer + 's answer' }, { t: o.odd + ' odd one' }, { t: o.discuss + 's discussion' }, { t: 'General pack' }]
+      : s.cat === 'Board'
+        ? [{ t: o.players + ' players' }, { t: o.turn + 's turns' }, { t: o.stack ? 'Stacking on' : 'Stacking off' }, { t: o.safe ? 'Safe zones' : 'No safe zones' }]
+        : [{ t: o.match + ' min' }, { t: o.lives + ' lives' }, { t: 'Rooftops arena' }];
+
+    const nav = (n, label, fn) => ({ n, label, go: fn });
+    return {
+      theme: s.theme, isDark: dark,
+      atSplash: s.scr === 'splash', atLogin: s.scr === 'login', atOnboard: s.scr === 'onboard',
+      atHome: s.scr === 'home', atConfig: s.scr === 'config', atLobby: s.scr === 'lobby',
+      atQuiz: s.scr === 'quiz', atC4: s.scr === 'c4', atResults: s.scr === 'results',
+      atProfile: s.scr === 'profile', atSettings: s.scr === 'settings',
+
+      toSplash: () => this.go('splash'), toLogin: () => this.go('login'), toOnboard: () => this.go('onboard'),
+      toHome: () => this.setState({ scr: 'home', joinOpen: false }), toConfig: () => this.go('config'),
+      toLobby: () => this.enterLobby(), toProfile: () => this.go('profile'), toSettings: () => this.go('settings'),
+      startGame: () => this.startGame(),
+
+      navA: [
+        nav('01', 'Splash', () => this.go('splash')), nav('02', 'Sign in', () => this.go('login')),
+        nav('03', 'Onboarding', () => this.go('onboard')), nav('04', 'Home', () => this.go('home')),
+        nav('05', 'Pre-lobby config', () => this.go('config')), nav('06', 'Lobby', () => this.enterLobby()),
+        nav('10', 'Profile & stats', () => this.go('profile')), nav('11', 'Settings', () => this.go('settings'))
+      ],
+      navB: [
+        nav('07', 'Imposter Quiz', () => this.setState({ scr: 'quiz', qp: 'reveal', vote: null })),
+        nav('08', 'Connect 4 — playable', () => this.setState({ scr: 'c4', board: Array(42).fill(null), turn: 'you', winner: null, winLine: [] })),
+        nav('09', 'Results', () => this.setState({ scr: 'results', result: s.result || { game: 'Imposter Quiz', head: 'YOU SURVIVED', kicker: 'You were the odd one out', note: 'Karthik said tomato. The table voted him out 3–2.', rows: [{ n: 'You', d: 'Odd one · survived', s: '+3', win: true }, { n: 'Divya', d: 'Civilian', s: '+0' }, { n: 'Rohan', d: 'Civilian', s: '+0' }, { n: 'Meera', d: 'Civilian', s: '+0' }, { n: 'Karthik', d: 'Voted out', s: '+0' }] } }))
+      ],
+
+      myName: s.myName, myMark: MARKS[s.mark],
+      setName: e => this.setState({ myName: e.target.value }),
+      marks: MARKS.map((g, i) => ({
+        g, pick: () => this.setState({ mark: i }),
+        border: s.mark === i ? acc : 'transparent',
+        color: s.mark === i ? hot : 'var(--ink)'
+      })),
+
+      joinOpen: s.joinOpen, joinClosed: !s.joinOpen,
+      openJoin: () => this.setState({ joinOpen: true }),
+      codeInput: s.codeInput, setCode: e => this.setState({ codeInput: e.target.value.toUpperCase() }),
+
+      lib: LIB.map(g => ({
+        name: g[0], meta: g[2],
+        isDed: g[1] === 'Deduction', isBoard: g[1] === 'Board', isArc: g[1] === 'Arcade',
+        tint: g[1] === 'Deduction' ? hot : 'var(--ink)',
+        pick: () => this.setState({ scr: 'config', cat: g[1], game: g[0] })
+      })),
+
+      cats: CATS.map(c => ({
+        name: c[0], desc: c[1], sel: s.cat === c[0],
+        border: s.cat === c[0] ? acc : 'transparent',
+        dot: s.cat === c[0] ? acc : 'var(--line2)',
+        dotFill: s.cat === c[0] ? acc : 'transparent',
+        pick: () => this.setState({ cat: c[0], game: LIB.filter(g => g[1] === c[0])[0][0] })
+      })),
+      catGames, steppers, rules, optLabel,
+      configSummary: s.cat + ' · ' + s.game + ' · ' + chips.map(c => c.t).join(' · '),
+
+      room: 'K7QX2M', copied: s.copied, notCopied: !s.copied,
+      copyCode: () => { this.setState({ copied: true }); setTimeout(() => this.setState({ copied: false }), 1600); },
+      seats, chips, gameName: s.game,
+      joinedLabel: s.joined + '/' + seatCount + ' joined',
+      cantStart: s.joined < Math.min(4, seatCount),
+      startLabel: s.joined < Math.min(4, seatCount) ? 'WAITING FOR PLAYERS' : 'START GAME',
+
+      qReveal: s.qp === 'reveal', qQuestion: s.qp === 'q', qAnswer: s.qp === 'answer', qCompare: s.qp === 'compare',
+      qDiscuss: s.qp === 'discuss', qVote: s.qp === 'vote', qOut: s.qp === 'out',
+      qHud: { reveal: 'Round 1 · deal', q: 'Round 1 · your question', answer: 'Round 1 · answer', compare: 'Round 1 · reveal', discuss: 'Round 1 · discussion', vote: 'Round 1 · vote', out: 'Round 1 · result' }[s.qp],
+      toQ: () => this.setQp('q'), toAnswer: () => this.setQp('answer'), toCompare: () => this.setQp('compare'),
+      toDiscuss: () => this.setQp('discuss'), toVote: () => this.setQp('vote'),
+      myAnswer: s.myAnswer, setAnswer: e => this.setState({ myAnswer: e.target.value }),
+      answerCards: ANSWERS.map(a => ({ name: a[0], text: a[1], border: '1px solid var(--line)', mine: false, notMine: true }))
+        .concat([{ name: s.myName, text: s.myAnswer || '—', border: '2px solid ' + acc, mine: true, notMine: false }]),
+      voteCards: OTHERS.map(p => ({
+        name: p[0], mark: p[1],
+        border: s.vote === p[0] ? '2px solid ' + acc : '1px solid var(--line)',
+        bg: s.vote === p[0] ? acc : 'var(--surface)',
+        color: s.vote === p[0] ? '#f3f2f2' : 'var(--ink)',
+        cast: () => this.castVote(p[0])
+      })),
+      hasVoted: !!s.vote, notVoted: !s.vote, voteTarget: s.vote,
+      secsLabel: '0:' + String(s.secs).padStart(2, '0'),
+      finishQuiz: () => this.finishQuiz(),
+
+      cols: Array.from({ length: 7 }, (_, c) => ({
+        drop: () => this.drop(c),
+        cells: Array.from({ length: 6 }, (_, r) => {
+          const v = s.board[r * 7 + c], wl = s.winLine.indexOf(r * 7 + c) >= 0;
+          return {
+            fill: v === 'you' ? acc : v === 'bot' ? 'var(--ink)' : 'transparent',
+            ring: wl ? '3px solid ' + hot : '1px solid var(--line)'
+          };
+        })
+      })),
+      yourTurn: !s.winner && s.turn === 'you', botTurn: !s.winner && s.turn === 'bot',
+      c4Status: s.winner ? 'Board closed' : s.turn === 'you' ? 'Your move — tap a column' : 'Bot is thinking',
+      youBar: s.turn === 'you' && !s.winner ? acc : 'transparent',
+      botBar: s.turn === 'bot' && !s.winner ? 'var(--ink)' : 'transparent',
+      hasWinner: !!s.winner, noWinner: !s.winner,
+      winHead: s.winner === 'you' ? 'FOUR IN A ROW' : s.winner === 'bot' ? 'BOT GOT FOUR' : 'DRAW',
+      winNote: s.winner === 'you' ? 'Clean. Take the scoreboard.' : s.winner === 'bot' ? 'It saw the diagonal.' : 'Board full.',
+      finishC4: () => this.finishC4(),
+      resetC4: () => this.setState({ board: Array(42).fill(null), turn: 'you', winner: null, winLine: [], lastCol: -1 }),
+
+      rGame: (s.result || {}).game || '', rHead: (s.result || {}).head || '', rKicker: (s.result || {}).kicker || '', rNote: (s.result || {}).note || '',
+      rRows: ((s.result || {}).rows || []).map((x, i) => ({
+        pos: String(i + 1).padStart(2, '0'), n: x.n, d: x.d, s: x.s,
+        bg: x.win ? acc : 'var(--surface)', color: x.win ? '#f3f2f2' : 'var(--ink)',
+        border: x.win ? '2px solid ' + acc : '1px solid var(--line)'
+      })),
+      playAgain: () => this.startGame(), changeGame: () => this.go('config'),
+      leaveLobby: () => this.setState({ scr: 'home', joinOpen: false }),
+
+      stats: [
+        { name: 'Imposter Quiz', record: '38–14', rate: '73%', tint: hot },
+        { name: 'Guess Who I Am', record: '11–9', rate: '55%', tint: 'var(--ink)' },
+        { name: "Liar's Bar", record: '7–12', rate: '37%', tint: 'var(--ink)' },
+        { name: 'UNO', record: '19–21', rate: '48%', tint: 'var(--ink)' },
+        { name: 'Chess', record: '4–16', rate: '20%', tint: 'var(--dim)' },
+        { name: 'Connect 4', record: '9–3', rate: '75%', tint: hot }
+      ],
+      history: [
+        { game: 'Imposter Quiz', when: 'Tonight', result: 'SURVIVED', tint: hot },
+        { game: 'Connect 4', when: 'Tonight', result: 'WON', tint: hot },
+        { game: 'Ludo', when: 'Yesterday', result: 'LOST', tint: 'var(--dim)' },
+        { game: "Liar's Bar", when: 'Sun', result: 'LOST', tint: 'var(--dim)' }
+      ],
+      prefs: [
+        { key: 'sound', name: 'Sound effects', hint: 'Dice, cards, buzzers', on: true, off: false },
+        { key: 'haptic', name: 'Haptics', hint: 'Buzz on your turn', on: true, off: false },
+        { key: 'push', name: 'Lobby invites', hint: 'Push when friends open a room', on: true, off: false },
+        { key: 'reveal', name: 'Fast reveal', hint: 'Skip vote animations', on: false, off: true }
+      ],
+      setDark: () => this.setState({ theme: 'dark' }), setLight: () => this.setState({ theme: 'light' }),
+      darkBorder: dark ? acc : 'transparent', lightBorder: dark ? 'transparent' : acc
+    };
+  }
+}
+
+</script>
+</body>
+</html>
