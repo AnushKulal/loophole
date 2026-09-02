@@ -1,0 +1,53 @@
+name: EAS Build (optional)
+
+# Builds through Expo's cloud service instead of on the runner.
+#
+# The Gradle workflow in android-apk.yml needs no account and is the default.
+# Use this one when you want EAS to handle signing, credentials and OTA update
+# channels for you. It requires an EXPO_TOKEN secret — create one at
+# https://expo.dev/settings/access-tokens and add it under
+# Settings → Secrets and variables → Actions.
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'EAS build profile'
+        type: choice
+        default: preview
+        options: [preview, production]
+
+defaults:
+  run:
+    working-directory: mobile
+
+jobs:
+  build:
+    name: EAS build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check for a token
+        if: ${{ !secrets.EXPO_TOKEN }}
+        run: |
+          echo "::error::EXPO_TOKEN is not set. Add it in Settings → Secrets and variables → Actions, or use the Android APK workflow instead, which needs no account."
+          exit 1
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - run: npm ci
+
+      # --wait blocks until the cloud build finishes so the run reports its result.
+      - name: Build
+        run: eas build --platform android --profile ${{ inputs.profile }} --non-interactive --wait

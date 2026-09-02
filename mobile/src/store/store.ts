@@ -1,23 +1,10 @@
 import { CATEGORIES, GAMES, gameByName, type Category } from '../data/games';
 import { FROST_TIER, TINTS, inboxId, INBOX } from '../data/progression';
 import { MARKS, OTHERS, REPLIES, SEED, grad, type ThreadLine } from '../data/people';
-import { botMove, emptyBoard, findWin, lowest, place, type Board, type Outcome } from '../game/connect4';
-import {
-  applyCard,
-  bestColour,
-  botChoice,
-  deal,
-  drawTo,
-  isValid,
-  nextSeat,
-  UNAME,
-  type CardColour,
-  type UnoState,
-} from '../game/uno';
 
 export type Screen =
   | 'splash' | 'login' | 'onboard' | 'home' | 'all' | 'config' | 'lobby'
-  | 'quiz' | 'c4' | 'uno' | 'results' | 'profile' | 'player' | 'board'
+  | 'quiz' | 'game' | 'results' | 'profile' | 'player' | 'board'
   | 'friends' | 'dm' | 'settings' | 'inbox' | 'add' | 'season' | 'shop'
   | 'spectate' | 'bracket';
 
@@ -34,6 +21,7 @@ export interface Options {
   odd: number;
   discuss: number;
   players: number;
+  /** Board: seconds before a turn auto-skips. */
   turn: number;
   lives: number;
   match: number;
@@ -88,12 +76,6 @@ export interface State {
   vote: string | null;
   secs: number;
 
-  board: Board;
-  turn: 'you' | 'bot';
-  winner: Outcome;
-  winLine: number[];
-  lastIdx: number;
-
   result: GameResult | null;
   who: string | null;
   scope: 'Global' | 'Friends' | 'Region';
@@ -102,9 +84,7 @@ export interface State {
   dmInput: string;
   threads: Record<string, ThreadLine[]>;
   typing: boolean;
-
-  uno: UnoState | null;
-  chatOpen: boolean;
+chatOpen: boolean;
   chatInput: string;
   emote: string | null;
   chat: [string, string][];
@@ -143,12 +123,6 @@ const initial = (): State => ({
   vote: null,
   secs: 45,
 
-  board: emptyBoard(),
-  turn: 'you',
-  winner: null,
-  winLine: [],
-  lastIdx: -1,
-
   result: null,
   who: null,
   scope: 'Global',
@@ -158,7 +132,6 @@ const initial = (): State => ({
   threads: JSON.parse(JSON.stringify(SEED)),
   typing: false,
 
-  uno: null,
   chatOpen: false,
   chatInput: '',
   emote: null,
@@ -196,8 +169,6 @@ class Store {
   private replyT: Timer | null = null;
   private chatT: Timer | null = null;
   private emoteT: Timer | null = null;
-  private unoT: Timer | null = null;
-  private botT: Timer | null = null;
   private voteT: Timer | null = null;
   private copyT: Timer | null = null;
 
@@ -217,7 +188,7 @@ class Store {
   dispose() {
     if (this.tick) clearInterval(this.tick);
     this.joins.forEach(clearTimeout);
-    [this.toastT, this.replyT, this.chatT, this.emoteT, this.unoT, this.botT, this.voteT, this.copyT].forEach(
+    [this.toastT, this.replyT, this.chatT, this.emoteT, this.voteT, this.copyT].forEach(
       (t) => t && clearTimeout(t),
     );
   }
@@ -324,15 +295,22 @@ class Store {
     this.copyT = setTimeout(() => this.setState({ copied: false }), 1600);
   };
 
+  /**
+   * Every title except the Imposter Quiz flow is a self-contained module in the
+   * game registry, so starting one is just switching to the host screen — the
+   * game reads which title from `s.game`.
+   */
   startGame = () => {
-    const { game, cat } = this.state;
-    if (game === 'UNO') return this.unoStart();
-    if (game === 'Connect 4' || cat !== 'Deduction') {
-      this.setState({ scr: 'c4', board: emptyBoard(), turn: 'you', winner: null, winLine: [], lastIdx: -1 });
-    } else {
+    const { game } = this.state;
+    if (game === 'Imposter Quiz') {
       this.setState({ scr: 'quiz', qp: 'reveal', vote: null, secs: this.state.opt.discuss });
+      return;
     }
+    this.setState({ scr: 'game' });
   };
+
+  /** A registry game finished. Hand its scoreboard to the results screen. */
+  finishMatch = (result: GameResult) => this.setState({ scr: 'results', result });
 
   // ── imposter quiz ────────────────────────────────────────────────
 
@@ -382,182 +360,6 @@ class Store {
   };
 
   setAnswer = (myAnswer: string) => this.setState({ myAnswer });
-
-  // ── connect 4 ────────────────────────────────────────────────────
-
-  drop = (col: number) => {
-    const s = this.state;
-    if (s.winner || s.turn !== 'you') return;
-    const r = lowest(s.board, col);
-    if (r < 0) return;
-
-    const n = place(s.board, col, 'you')!;
-    const idx = r * 7 + col;
-    const w = findWin(n, 'you');
-    if (w) return this.setState({ board: n, winner: 'you', winLine: w, lastIdx: idx });
-    if (!n.includes(null)) return this.setState({ board: n, winner: 'draw', lastIdx: idx });
-
-    this.setState({ board: n, turn: 'bot', lastIdx: idx });
-    if (this.botT) clearTimeout(this.botT);
-    this.botT = setTimeout(this.botTurn, 640);
-  };
-
-  private botTurn = () => {
-    const b = this.state.board;
-    const pick = botMove(b);
-    if (pick === null) return this.setState({ winner: 'draw' });
-
-    const idx = lowest(b, pick) * 7 + pick;
-    const n = place(b, pick, 'bot')!;
-    const w = findWin(n, 'bot');
-    if (w) return this.setState({ board: n, winner: 'bot', winLine: w, lastIdx: idx });
-
-    this.setState({ board: n, turn: 'you', lastIdx: idx, winner: n.includes(null) ? null : 'draw' });
-  };
-
-  resetC4 = () =>
-    this.setState({ board: emptyBoard(), turn: 'you', winner: null, winLine: [], lastIdx: -1 });
-
-  startC4 = () => this.setState({ scr: 'c4', ...this.c4Fresh() });
-
-  private c4Fresh = () =>
-    ({ board: emptyBoard(), turn: 'you' as const, winner: null, winLine: [], lastIdx: -1 });
-
-  finishC4 = () => {
-    const { winner: w, myName: me, mode, mark, tint } = this.state;
-    const opp = mode === 'friends' ? 'Divya' : 'Bot';
-    this.setState({
-      scr: 'results',
-      result: {
-        game: 'Connect 4',
-        head: w === 'you' ? 'You won' : w === 'bot' ? 'You lost' : 'A draw',
-        kicker:
-          w === 'you' ? 'Four in a row' : w === 'bot' ? `${opp} got there first` : 'Board full, nobody lined up',
-        xp: w === 'you' ? '+180' : '+30',
-        note: w === 'you' ? 'Rematch before they change their mind.' : 'Rematch and take it back.',
-        rows: [
-          { n: me, d: 'Violet', s: w === 'you' ? '+180' : '+30', win: w === 'you', mark: MARKS[mark], grad: TINTS[tint].grad },
-          { n: opp, d: 'Cyan', s: w === 'bot' ? '+180' : '+30', win: w === 'bot', mark: opp === 'Bot' ? 'B' : '▲', grad: grad(2) },
-        ],
-      },
-    });
-  };
-
-  // ── uno ──────────────────────────────────────────────────────────
-
-  unoStart = () => this.setState({ scr: 'uno', game: 'UNO', cat: 'Board', uno: deal() });
-
-  unoPlay = (idx: number, chosen?: CardColour) => {
-    const prev = this.state.uno;
-    if (!prev || prev.winner !== null || prev.turn !== 0) return;
-
-    const u: UnoState = { ...prev };
-    const card = u.hands[0][idx];
-    if (!card) return;
-    if (!isValid(card, u)) return this.flash('That card does not match');
-    // A wild needs a colour before it can resolve — open the picker.
-    if (card.c === 'W' && !chosen) return this.setState({ uno: { ...u, need: true, pending: idx } });
-
-    u.hands = u.hands.map((h) => h.slice());
-    u.hands[0].splice(idx, 1);
-    u.need = false;
-    u.pending = null;
-
-    if (!u.hands[0].length) {
-      u.winner = 0;
-      u.log = 'You went out';
-      return this.setState({ uno: u });
-    }
-
-    applyCard(u, card, chosen ?? null, 0);
-    u.log = u.hands[0].length === 1 ? 'One card left — say it' : 'Waiting on the table';
-    this.setState({ uno: u });
-    this.queueBot();
-  };
-
-  unoDraw = () => {
-    const prev = this.state.uno;
-    if (!prev || prev.winner !== null || prev.turn !== 0) return;
-
-    const u: UnoState = { ...prev, hands: prev.hands.map((h) => h.slice()) };
-    drawTo(u, 0, 1);
-    const card = u.hands[0][u.hands[0].length - 1];
-
-    // A drawn card that happens to be playable goes straight down.
-    if (isValid(card, u) && card.c !== 'W') {
-      u.hands[0].pop();
-      applyCard(u, card, null, 0);
-      u.log = `Drew ${UNAME[card.c]} ${card.v} and played it`;
-    } else {
-      u.turn = nextSeat(u.dir, 0, false);
-      u.log = 'You drew a card';
-    }
-    this.setState({ uno: u });
-    this.queueBot();
-  };
-
-  private queueBot() {
-    if (this.unoT) clearTimeout(this.unoT);
-    this.unoT = setTimeout(this.unoBot, 800);
-  }
-
-  private unoBot = () => {
-    const prev = this.state.uno;
-    if (!prev || prev.winner !== null || prev.turn === 0) return;
-
-    const u: UnoState = { ...prev, hands: prev.hands.map((h) => h.slice()) };
-    const p = u.turn;
-    const hand = u.hands[p];
-    const name = OTHERS[p - 1].name;
-    const i = botChoice(hand, u);
-
-    if (i < 0) {
-      drawTo(u, p, 1);
-      u.turn = nextSeat(u.dir, p, false);
-      u.log = `${name} drew a card`;
-    } else {
-      const card = hand.splice(i, 1)[0];
-      if (!hand.length) {
-        u.winner = p;
-        u.log = `${name} went out`;
-        return this.setState({ uno: u });
-      }
-      const chosen = bestColour(hand);
-      applyCard(u, card, chosen, p);
-      u.log = `${name} played ${card.c === 'W' ? `${card.v} → ${UNAME[chosen]}` : `${UNAME[card.c]} ${card.v}`}`;
-    }
-
-    if (u.turn === 0) u.log = 'Your move';
-    this.setState({ uno: u });
-    if (u.turn !== 0 && u.winner === null) this.queueBot();
-  };
-
-  finishUno = () => {
-    const u = this.state.uno;
-    if (!u) return;
-    const { myName: me, mark, tint } = this.state;
-    const won = u.winner === 0;
-    this.setState({
-      scr: 'results',
-      result: {
-        game: 'UNO',
-        head: won ? 'You went out' : 'You lost',
-        kicker: won ? 'Hand emptied first' : `${OTHERS[(u.winner || 1) - 1].name} emptied first`,
-        xp: won ? '+240' : '+40',
-        note: won ? 'Nobody stacked a +4 on you. Rare.' : 'The amber run got you.',
-        rows: [0, 1, 2, 3]
-          .map((p) => ({
-            n: p === 0 ? me : OTHERS[p - 1].name,
-            d: p === u.winner ? 'Went out' : `${u.hands[p].length} cards left`,
-            s: p === u.winner ? '+240' : '+40',
-            win: p === u.winner,
-            mark: p === 0 ? MARKS[mark] : OTHERS[p - 1].mark,
-            grad: p === 0 ? TINTS[tint].grad : grad(OTHERS[p - 1].gi),
-          }))
-          .sort((a, b) => (b.win ? 1 : 0) - (a.win ? 1 : 0)),
-      },
-    });
-  };
 
   // ── table chat, emotes ───────────────────────────────────────────
 

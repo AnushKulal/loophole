@@ -1,0 +1,126 @@
+name: Android APK
+
+# Builds an installable Loophole APK and attaches it to the run.
+#
+# This builds on the runner with Gradle rather than through EAS, so it needs no
+# Expo account and no secrets. Add a keystore (see the `release` job) only when
+# you want a signed build for distribution.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mobile/**'
+      - '.github/workflows/android-apk.yml'
+  pull_request:
+    paths:
+      - 'mobile/**'
+  workflow_dispatch:
+    inputs:
+      variant:
+        description: 'Which APK to build'
+        type: choice
+        default: debug
+        options: [debug, release]
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: mobile
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Test the game engines
+        run: npm test
+
+      # Generates the native android/ project from app.json. It is not committed,
+      # so the config stays the single source of truth.
+      - name: Prebuild native project
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('mobile/android/**/*.gradle*', 'mobile/android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-${{ runner.os }}-
+
+      # A debug APK is signed with the auto-generated debug keystore, so it
+      # installs on any phone with "install unknown apps" enabled — which is all
+      # you need to hand it to friends for testing.
+      - name: Build debug APK
+        if: inputs.variant != 'release'
+        working-directory: mobile/android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Decode release keystore
+        if: inputs.variant == 'release' && env.KEYSTORE_B64 != ''
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: echo "$KEYSTORE_B64" | base64 -d > android/app/release.keystore
+
+      - name: Build release APK
+        if: inputs.variant == 'release'
+        working-directory: mobile/android
+        env:
+          LOOPHOLE_STORE_FILE: release.keystore
+          LOOPHOLE_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          LOOPHOLE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          LOOPHOLE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew assembleRelease --no-daemon
+
+      - name: Locate the APK
+        id: apk
+        run: echo "path=$(find android/app/build/outputs/apk -name '*.apk' | head -1)" >> "$GITHUB_OUTPUT"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: loophole-${{ inputs.variant || 'debug' }}-apk
+          path: mobile/${{ steps.apk.outputs.path }}
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Summarise
+        run: |
+          {
+            echo "### Loophole APK"
+            echo ""
+            echo "Built \`${{ steps.apk.outputs.path }}\`"
+            echo ""
+            echo "Download it from the **Artifacts** section of this run, transfer it to an"
+            echo "Android phone, and open it. You will need to allow installing from unknown"
+            echo "sources the first time."
+          } >> "$GITHUB_STEP_SUMMARY"
