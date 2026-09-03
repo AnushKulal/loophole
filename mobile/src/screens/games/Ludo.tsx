@@ -578,6 +578,9 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
           rolling={rolling}
           canRoll={toRoll && st.winner === null}
           onRoll={beginRoll}
+          // The headline reads off the same die the face below it shows: the
+          // roll on the table while one is waiting to be spent, and only then
+          // the roll just spent — which is a *last* roll, and says so.
           title={
             st.winner !== null
               ? st.winner === 0
@@ -587,9 +590,13 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
                 ? 'Roll the dice'
                 : rolling
                   ? 'Rolling…'
-                  : st.last?.dice
-                    ? `Rolled a ${st.last.dice}`
-                    : 'Waiting for the table'
+                  : toMove
+                    ? `You rolled a ${st.dice}`
+                    : st.dice !== null
+                      ? `Rolled a ${st.dice}`
+                      : st.last?.dice
+                        ? `Last roll ${st.last.dice}`
+                        : 'Waiting for the table'
           }
           hint={
             st.winner !== null

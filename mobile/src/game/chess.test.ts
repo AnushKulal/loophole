@@ -30,6 +30,7 @@ import {
   other,
   outcome,
   outcomeText,
+  repetitions,
   resign,
   searchRoot,
   squareOf,
@@ -39,6 +40,7 @@ import {
   type ChessState,
   type Color,
   type Move,
+  type PieceType,
 } from './chess';
 
 const DIFFS = ['Easy', 'Normal', 'Sharp'] as const;
@@ -63,6 +65,10 @@ function play(s: ChessState, ...line: string[]): ChessState {
   }
   return s;
 }
+
+/** What `c` took between two positions — the row's delta, not the whole row. */
+const took = (before: ChessState, after: ChessState, c: Color): PieceType[] =>
+  after.captured[c].slice(before.captured[c].length);
 
 /** Both seats played by a bot, to a finished game or a ply cap. */
 function autoGame(white: BotProfile, black: BotProfile, rng: Rng, check = false, maxPly = 500): ChessState {
@@ -380,6 +386,39 @@ describe('endings', () => {
     expect(status(fromFen('7k/6Q1/5K2/8/8/8/8/8 b - - 100 60'))).toBe('checkmate');
   });
 
+  it('draws when the same position has stood three times', () => {
+    // The rook shuffles h1–h2 and the king e8–e7: four plies puts everything
+    // back, so the opening position stands again on the fourth and the eighth.
+    const s = fromFen('4k3/8/8/8/8/8/8/4K2R w - - 0 1');
+    expect(repetitions(s)).toBe(1);
+    const twice = play(s, 'h1h2', 'e8e7', 'h2h1', 'e7e8');
+    expect(repetitions(twice)).toBe(2);
+    expect(status(twice)).toBe('playing');
+
+    const thrice = play(twice, 'h1h2', 'e8e7', 'h2h1', 'e7e8');
+    expect(repetitions(thrice)).toBe(3);
+    expect(thrice.half).toBe(8); // nowhere near the fifty-move clock
+    expect(status(thrice)).toBe('repetition');
+    expect(outcome(thrice)).toMatchObject({ over: true, winner: null, draw: true });
+    expect(outcomeText(outcome(thrice), () => 'You')).toBe('The same position three times — a draw');
+  });
+
+  it('counts two positions as the same only if the same things are still possible', () => {
+    // The castling right dies with the rook's first move, so the position the
+    // rook returns to is not the one it left: three shuffles, not two.
+    const rights = fromFen('4k3/8/8/8/8/8/8/4K2R w K - 0 1');
+    expect(status(play(rights, 'h1h2', 'e8e7', 'h2h1', 'e7e8', 'h1h2', 'e8e7', 'h2h1', 'e7e8'))).toBe('playing');
+    expect(status(play(rights, 'h1h2', 'e8e7', 'h2h1', 'e7e8', 'h1h2', 'e8e7', 'h2h1', 'e7e8', 'h1h2', 'e8e7', 'h2h1', 'e7e8'))).toBe(
+      'repetition',
+    );
+
+    // And a pawn move can never be taken back, so it draws a line under the
+    // record: the shuffle that follows starts counting from one again.
+    const pawn = play(fromFen('4k3/8/8/8/8/7P/8/4K2R w - - 0 1'), 'h1h2', 'e8e7', 'h2h1', 'e7e8', 'h3h4');
+    expect(repetitions(pawn)).toBe(1);
+    expect(pawn.seen).toHaveLength(1);
+  });
+
   it('lets a player resign, and refuses to move on afterwards', () => {
     const s = resign(newGame(), 'w');
     expect(status(s)).toBe('resigned');
@@ -455,6 +494,43 @@ describe('material', () => {
     expect(capturedBy(s, 'w')).toEqual(['q']);
     expect(capturedBy(s, 'b')).toEqual(['p', 'p', 'p']);
     expect(capturedBy(newGame(), 'w')).toEqual([]);
+  });
+
+  it('keeps the strip on a promotion, which takes nothing and gives nothing back', () => {
+    // A white pawn on h7 steps onto an empty h8. Nothing changes hands, so
+    // neither row may change — the new queen is not a pawn Black took.
+    const s = fromFen('rnbqkbn1/pppppppP/8/8/8/8/PPPPPPP1/RNBQKBNR w Qkq - 0 1');
+    expect(capturedBy(s, 'b')).toEqual([]);
+    const n = play(s, 'h7h8q');
+    expect(capturedBy(n, 'b')).toEqual([]);
+    expect(xpFor(n, 'b', outcome(n))).toBe(xpFor(s, 'b', outcome(s)));
+  });
+
+  it('does not lose a piece that was really taken when the enemy promotes a new one', () => {
+    // Black has White's queen. White promotes another onto h8: the board is
+    // back to one white queen, but Black still took the first one.
+    const s = fromFen('rnbqkbn1/pppppppP/8/8/8/8/PPPPPPP1/RNB1KBNR w Qkq - 0 1');
+    expect(capturedBy(s, 'b')).toEqual(['q']);
+    const n = play(s, 'h7h8q');
+    expect(capturedBy(n, 'b')).toEqual(['q']);
+  });
+
+  it('adds a taken piece the moment it is taken, promotion or not', () => {
+    const s = play(newGame(), 'e2e4', 'd7d5', 'e4d5');
+    expect(capturedBy(s, 'w')).toEqual(['p']);
+    expect(capturedBy(s, 'b')).toEqual([]);
+    // A promotion that does capture counts the rook it took, and nothing more.
+    const promo = fromFen('5r2/4P3/8/8/8/8/8/K6k w - - 0 1');
+    expect(took(promo, play(promo, 'e7f8q'), 'w')).toEqual(['r']);
+    // En passant counts the pawn that walked past, which is not on the square.
+    const ep = fromFen('4k3/3p4/8/4P3/8/8/8/4K3 b - - 0 1');
+    expect(took(ep, play(ep, 'd7d5', 'e5d6'), 'w')).toEqual(['p']);
+  });
+
+  it('reads a position it was handed by counting the gaps, promotions included', () => {
+    // A second white queen on h2 with only seven pawns left: she came from the
+    // missing one, so Black has taken nothing at all.
+    expect(capturedBy(fromFen('4k3/8/8/8/8/8/PPPPPPPQ/RNBQKBNR b - - 0 1'), 'b')).toEqual([]);
   });
 
   it('scores the lead in pawns, from either chair', () => {
@@ -674,7 +750,7 @@ describe('a full game', () => {
       const s = autoGame(BOT.Easy, BOT.Easy, makeRng(seed * 41 + 7), true);
       const o = outcome(s);
       expect(o.over).toBe(true);
-      expect(['checkmate', 'stalemate', 'insufficient', 'fifty']).toContain(o.status);
+      expect(['checkmate', 'stalemate', 'insufficient', 'repetition', 'fifty']).toContain(o.status);
       // Exactly one of "somebody won" and "it was drawn" is true.
       expect(o.draw === (o.winner === null)).toBe(true);
       if (o.status === 'checkmate') {

@@ -985,6 +985,18 @@ export function pointsFor(s: CarromState, team: number): number {
 /** 1 for the winning team's seats, 2 for the rest. */
 export const placeOf = (s: CarromState, seat: number) => (s.winner === teamOf(seat) ? 1 : 2);
 
+/**
+ * The seats in scoreboard order: the winning side first, seat order within a
+ * side. Teams are seat parities, so the seats themselves interleave win and
+ * loss — anything that prints a row's position as its placing has to be handed
+ * the board through here rather than in seat order.
+ */
+export function standings(s: CarromState): number[] {
+  return Array.from({ length: s.seats }, (_, i) => i).sort(
+    (a, b) => placeOf(s, a) - placeOf(s, b) || a - b,
+  );
+}
+
 /** XP: a flat fee, the men your side sank, the board points and the win. */
 export function xpFor(s: CarromState, seat: number): number {
   const team = teamOf(seat);

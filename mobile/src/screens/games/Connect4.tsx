@@ -33,9 +33,17 @@ import { radius as R } from '../../theme/tokens';
  * and the clock, and scales the opponent by its `BotProfile`.
  */
 
-/** Board geometry. The gap and the rim padding are the web build's numbers. */
+/**
+ * Board geometry. The gap and the rim padding are the web build's numbers.
+ * `GUTTER` is the breathing room either side of the board — it is the padding on
+ * the very view that gets measured, so the sizing maths has to take it back off
+ * the measured width. `BORDER` is the 1px rim `Glass` draws inside whatever
+ * width it is given, which RN takes out of the content box.
+ */
 const GAP = 6;
 const PAD = 11;
+const GUTTER = 14;
+const BORDER = 1;
 
 /** Columns in the order a Connect 4 player considers them: centre outwards. */
 const CENTRE = [3, 2, 4, 1, 5, 0, 6];
@@ -82,7 +90,7 @@ export function chooseColumn(b: Board, profile: BotProfile, rng: Rng): number | 
 
   if (rng() < profile.blunder || rng() >= profile.skill) return pick(legal, rng);
 
-  const line = botMove(b) ?? legal[0];
+  const line = botMove(b, rng) ?? legal[0];
   if (completes(b, line, 'you')) return line;
   if (profile.depth < 2) return line;
 
@@ -99,7 +107,7 @@ export function chooseColumn(b: Board, profile: BotProfile, rng: Rng): number | 
  * would take as you.
  */
 const swap = (b: Board): Board => b.map((v) => (v === 'you' ? 'bot' : v === 'bot' ? 'you' : null));
-const houseColumn = (b: Board) => botMove(swap(b));
+const houseColumn = (b: Board, rng: Rng) => botMove(swap(b), rng);
 
 type Turn = Disc;
 
@@ -144,9 +152,15 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
   // The board is sized to whatever the middle of the frame leaves, so it fits a
   // short phone without ever pushing the controls off the bottom.
   const measured = box.w > 0 && box.h > 0;
+  // `box` is the measured view's border box, so its own gutter comes off first;
+  // then the Glass rim, then the rim padding, then the gaps between the holes.
   const cell = clamp(
-    // The extra few pixels are the Glass rim, which sits outside the padding.
-    Math.floor(Math.min((box.w - PAD * 2 - GAP * (COLS - 1) - 2) / COLS, (box.h - PAD * 2 - GAP * (ROWS - 1) - 4) / ROWS)),
+    Math.floor(
+      Math.min(
+        (box.w - GUTTER * 2 - BORDER * 2 - PAD * 2 - GAP * (COLS - 1)) / COLS,
+        (box.h - BORDER * 2 - PAD * 2 - GAP * (ROWS - 1)) / ROWS,
+      ),
+    ),
     22,
     46,
   );
@@ -201,7 +215,7 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
       clearInterval(id);
       const cur = now.current;
       if (cur.winner || cur.turn !== 'you') return;
-      const col = houseColumn(cur.board);
+      const col = houseColumn(cur.board, rng.current as Rng);
       if (col === null) return;
       const r = lowest(cur.board, col);
       const n = place(cur.board, col, 'you');
@@ -347,7 +361,7 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
         </View>
 
         <View
-          style={{ flex: 1, minHeight: 0, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14 }}
+          style={{ flex: 1, minHeight: 0, alignItems: 'center', justifyContent: 'center', paddingHorizontal: GUTTER }}
           onLayout={(e: LayoutChangeEvent) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
         >
           {measured && (
@@ -443,7 +457,8 @@ function BoardView({
   onDrop: (col: number) => void;
 }) {
   const t = useTheme();
-  const width = cell * COLS + GAP * (COLS - 1) + PAD * 2;
+  // Glass draws its rim inside this width, so the holes only get what is left.
+  const width = cell * COLS + GAP * (COLS - 1) + PAD * 2 + BORDER * 2;
 
   return (
     <Glass radius={24} borderColor={t.line2} style={{ width }}>
@@ -514,7 +529,13 @@ function Slot({
   const won = winOrder >= 0;
 
   useEffect(() => {
-    if (!dropping || !value) return;
+    // A fall that is interrupted — you drop into another column before this one
+    // has landed — stops where it stands, so the slot has to be put back on its
+    // hole rather than left hanging over the board.
+    if (!dropping || !value) {
+      y.setValue(0);
+      return;
+    }
     y.setValue(-(row + 1) * (size + GAP));
     const a = Animated.timing(y, {
       toValue: 0,

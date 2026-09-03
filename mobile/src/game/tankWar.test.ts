@@ -44,6 +44,7 @@ import {
   lineFor,
   livesFor,
   lockedOn,
+  mostWrecks,
   navigate,
   norm,
   overlaps,
@@ -170,13 +171,21 @@ describe('the arena', () => {
     expect(livesFor(0)).toBe(3);
     expect(livesFor(5)).toBe(5);
     expect(livesFor(50)).toBe(9);
-    expect(secondsFor(3)).toBe(180);
-    expect(secondsFor(0.2)).toBe(60);
-    expect(secondsFor(99)).toBe(600);
+    // A lobby minute is a round of the arena, not sixty seconds of one: three
+    // lives a seat are spent in about twenty seconds, so minutes on the clock
+    // would be a clock no match ever reached.
+    expect(secondsFor(2)).toBe(20);
+    expect(secondsFor(3)).toBe(30);
+    expect(secondsFor(10)).toBe(100);
+    expect(secondsFor(0.2)).toBe(20);
+    expect(secondsFor(99)).toBe(100);
+    // The lobby's shortest round is a round a match reaches; its longest is not.
+    expect(secondsFor(2)).toBeLessThan(30);
+    expect(secondsFor(2)).toBeLessThan(secondsFor(10));
     const w = startMatch(6, 4, 2, makeRng(2));
     expect(w.seats).toBe(6);
     expect(w.tanks).toHaveLength(6);
-    expect(w.limit).toBe(120);
+    expect(w.limit).toBe(20);
     expect(w.livesPer).toBe(4);
     w.tanks.forEach((t) => expect(t.lives).toBe(4));
   });
@@ -375,6 +384,63 @@ describe('driving', () => {
     expect(edge.tanks[0].y).toBeGreaterThanOrEqual(TANK_R - 1e-9);
   });
 
+  it('never drives through another tank', () => {
+    let w = bare(2, 3, 5);
+    w = place(w, 0, 0.3, 0.65, 0);
+    w = place(w, 1, 0.6, 0.65, 0);
+    const east = only(w.seats, 0, { mx: 1, my: 0, aim: null, fire: false });
+    let closest = 99;
+    for (let k = 0; k < Math.round(2 / DT) && !w.over; k++) {
+      w = step(w, DT, east);
+      closest = Math.min(closest, Math.hypot(w.tanks[0].x - w.tanks[1].x, w.tanks[0].y - w.tanks[1].y));
+    }
+    // Two hulls never share a patch of floor, whatever the stick says.
+    expect(closest).toBeGreaterThan(TANK_R * 2 - 1e-6);
+    // The one in front is still in front — shoved along the floor, not driven
+    // through — so it is between seat 0 and the wall it was heading for.
+    expect(w.tanks[0].x).toBeLessThan(w.tanks[1].x);
+    expect(w.tanks[1].x).toBeGreaterThan(0.6);
+    expect(w.tanks[0].x).toBeLessThan(ARENA_W - TANK_R - 0.05);
+  });
+
+  it('parts two hulls dropped on the same spot rather than drawing them as one', () => {
+    let w = bare(2);
+    w = place(w, 0, 0.5, 0.65, 0);
+    w = place(w, 1, 0.5, 0.65, 0);
+    w = step(w, DT, still(w.seats));
+    const gap = Math.hypot(w.tanks[0].x - w.tanks[1].x, w.tanks[0].y - w.tanks[1].y);
+    expect(gap).toBeGreaterThan(TANK_R * 2 - 1e-6);
+    w.tanks.forEach((t) => expect(insideWall(w.walls, t.x, t.y, TANK_R - 1e-9)).toBe(false));
+  });
+
+  it('keeps hulls apart with a block behind them, over a whole bot match', () => {
+    for (let seed = 0; seed < 4; seed++) {
+      let w = startMatch(4, 3, 3, makeRng(seed * 3 + 2));
+      const rng = makeRng(seed + 77);
+      let inputs: Record<number, Input> = {};
+      let worst = 99;
+      for (let tick = 0; !w.over && tick < 60 * 60; tick++) {
+        if (tick % 4 === 0) {
+          inputs = {};
+          for (let i = 0; i < w.seats; i++) inputs[i] = botInput(w, i, BOT.Sharp, rng);
+        }
+        w = step(w, DT, inputs);
+        for (let i = 0; i < w.seats; i++) {
+          for (let j = i + 1; j < w.seats; j++) {
+            const a = w.tanks[i];
+            const b = w.tanks[j];
+            if (!a.alive || !b.alive) continue;
+            worst = Math.min(worst, Math.hypot(a.x - b.x, a.y - b.y));
+          }
+        }
+      }
+      // A pair pinned against a block keeps whatever the block insists on, but
+      // nothing like the free stacking that let a shell only ever reach the
+      // lower seat of the two.
+      expect(worst).toBeGreaterThan(TANK_R * 1.8);
+    }
+  });
+
   it('shoves a box out of whatever it is buried in, along the shallow axis', () => {
     const walls = [{ x: 0.4, y: 0.4, w: 0.2, h: 0.2 }];
     const near = pushOut(walls, 0.42, 0.5, TANK_R);
@@ -555,16 +621,76 @@ describe('plates, lives and elimination', () => {
 
 describe('the clock', () => {
   it('runs the match down and hands it to the top of the board', () => {
-    let w = bare(3, 3, 1);
-    expect(timeLeft(w)).toBe(60);
+    let w = bare(3, 3, 2);
+    expect(timeLeft(w)).toBe(20);
     w = { ...w, tanks: w.tanks.map((t, i) => ({ ...t, kills: i === 1 ? 4 : i })) };
-    w = run(w, 61, {});
+    w = run(w, 21, {});
     expect(w.over).toBe(true);
     expect(w.t).toBe(w.limit);
     expect(timeLeft(w)).toBe(0);
     expect(w.winner).toBe(1);
     expect(standings(w)[0]).toBe(1);
     expect(placeOf(w, 1)).toBe(1);
+  });
+
+  it('gives a match on the clock to whoever wrecked the most, lives left or not', () => {
+    // The rules sheet promises the clock to whoever has wrecked the most. The
+    // board is a different question: it ranks a seat that is still rolling above
+    // one that is out, however many hulls that one took with it.
+    const w = bare(3, 3, 2);
+    const rigged: TankWorld = {
+      ...w,
+      tanks: [
+        { ...w.tanks[0], kills: 9, deaths: 3, lives: 0, out: true, alive: false },
+        { ...w.tanks[1], kills: 0 },
+        { ...w.tanks[2], kills: 1 },
+      ],
+    };
+    const done = run(rigged, rigged.limit + 1, {});
+    expect(done.over).toBe(true);
+    expect(done.t).toBe(done.limit);
+    expect(mostWrecks(done)).toBe(0);
+    expect(done.winner).toBe(0);
+    // ...and the board still reads the other way round, as it should.
+    expect(standings(done)[0]).not.toBe(0);
+  });
+
+  it('lets the clock actually end a match, so the lobby length is a setting and not a decoration', () => {
+    const onTheClock = (minutes: number) => {
+      let ended = 0;
+      for (let seed = 0; seed < 12; seed++) {
+        const w = botMatch([BOT.Normal, BOT.Normal, BOT.Normal, BOT.Normal], makeRng(seed * 13 + 7), minutes);
+        if (standing(w).length > 1) {
+          expect(w.over).toBe(true);
+          expect(w.t).toBe(w.limit);
+          expect(w.winner).toBe(mostWrecks(w));
+          ended++;
+        }
+      }
+      return ended;
+    };
+    // The shortest round the lobby offers is one the clock decides more often
+    // than not; the longest is one the arena decides on its own.
+    expect(onTheClock(2)).toBeGreaterThan(5);
+    expect(onTheClock(10)).toBe(0);
+  });
+
+  it('hands nobody the arena when the last two wreck each other on the same tick', () => {
+    // Both on their last life, muzzle to muzzle. The shells land together, so
+    // there is no last tank rolling to take it — and the seat that must not take
+    // it by default is seat 0, which is always the player.
+    let w = bare(2, 1, 5);
+    w = place(w, 0, 0.3, 0.65, 0, { hp: 1 });
+    w = place(w, 1, 0.7, 0.65, Math.PI, { hp: 1 });
+    w = run(w, 2, {
+      0: { mx: 0, my: 0, aim: 0, fire: true },
+      1: { mx: 0, my: 0, aim: Math.PI, fire: true },
+    });
+    expect(w.over).toBe(true);
+    expect(w.tanks.map((t) => t.out)).toEqual([true, true]);
+    expect(w.tanks.map((t) => t.kills)).toEqual([1, 1]);
+    expect(standing(w)).toEqual([]);
+    expect(w.winner).toBeNull();
   });
 
   it('ranks a seat that is out below one that is still rolling, whatever the kills', () => {
@@ -821,19 +947,26 @@ describe('bots', () => {
 // ── a full match ──────────────────────────────────────────────────
 
 describe('a full match', () => {
-  it('reaches a finish with exactly one winner and a scoreboard for every seat', () => {
+  it('reaches a finish the board agrees with, and a scoreboard for every seat', () => {
     for (let seed = 0; seed < 12; seed++) {
       const w = botMatch([BOT.Normal, BOT.Normal, BOT.Normal, BOT.Normal], makeRng(seed * 13 + 7), 3);
       expect(w.over).toBe(true);
-      expect(w.winner).not.toBeNull();
-      expect(w.tanks.filter((t) => t.seat === w.winner)).toHaveLength(1);
       expect(standings(w)).toHaveLength(w.seats);
       expect(new Set(standings(w)).size).toBe(w.seats);
-      expect(standings(w)[0]).toBe(w.winner);
-      // A winner by elimination is the only one left; a winner on time is top of the board.
+      if (w.winner !== null) expect(w.tanks.filter((t) => t.seat === w.winner)).toHaveLength(1);
       const left = standing(w);
-      if (left.length === 1) expect(left).toEqual([w.winner]);
-      else expect(w.t).toBe(w.limit);
+      if (left.length === 1) {
+        // A winner by elimination is the only one left, and tops the board with it.
+        expect(w.winner).toBe(left[0]);
+        expect(standings(w)[0]).toBe(w.winner);
+      } else if (left.length === 0) {
+        // The last two went together, so there is nobody to hand it to.
+        expect(w.winner).toBeNull();
+      } else {
+        // A winner on time is whoever wrecked the most.
+        expect(w.t).toBe(w.limit);
+        expect(w.winner).toBe(mostWrecks(w));
+      }
       w.tanks.forEach((t) => {
         expect(t.lives).toBeGreaterThanOrEqual(0);
         expect(t.deaths).toBeLessThanOrEqual(w.livesPer);
@@ -851,7 +984,9 @@ describe('a full match', () => {
         3,
       );
       expect(w.over).toBe(true);
-      expect(w.winner).not.toBeNull();
+      // Somebody takes it, unless the last two went together and nobody can.
+      if (w.winner === null) expect(standing(w)).toHaveLength(0);
+      else expect(standings(w)).toContain(w.winner);
       expect(w.tanks).toHaveLength(seats);
     }
   });
@@ -944,7 +1079,10 @@ describe('reproducibility', () => {
   it('lets any mark win, so the bots are beatable as well as beating', () => {
     const wins = [0, 0, 0, 0];
     for (let seed = 0; seed < 60; seed++) {
-      wins[botMatch([BOT.Sharp, BOT.Sharp, BOT.Sharp, BOT.Sharp], makeRng(seed * 3 + 1), 3).winner as number]++;
+      // A mutual last-life wreck takes the arena away from everybody; it counts
+      // for no mark rather than quietly for seat 0.
+      const champ = botMatch([BOT.Sharp, BOT.Sharp, BOT.Sharp, BOT.Sharp], makeRng(seed * 3 + 1), 3).winner;
+      if (champ !== null) wins[champ]++;
     }
     wins.forEach((n) => expect(n).toBeGreaterThan(0));
   });

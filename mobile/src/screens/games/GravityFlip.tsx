@@ -57,16 +57,22 @@ import { radius as R } from '../../theme/tokens';
  * engine ticks rather than stretching one, so the physics is identical to the
  * one the tests replay, and the handle is cancelled on unmount.
  *
- * The scene's aspect is chosen so the track visible ahead of the runner is
- * about `SIGHT` — the same distance the bots are allowed to project over. That
- * is what makes them beatable: they are quicker and steadier than you, but they
+ * The scene's aspect is chosen so the track visible ahead of the runner is at
+ * least `SIGHT` — the distance the bots are allowed to project over. That is
+ * what makes them beatable: they are quicker and steadier than you, but they
  * cannot see any more of the course than you can.
  */
 
-/** How far into the frame the runner sits, as a fraction of its width. */
-const RUNNER_VIEW_X = 0.12;
+/**
+ * How far into the frame the runner sits, as a fraction of its width. The
+ * corridor behind it is where the rivals are stacked, so it has to be deep
+ * enough to hold three of them clear of the left edge.
+ */
+const RUNNER_VIEW_X = 0.2;
 /** The scene aspect that puts `SIGHT` of track in front of the runner. */
 const ASPECT = SIGHT / (1 - RUNNER_VIEW_X);
+/** How far back of the runner each rival is drawn, in track heights. */
+const GHOST_BACK = 0.055;
 /** Height the telemetry strip under the scene needs. */
 const METER_H = 58;
 
@@ -114,7 +120,9 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
 
   const you = st.runners[0];
   const sceneW = Math.max(0, box.w);
-  const sceneH = Math.max(0, Math.min(box.h - METER_H, Math.round(sceneW / ASPECT)));
+  // Rounded down: a shorter scene shows *more* track, so the glass never ends
+  // up showing less of the corridor than the bots are allowed to read.
+  const sceneH = Math.max(0, Math.min(box.h - METER_H, Math.floor(sceneW / ASPECT)));
   const scene = sceneW > 80 && sceneH > 90;
 
   // ── the frame loop ────────────────────────────────────────────────
@@ -443,6 +451,13 @@ function Corridor({
   const you = w.runners[0];
   const flash = you.invuln > 0 && Math.floor(w.t * 9) % 2 === 0;
 
+  // The whole stack of rivals has to fit in the track behind the runner, glow
+  // and all, so on a narrow scene the step back closes up rather than pushing
+  // the last one off the left edge of the corridor.
+  const ghosts = w.runners.slice(1);
+  const ghostR = RUNNER_R * S * 0.82;
+  const ghostStep = ghosts.length ? Math.min(GHOST_BACK * S, (runnerX - ghostR * 1.7) / ghosts.length) : 0;
+
   const onScreen = (x: number, wide = 0) => px(x) + wide * S > -12 && px(x) < width + 12;
   const slabs = w.course.slabs.filter((s: Slab) => onScreen(s.x, s.w));
   const orbs = w.course.orbs.filter((o: Orb) => onScreen(o.x) && !o.taken.includes(0));
@@ -511,13 +526,13 @@ function Corridor({
       ))}
 
       {/* the rivals, set a touch behind so four runners never stack into one */}
-      {w.runners.slice(1).map((r: Runner, k: number) => (
+      {ghosts.map((r: Runner, k: number) => (
         <Ghost
           key={r.seat}
           r={r}
-          x={runnerX - (k + 1) * 0.055 * S}
+          x={runnerX - (k + 1) * ghostStep}
           y={r.y * S}
-          rad={RUNNER_R * S * 0.82}
+          rad={ghostR}
           tint={gradStops(table[r.seat]?.grad ?? '')[0]}
         />
       ))}

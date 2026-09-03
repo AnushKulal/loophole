@@ -41,6 +41,7 @@ import {
   sideOfSeat,
   sideOfTeam,
   spotFree,
+  standings,
   startMatch,
   step,
   strikerAt,
@@ -369,7 +370,12 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
       note: won
         ? `Nine men and ${points} point${points === 1 ? '' : 's'} on the board.`
         : `You left ${menLeft(st, mySide)} of your nine still on the cloth.`,
-      rows: table.map((p, i) => {
+      // The scoreboard prints a row's position as its placing, and teams are
+      // seat parities, so the seats are handed over winner-first rather than
+      // in seat order — otherwise doubles reads 1,2,3,4 straight down the
+      // board with the losing side on top.
+      rows: standings(st).map((i) => {
+        const p = table[i];
         const side = sideOfTeam(teamOf(i));
         const isWin = st.winner === teamOf(i);
         return {
@@ -433,8 +439,11 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
 
       <View
         style={{ flex: 1, minHeight: 0, paddingHorizontal: 20, alignItems: 'center', justifyContent: 'center' }}
+        // `layout` is this view's border box, which still holds the screen's
+        // 20px rail on either side, so the measured box is trimmed by both
+        // before the board is sized — otherwise the glass spills into the rail.
         onLayout={(e) => {
-          const w = Math.floor(e.nativeEvent.layout.width);
+          const w = Math.floor(e.nativeEvent.layout.width - 40);
           const h = Math.floor(e.nativeEvent.layout.height);
           setBox((cur) => (cur.w === w && cur.h === h ? cur : { w, h }));
         }}

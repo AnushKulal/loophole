@@ -32,7 +32,6 @@ import {
   livesFor,
   lockedOn,
   botInput,
-  secondsFor,
   seatsFor,
   startMatch,
   step,
@@ -120,9 +119,10 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
   const bot = BOT[config.difficulty];
 
   // ── the table ─────────────────────────────────────────────────────
-  // Arcade options: respawns each, and minutes on the clock.
+  // Arcade options: respawns each, and the lobby's minutes on the clock. The
+  // engine reads those minutes as a round of the arena, so they are handed over
+  // as the lobby set them rather than converted here and read a second time.
   const lives = livesFor(config.options.lives);
-  const limit = secondsFor(config.options.match);
 
   // A lobby of one still needs somebody to shoot at.
   const filler: Player = { name: 'Rogue', mark: '◆', grad: `linear-gradient(160deg,${t.acc},${t.acc2})`, bot: true };
@@ -136,7 +136,7 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
   const rng = useRef<Rng | null>(null);
   if (!rng.current) rng.current = makeRng(Math.floor(Math.random() * 0x7fffffff));
 
-  const [w, setW] = useState<TankWorld>(() => startMatch(seats, lives, limit / 60, rng.current as Rng));
+  const [w, setW] = useState<TankWorld>(() => startMatch(seats, lives, config.options.match, rng.current as Rng));
   const [stick, setStick] = useState({ x: 0, y: 0 });
   const [emote, setEmote] = useState<string | null>(null);
   const [box, setBox] = useState({ w: 0, h: 0 });
@@ -241,22 +241,32 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
   }
 
   // ── the scoreboard ────────────────────────────────────────────────
+  // Three ways a match ends, and the overlay, the log and the scoreboard all
+  // say the same one: you took it, somebody else did, or the last two hulls went
+  // together and nobody took it. A seat can also be top of the board on the
+  // clock with its own lives spent, and "Arena taken" would read as a lie next
+  // to the OUT chip in the header.
+  const draw = w.winner === null;
+  const won = w.winner === 0;
+  const headline = draw ? 'Nobody standing' : won ? (me.out ? 'Top of the board' : 'Arena taken') : 'Knocked out';
+
   const finish = () => {
     if (done.current) return;
     done.current = true;
     const champ = w.winner ?? 0;
-    const won = champ === 0;
     const mine = me;
     const lastOne = w.tanks.filter((x) => !x.out).length === 1;
 
     onFinish({
       game: '3D Tank War',
-      head: won ? 'Arena taken' : 'Knocked out',
-      kicker: won
-        ? lastOne
-          ? 'Last tank rolling'
-          : `Top of the board with ${Math.max(0, mine.kills)} kill${mine.kills === 1 ? '' : 's'}`
-        : `${who(champ)} took the arena`,
+      head: headline,
+      kicker: draw
+        ? 'The last two hulls went together'
+        : won
+          ? lastOne
+            ? 'Last tank rolling'
+            : `Top of the board with ${Math.max(0, mine.kills)} kill${mine.kills === 1 ? '' : 's'}`
+          : `${who(champ)} took the arena`,
       xp: `+${xpFor(w, 0)}`,
       note: won
         ? `${Math.max(0, mine.kills)} wrecked, ${mine.deaths} lost, ${mine.hits} of ${mine.shots} shells on target.`
@@ -292,9 +302,13 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
   const recent = w.feed[w.feed.length - 1];
   const last = recent && w.t - recent.at < 2.5 ? recent : null;
   const log = w.over
-    ? w.winner === 0
-      ? 'The arena is yours'
-      : `${who(w.winner ?? 0)} took the arena`
+    ? draw
+      ? 'The last two went together — nobody took it'
+      : won
+        ? me.out
+          ? 'Out of lives, but top of the board'
+          : 'The arena is yours'
+        : `${who(w.winner ?? 0)} took the arena`
     : !me.alive
       ? me.out
         ? 'Out of lives — watching it burn'
@@ -404,11 +418,13 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
 
       {w.over && (
         <GameOverlay
-          title={w.winner === 0 ? 'Arena taken' : 'Knocked out'}
+          title={headline}
           blurb={
-            w.winner === 0
-              ? `${Math.max(0, me.kills)} wrecked, ${me.deaths} lost, ${me.hits} of ${me.shots} shells on target.`
-              : `${who(w.winner ?? 0)} took the arena. You wrecked ${Math.max(0, me.kills)} on the way down.`
+            draw
+              ? `The last two hulls went together. ${Math.max(0, me.kills)} wrecked, ${me.deaths} lost.`
+              : won
+                ? `${Math.max(0, me.kills)} wrecked, ${me.deaths} lost, ${me.hits} of ${me.shots} shells on target.`
+                : `${who(w.winner ?? 0)} took the arena. You wrecked ${Math.max(0, me.kills)} on the way down.`
           }
           label="Match over"
         >
@@ -749,7 +765,7 @@ export const game: PlayableGame = {
   rules: [
     'Drive with the stick on the left. Your gun locks itself onto the nearest tank you have a clear line to and leads the shot, so the trigger on the right is the only timing you own.',
     'Shells bounce once off the blocks and the arena walls, and a shell that has bounced will take your own plates off. Three hits wrecks a hull; a wreck costs one of your lives.',
-    'Run a tank out of lives and it is out for good. Last tank rolling takes the arena — or, if the clock beats you to it, whoever has wrecked the most.',
+    'Hulls shove each other, so you can body-block as well as shoot. Run a tank out of lives and it is out for good: last tank rolling takes the arena, or, if the clock beats you to it, whoever has wrecked the most. Wreck each other on the same tick and nobody takes it.',
   ],
 };
 
