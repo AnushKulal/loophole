@@ -39,6 +39,7 @@ import {
   type Move,
   type PieceType,
 } from '../../game/chess';
+import { ChessPiece, TakenPiece } from './ChessPieces';
 import { useTheme } from '../../theme/theme';
 import { radius as R } from '../../theme/tokens';
 
@@ -56,16 +57,6 @@ import { radius as R } from '../../theme/tokens';
  * pixels, the taps and the clock.
  */
 
-/**
- * The pieces are drawn twice: the solid glyph in the piece's own colour, then
- * the outline glyph of the same piece over it in the opposite one, which gives
- * each man a contour the way a real set does. Without it a white piece on a
- * light square is a silhouette of nothing.
- */
-const SOLID: Record<PieceType, string> = { k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' };
-const OUTLINE: Record<PieceType, string> = { k: '♔', q: '♕', r: '♖', b: '♗', n: '♘', p: '♙' };
-/** U+FE0E asks for the text face of a glyph rather than an emoji one. */
-const TEXT_FACE = '\uFE0E';
 
 /**
  * Both sets have to read against both square tints in both themes, so — like a
@@ -397,17 +388,16 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
 
 // ── the board ─────────────────────────────────────────────────────
 
-/** One man: the solid glyph, then its outline over the top for a contour. */
+/** One man: a vector piece filled in its own colour, contoured in the other. */
 function Man({ c, type, size }: { c: Color; type: PieceType; size: number }) {
-  const fill = c === 'w' ? MAN.w : MAN.b;
-  const edge = c === 'w' ? MAN.b : MAN.w;
-  const font = Math.round(size * 0.76);
-  const line = Math.round(size * 0.92);
-  const style = { fontSize: font, lineHeight: line, textAlign: 'center' as const, width: size };
   return (
     <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={[style, { color: fill }]}>{SOLID[type] + TEXT_FACE}</Text>
-      <Text style={[style, { position: 'absolute', color: edge, opacity: 0.85 }]}>{OUTLINE[type] + TEXT_FACE}</Text>
+      <ChessPiece
+        type={type}
+        size={Math.round(size * 0.86)}
+        fill={c === 'w' ? MAN.w : MAN.b}
+        edge={c === 'w' ? MAN.b : MAN.w}
+      />
     </View>
   );
 }
@@ -557,7 +547,6 @@ function Board({
  */
 function Taken({ who, pieces, lead, victims }: { who: string; pieces: PieceType[]; lead: number; victims: Color }) {
   const t = useTheme();
-  const face = victims === 'w' ? OUTLINE : SOLID;
   return (
     <View style={{ paddingHorizontal: 20, paddingVertical: 5, flexDirection: 'row', alignItems: 'center', gap: 8, height: 28 }}>
       <Kicker color={t.dim2} tracking={1.3}>
@@ -571,9 +560,7 @@ function Taken({ who, pieces, lead, victims }: { who: string; pieces: PieceType[
         style={{ flexDirection: 'row', flex: 1, minWidth: 0, alignItems: 'center' }}
       >
         {pieces.slice(0, 15).map((p, k) => (
-          <Text key={k} style={{ fontSize: 13, lineHeight: 16, marginRight: -1, color: t.dim }}>
-            {face[p] + TEXT_FACE}
-          </Text>
+          <TakenPiece key={k} type={p} size={16} ink={t.dim} victims={victims} />
         ))}
       </View>
       {lead > 0 && (
