@@ -237,16 +237,7 @@ export default function PlayerCard({ s }: { s: State }) {
               <View key={b.name} accessible accessibilityRole="image" accessibilityLabel={b.name} style={{ flex: 1 }}>
                 <Glass radius={15}>
                   <View style={{ aspectRatio: 1, alignItems: 'center', justifyContent: 'center' }}>
-                    <View
-                      style={{
-                        shadowColor: tint,
-                        shadowOffset: { width: 0, height: 0 },
-                        shadowRadius: 6,
-                        shadowOpacity: 0.9,
-                      }}
-                    >
-                      <Glyph d={b.d} size={19} color={tint} width={1.8} />
-                    </View>
+<Glyph d={b.d} size={19} color={tint} width={1.8} glow={tint} />
                   </View>
                 </Glass>
               </View>

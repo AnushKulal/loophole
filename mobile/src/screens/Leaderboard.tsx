@@ -138,10 +138,10 @@ export default function Leaderboard({ s }: { s: State }) {
         <H size={15} style={{ marginRight: 'auto' }}>
           Rankings
         </H>
-        {/* the trophy, lit — `drop-shadow(0 0 6px var(--gold))` */}
-        <View style={{ shadowColor: t.gold, shadowOffset: { width: 0, height: 0 }, shadowRadius: 6, shadowOpacity: 0.9 }}>
-          <Glyph d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0z" size={19} color={t.gold} />
-        </View>
+{/* the cup opens the tournament bracket */}
+        <Tap onPress={() => store.go('bracket')} label="Friday Cup bracket">
+          <Glyph d="M8 21h8M12 17v4M7 4h10v5a5 5 0 01-10 0z" size={19} color={t.gold} glow={t.gold} />
+        </Tap>
       </View>
 
       {/* scope */}

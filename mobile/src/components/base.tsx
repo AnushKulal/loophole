@@ -234,12 +234,20 @@ export function Glyph({
   size = 18,
   color,
   width = 2,
+  glow,
   extra,
 }: {
   d: string;
   size?: number;
   color?: string;
   width?: number;
+  /**
+   * Colour of the bloom around the stroke — the design's
+   * `filter: drop-shadow(0 0 6px …)`. React Native has no such filter, and a
+   * shadow on the wrapping View renders as a square halo, so the bloom is the
+   * same path drawn wide and translucent underneath.
+   */
+  glow?: string;
   /** Additional shapes drawn on the same grid — the rects and circles a few icons need. */
   extra?: ReactNode;
 }) {
@@ -247,6 +255,16 @@ export function Glyph({
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       {extra}
+      {glow && (
+        <Path
+          d={d}
+          stroke={glow}
+          strokeWidth={width + 3.5}
+          strokeOpacity={0.22}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      )}
       <Path d={d} stroke={color ?? t.ink} strokeWidth={width} strokeLinecap="round" strokeLinejoin="round" />
     </Svg>
   );
@@ -321,16 +339,36 @@ export function Ring({
   );
 }
 
-/** The five-axis performance matrix on the profile screens. */
-export function Radar({ points, stroke, fill, size = 212, spokes = false }: { points: string; stroke: string; fill: string; size?: number; spokes?: boolean }) {
+/**
+ * The five-axis performance matrix on the profile screens.
+ *
+ * The viewBox is padded past the polygon so the axis labels have room — at a
+ * tight 0 0 220 190 the outer ones ("BOARD", "SURVIVAL") are clipped by the
+ * edge, since a middle-anchored label extends half its width either side.
+ */
+export function Radar({
+  points,
+  stroke,
+  fill,
+  size = 212,
+  spokes = false,
+}: {
+  points: string;
+  stroke: string;
+  fill: string;
+  size?: number;
+  spokes?: boolean;
+}) {
   const t = useTheme();
-  const h = (size / 212) * 184;
+  const VB = { x: -22, y: -6, w: 264, h: 206 };
+  const h = (size * VB.h) / VB.w;
+
   const axes = [
     { label: 'BLUFF', x: 110, y: 10 },
-    { label: 'SPEED', x: 206, y: 66 },
-    { label: 'VOTES', x: 170, y: 180 },
-    { label: 'SURVIVAL', x: 50, y: 180 },
-    { label: 'BOARD', x: 14, y: 66 },
+    { label: 'SPEED', x: 208, y: 66 },
+    { label: 'VOTES', x: 172, y: 182 },
+    { label: 'SURVIVAL', x: 48, y: 182 },
+    { label: 'BOARD', x: 12, y: 66 },
   ];
   const verts: [number, number][] = [
     [110, 18],
@@ -339,8 +377,9 @@ export function Radar({ points, stroke, fill, size = 212, spokes = false }: { po
     [56, 166],
     [23, 68],
   ];
+
   return (
-    <Svg width={size} height={h} viewBox="0 0 220 190">
+    <Svg width={size} height={h} viewBox={`${VB.x} ${VB.y} ${VB.w} ${VB.h}`} accessibilityLabel="Performance matrix">
       <Polygon points="110,18 197,68 164,166 56,166 23,68" fill="none" stroke={t.line2} strokeWidth={1} />
       <Polygon points="110,60 154,86 137,136 83,136 66,86" fill="none" stroke={t.line} strokeWidth={1} />
       {spokes && verts.map(([x, y]) => <SvgLine key={`${x}-${y}`} x1={110} y1={92} x2={x} y2={y} stroke={t.line} />)}

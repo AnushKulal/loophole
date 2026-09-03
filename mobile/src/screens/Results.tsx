@@ -235,17 +235,7 @@ export default function Results({ s }: { s: State }) {
                         marginBottom: 10,
                       }}
                     >
-                      {/* the `drop-shadow` bloom the web draws with a CSS filter */}
-                      <View
-                        style={{
-                          shadowColor: tint,
-                          shadowOffset: { width: 0, height: 0 },
-                          shadowRadius: 6,
-                          shadowOpacity: 0.9,
-                        }}
-                      >
-                        <Glyph d={a.d} size={18} color={tint} width={1.8} />
-                      </View>
+<Glyph d={a.d} size={18} color={tint} width={1.8} glow={tint} />
                     </View>
                     <H size={12.5}>{a.name}</H>
                     <P size={10.5} weight={400} color={t.dim} style={{ marginTop: 3, lineHeight: 14.2 }}>

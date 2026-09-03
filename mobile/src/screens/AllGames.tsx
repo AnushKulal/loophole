@@ -47,11 +47,7 @@ function GameTile({ g }: { g: Game }) {
               end={DIM_END}
               style={StyleSheet.absoluteFill}
             />
-            {/* CSS lit the glyph with a drop-shadow filter; RN has none,
-                so the bloom is a shaped shadow on the wrapper. */}
-            <View style={{ shadowColor: neon, shadowOffset: { width: 0, height: 0 }, shadowRadius: 6, shadowOpacity: 0.9 }}>
-              <Glyph d={g.d} size={21} color={neon} width={1.8} />
-            </View>
+<Glyph d={g.d} size={21} color={neon} width={1.8} glow={neon} />
           </View>
 
           <View style={{ minWidth: 0 }}>

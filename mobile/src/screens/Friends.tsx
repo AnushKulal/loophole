@@ -269,7 +269,16 @@ export default function Friends({ s }: { s: State }) {
                   </View>
                 </Tap>
 
-                <Tap onPress={() => store.flash(`Invite sent to ${f.name}`)} label="Invite">
+                {/* Someone already at a table cannot be invited to yours — offer
+                    to watch theirs instead. */}
+                <Tap
+                  onPress={() =>
+                    f.status.includes('In a lobby')
+                      ? store.go('spectate')
+                      : store.flash(`Invite sent to ${f.name}`)
+                  }
+                  label={f.status.includes('In a lobby') ? `Watch ${f.name}` : `Invite ${f.name}`}
+                >
                   <View
                     style={{
                       height: 36,
@@ -283,7 +292,7 @@ export default function Friends({ s }: { s: State }) {
                     }}
                   >
                     <H size={11} color={t.lime}>
-                      Invite
+                      {f.status.includes('In a lobby') ? 'Watch' : 'Invite'}
                     </H>
                   </View>
                 </Tap>
