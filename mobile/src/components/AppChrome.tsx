@@ -5,6 +5,7 @@ import { Circle, Rect } from 'react-native-svg';
 import { store, type State } from '../store/useStore';
 import type { Screen } from '../store/store';
 import { RULES } from '../data/games';
+import { findGame } from '../game/registry';
 import { useTheme } from '../theme/theme';
 import { CloseIcon, Glass, Glyph, Gradient, H, Kicker, P, Tap } from './base';
 import { FadeIn } from './GameChrome';
@@ -283,7 +284,10 @@ export function ChatSheet({ s }: { s: State }) {
 /** How-to-play, reachable from the lobby and from inside a game. */
 export function RulesSheet({ game }: { game: string }) {
   const t = useTheme();
-  const steps = RULES[game] ?? RULES.UNO;
+  // Each playable title carries its own rules; `RULES` in the fixture data only
+  // ever covered the original four. Falling back to it showed UNO's rules for
+  // every other game, so the registry is consulted first.
+  const steps = findGame(game)?.rules ?? RULES[game] ?? [];
 
   return (
     <View

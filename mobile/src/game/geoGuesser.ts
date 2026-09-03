@@ -567,9 +567,13 @@ export const toXY = (p: LatLon, w = MAP_W, h = MAP_H) => ({
 
 /** The inverse — what a tap at (x, y) on a `w`×`h` map means. */
 export function toLatLon(x: number, y: number, w = MAP_W, h = MAP_H): LatLon {
+  // Total by construction: a non-finite tap maps to the map's origin rather
+  // than propagating NaN into a pin's coordinates.
+  const fx = Number.isFinite(x) ? x : 0;
+  const fy = Number.isFinite(y) ? y : 0;
   return {
-    lat: r4(90 - clamp(y / h, 0, 1) * 180),
-    lon: r4(clamp(x / w, 0, 1) * 360 - 180),
+    lat: r4(90 - clamp(fy / h, 0, 1) * 180),
+    lon: r4(clamp(fx / w, 0, 1) * 360 - 180),
   };
 }
 

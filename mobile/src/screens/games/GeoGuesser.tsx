@@ -655,6 +655,9 @@ function WorldMap({
   const press = (e: GestureResponderEvent) => {
     if (locked || !w) return;
     const { locationX, locationY } = e.nativeEvent;
+    // react-native-web does not always populate these; a NaN here would reach
+    // SVG as cx="NaN" and blank the pin.
+    if (!Number.isFinite(locationX) || !Number.isFinite(locationY)) return;
     onDrop(toLatLon(locationX, locationY, w, h));
   };
 
