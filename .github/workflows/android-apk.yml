@@ -167,7 +167,11 @@ jobs:
       - name: Report the signature
         run: |
           apksigner="$(find "$ANDROID_HOME/build-tools" -name apksigner | sort | tail -1)"
-          [ -n "$apksigner" ] && "$apksigner" verify --print-certs "${{ steps.apk.outputs.path }}" | head -20
+          if [ -n "$apksigner" ]; then
+            "$apksigner" verify --print-certs "${{ steps.apk.outputs.path }}" | head -20
+          else
+            echo "::warning::apksigner not found; cannot confirm which key signed the APK"
+          fi
 
       - name: Upload APK to the run
         uses: actions/upload-artifact@v4
