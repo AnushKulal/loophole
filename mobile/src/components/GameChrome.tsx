@@ -114,11 +114,19 @@ export interface SeatInfo {
   out?: boolean;
 }
 
-/** The opponent row along the top of a table game. */
+/**
+ * The opponent row along the top of a table game.
+ *
+ * Up to three seats fit side by side with the name beside the avatar. Past that
+ * the row is too narrow for a name — "Karthik" truncates to "Ka…" — so the seats
+ * stack the label under the avatar instead, the same shape the lobby uses.
+ */
 export function SeatStrip({ seats, onSeat }: { seats: SeatInfo[]; onSeat?: (i: number) => void }) {
   const t = useTheme();
+  const stacked = seats.length > 3;
+
   return (
-    <View style={{ flexDirection: 'row', gap: 9, paddingHorizontal: 20, paddingBottom: 14 }}>
+    <View style={{ flexDirection: 'row', gap: stacked ? 6 : 9, paddingHorizontal: 20, paddingBottom: 14 }}>
       {seats.map((p, i) => {
         const body = (
           <Glass
@@ -127,10 +135,16 @@ export function SeatStrip({ seats, onSeat }: { seats: SeatInfo[]; onSeat?: (i: n
             borderColor={p.active ? t.acc : 'transparent'}
             style={{ flex: 1, opacity: p.out ? 0.45 : 1 }}
           >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 9, padding: 9 }}>
-              <Avatar mark={p.mark} grad={p.grad} size={30} fontSize={12} />
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <H size={11} numberOfLines={1}>
+            <View
+              style={
+                stacked
+                  ? { alignItems: 'center', gap: 5, paddingVertical: 9, paddingHorizontal: 4 }
+                  : { flexDirection: 'row', alignItems: 'center', gap: 9, padding: 9 }
+              }
+            >
+              <Avatar mark={p.mark} grad={p.grad} size={stacked ? 28 : 30} fontSize={stacked ? 11 : 12} />
+              <View style={stacked ? { alignItems: 'center', width: '100%' } : { flex: 1, minWidth: 0 }}>
+                <H size={stacked ? 10 : 11} numberOfLines={1}>
                   {p.name}
                 </H>
                 <P size={9.5} color={t.dim2} numberOfLines={1}>

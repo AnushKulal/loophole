@@ -186,12 +186,7 @@ export default function Profile({ s }: { s: State }) {
               <View key={b.name} style={{ flex: 1, alignItems: 'center', gap: 6 }}>
                 <Glass radius={15} elevated={false} style={{ width: '100%' }}>
                   <View style={{ width: '100%', aspectRatio: 1, alignItems: 'center', justifyContent: 'center' }}>
-                    {/* the `drop-shadow` bloom the web draws with a CSS filter */}
-                    <View
-                      style={{ shadowColor: neon, shadowOffset: { width: 0, height: 0 }, shadowRadius: 6, shadowOpacity: 0.9 }}
-                    >
-                      <Glyph d={b.d} size={20} color={neon} width={1.8} />
-                    </View>
+<Glyph d={b.d} size={20} color={neon} width={1.8} glow={neon} />
                   </View>
                 </Glass>
                 <P size={9.5} weight={400} color={t.dim2} style={{ textAlign: 'center', lineHeight: 11.4 }}>
