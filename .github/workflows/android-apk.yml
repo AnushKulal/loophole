@@ -185,7 +185,9 @@ jobs:
       # by QR. A release asset on a public repo is a plain URL, which can.
       - name: Publish a release with a QR code
         id: release
-        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        # Every build of main gets a release, so a push is enough to produce a
+        # scannable link; a manual run can opt out by unticking publish.
+        if: github.ref == 'refs/heads/main' && (github.event_name != 'workflow_dispatch' || inputs.publish)
         env:
           GH_TOKEN: ${{ github.token }}
           APK: ${{ steps.apk.outputs.path }}
