@@ -710,3 +710,14 @@ describe('the generated scene', () => {
     expect(roadEdges(-100)).toEqual(roadEdges(HORIZON));
   });
 });
+
+describe('toLatLon robustness', () => {
+  it('never returns a non-finite point, whatever the tap carries', () => {
+    for (const bad of [NaN, Infinity, -Infinity, undefined as unknown as number]) {
+      const a = toLatLon(bad, 50);
+      const b = toLatLon(50, bad);
+      expect(Number.isFinite(a.lat) && Number.isFinite(a.lon)).toBe(true);
+      expect(Number.isFinite(b.lat) && Number.isFinite(b.lon)).toBe(true);
+    }
+  });
+});
