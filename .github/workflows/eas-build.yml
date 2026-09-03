@@ -27,13 +27,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Check for a token
-        if: ${{ !secrets.EXPO_TOKEN }}
-        run: |
-          echo "::error::EXPO_TOKEN is not set. Add it in Settings → Secrets and variables → Actions, or use the Android APK workflow instead, which needs no account."
-          exit 1
-
       - uses: actions/checkout@v4
+
+      # `secrets` is not available to a step-level `if:`, so the check happens
+      # inside the step with the token passed in as an env var. It has to come
+      # after the checkout, because every `run:` here starts in mobile/.
+      - name: Check for a token
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::EXPO_TOKEN is not set. Add it in Settings → Secrets and variables → Actions, or use the Android APK workflow instead, which needs no account."
+            exit 1
+          fi
 
       - uses: actions/setup-node@v4
         with:
