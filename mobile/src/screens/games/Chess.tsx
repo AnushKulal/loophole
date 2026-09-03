@@ -65,6 +65,28 @@ import { radius as R } from '../../theme/tokens';
  */
 const MAN = { w: '#f4f8ff', b: '#111725' };
 
+/**
+ * Which board tint is the light half, and what reads on top of it.
+ *
+ * `g2` and `g3` are neighbouring steps on the theme's ink ramp rather than a
+ * fixed light/dark pair, and the ramp runs the other way in Day: there `g3` is
+ * the brighter of the two, in Night `g2` is. So the board measures the tints it
+ * is given instead of trusting their names, and a coordinate takes whichever of
+ * the two set colours contrasts with the square under it rather than the step
+ * next door on the same ramp, which is barely a shade away from its own ground.
+ */
+function luminance(hex: string): number {
+  const n = parseInt(hex.replace('#', ''), 16) || 0;
+  const lin = (v: number) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+  return 0.2126 * lin(((n >> 16) & 255) / 255) + 0.7152 * lin(((n >> 8) & 255) / 255) + 0.0722 * lin((n & 255) / 255);
+}
+
+/** WCAG contrast between two relative luminances. */
+const ratio = (a: number, b: number) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+
+/** The man's colour that reads best on a square of this tint. */
+const inkOn = (bg: string) => (ratio(luminance(bg), luminance(MAN.w)) >= ratio(luminance(bg), luminance(MAN.b)) ? MAN.w : MAN.b);
+
 const NAME_OF: Record<PieceType, string> = {
   k: 'king',
   q: 'queen',
@@ -79,6 +101,11 @@ const CROWN = 'M4 8l3.5 3L12 5l4.5 6L20 8l-1.5 9h-13z';
 
 const ROWS = [0, 1, 2, 3, 4, 5, 6, 7];
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
+
+/** The gutter down each side of the board, inside the frame it is measured in. */
+const GUTTER = 20;
+/** The hairline the board is framed in, which stands inside that same width. */
+const FRAME = 2;
 
 /** The colour you play. White, so you always open. */
 const YOU: Color = 'w';
@@ -129,8 +156,11 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
 
   // The board is square and sized to whatever the middle of the frame leaves,
   // so it fits a short phone without ever pushing the controls off the bottom.
+  // `onLayout` reports the border box, so the gutters and the board's own frame
+  // come off the width before it is split into eight: a square sized from the
+  // outer width would sit its edge out in the margin.
   const measured = box.w > 0 && box.h > 0;
-  const side = clamp(Math.floor(Math.min(box.w, box.h) / 8), 26, 46);
+  const side = clamp(Math.floor((Math.min(box.w - GUTTER * 2, box.h) - FRAME) / 8), 26, 46);
 
   // ── the opponent thinks, then moves ───────────────────────────────
   useEffect(() => {
@@ -232,7 +262,14 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
     const won = o.winner === YOU;
     const gap = materialLead(st, YOU);
     const played = Math.max(1, st.full - (st.turn === 'w' ? 1 : 0));
-    const drawn = how === 'stalemate' ? 'stalemate' : how === 'fifty' ? 'the fifty-move rule' : 'no mating material';
+    const drawn =
+      how === 'stalemate'
+        ? 'stalemate'
+        : how === 'fifty'
+          ? 'the fifty-move rule'
+          : how === 'repetition'
+            ? 'threefold repetition'
+            : 'no mating material';
 
     const row = (p: Player, c: Color) => ({
       n: p.name,
@@ -311,7 +348,7 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
         <Taken who={foe.name} pieces={capturedBy(st, 'b')} lead={-lead} victims="w" />
 
         <View
-          style={{ flex: 1, minHeight: 0, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20 }}
+          style={{ flex: 1, minHeight: 0, alignItems: 'center', justifyContent: 'center', paddingHorizontal: GUTTER }}
           onLayout={(e: LayoutChangeEvent) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
         >
           {measured && (
@@ -423,6 +460,13 @@ function Board({
   const t = useTheme();
   const last = st.last;
 
+  // The two tints of the checkerboard and the ink that reads on each of them,
+  // decided by measuring rather than by which token is called which.
+  const shades = useMemo(() => {
+    const [pale, deep] = luminance(t.g2) >= luminance(t.g3) ? [t.g2, t.g3] : [t.g3, t.g2];
+    return { light: { bg: pale, ink: inkOn(pale) }, dark: { bg: deep, ink: inkOn(deep) } };
+  }, [t.g2, t.g3]);
+
   return (
     // The shadow and the clip are separate nodes: a node that clips its
     // children on iOS clips its own shadow too.
@@ -442,6 +486,7 @@ function Board({
           {ROWS.map((col) => {
             const i = row * 8 + col;
             const p = st.board[i];
+            const shade = isLightSquare(i) ? shades.light : shades.dark;
             const move = targets.get(i);
             const label = `${nameOf(i)}${p ? `, ${p.c === 'w' ? 'white' : 'black'} ${NAME_OF[p.t]}` : ', empty'}${
               move ? (move.cap ? ', can be taken' : ', can move here') : ''
@@ -453,7 +498,7 @@ function Board({
                   style={{
                     width: side,
                     height: side,
-                    backgroundColor: isLightSquare(i) ? t.g2 : t.g3,
+                    backgroundColor: shade.bg,
                     alignItems: 'center',
                     justifyContent: 'center',
                     opacity: live ? 1 : 0.92,
@@ -505,7 +550,7 @@ function Board({
                         bottom: 1,
                         fontSize: 8,
                         lineHeight: 10,
-                        color: isLightSquare(i) ? t.g3 : t.g2,
+                        color: shade.ink,
                       }}
                     >
                       {nameOf(i)[0]}
@@ -519,7 +564,7 @@ function Board({
                         top: 1,
                         fontSize: 8,
                         lineHeight: 10,
-                        color: isLightSquare(i) ? t.g3 : t.g2,
+                        color: shade.ink,
                       }}
                     >
                       {nameOf(i)[1]}
@@ -644,7 +689,7 @@ export const game: PlayableGame = {
   rules: [
     'You play White and move first. Tap a piece to light every square it may legally reach, then tap one of them to move there.',
     'The whole rulebook is in: castling both ways, capturing en passant, and a picker when a pawn reaches the eighth rank. A king may never be left in check.',
-    'Trap the king with no legal answer and it is checkmate. No legal move without check is stalemate — a draw, as are bare kings and fifty moves with no capture and no pawn moved.',
+    'Trap the king with no legal answer and it is checkmate. No legal move without check is stalemate — a draw, as are bare kings, the same position three times over, and fifty moves with no capture and no pawn moved.',
   ],
 };
 

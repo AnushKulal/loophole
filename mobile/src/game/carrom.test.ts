@@ -25,6 +25,7 @@ import {
   menLeft,
   placeAtCentre,
   playShot,
+  placeOf,
   pocketIndex,
   pointsFor,
   queenOnBoard,
@@ -36,6 +37,7 @@ import {
   sideOfSeat,
   sideOfTeam,
   spotFree,
+  standings,
   startMatch,
   step,
   strikerAt,
@@ -888,6 +890,27 @@ describe('the scoreboard', () => {
   it('ranks the winning side first', () => {
     const s = won();
     expect([0, 1, 2, 3].map((i) => (s.winner === teamOf(i) ? 1 : 2))).toEqual([1, 2, 1, 2]);
+    expect([0, 1, 2, 3].map((i) => placeOf(s, i))).toEqual([1, 2, 1, 2]);
+  });
+
+  it('orders the board winner-first, however the sides are seated', () => {
+    // A row's position on the scoreboard is its placing, so the losing side
+    // must never come out on top of a board it lost.
+    expect(standings(won({ seats: 2, winner: 1 }))).toEqual([1, 0]);
+    expect(standings(won({ seats: 2, winner: 0 }))).toEqual([0, 1]);
+    // In doubles the teams are seat parities, so seat order interleaves them.
+    expect(standings(won({ seats: 4, winner: 1 }))).toEqual([1, 3, 0, 2]);
+    expect(standings(won({ seats: 4, winner: 0 }))).toEqual([0, 2, 1, 3]);
+    // Winner-first, and nothing lost or invented along the way.
+    for (const seats of [2, 4]) {
+      for (const winner of [0, 1]) {
+        const s = won({ seats, winner });
+        const order = standings(s);
+        expect(order.slice().sort((a, b) => a - b)).toEqual(Array.from({ length: seats }, (_, i) => i));
+        expect(order.map((seat) => placeOf(s, seat))).toEqual(order.map((seat) => placeOf(s, seat)).slice().sort());
+        expect(placeOf(s, order[0])).toBe(1);
+      }
+    }
   });
 
   it('says what the last shot did', () => {

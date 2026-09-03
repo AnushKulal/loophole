@@ -443,6 +443,69 @@ suite('turn order', () => {
   });
 });
 
+// ── the roll on the table ─────────────────────────────────────────
+// A screen reads the die out of `last` whenever it is narrating rather than
+// drawing, so a roll that only ever showed up in `dice` left every readout a
+// whole move behind — the headline naming the previous move's die while the
+// face under it showed the new one.
+
+suite('the roll on the table', () => {
+  it('records the roll waiting to be spent, not only the move that spends it', () => {
+    let st = startMatch(4);
+    const rng = dice(6, 2);
+
+    st = rollDice(st, rng);
+    expect(st.dice).toBe(6);
+    expect(st.last).toMatchObject({ kind: 'roll', p: 0, dice: 6 });
+
+    // the six lifts a token out and buys another roll
+    st = applyMove(st, 0);
+    expect(st.turn).toBe(0);
+    expect(st.last).toMatchObject({ kind: 'move', p: 0, dice: 6 });
+
+    st = rollDice(st, rng);
+    expect(st.dice).toBe(2);
+    expect(st.last).toMatchObject({ kind: 'roll', p: 0, dice: 2 });
+  });
+
+  it('still reports a forfeit and a dead roll as such', () => {
+    const forfeit = (() => {
+      let st = startMatch(4);
+      const rng = dice(6, 6, 6);
+      st = applyMove(rollDice(st, rng), 0);
+      st = applyMove(rollDice(st, rng), 0);
+      return rollDice(st, rng);
+    })();
+    expect(forfeit.last).toMatchObject({ kind: 'forfeit', p: 0, dice: 6 });
+
+    const stuck = rollDice(rig([[HOME, HOME, HOME, HOME - 1], yard(), yard(), yard()]), dice(4));
+    expect(stuck.last).toMatchObject({ kind: 'stuck', p: 0, dice: 4 });
+  });
+
+  it('keeps the last event in step with the die, every roll of a match', () => {
+    const rng = makeRng(2091);
+    let st = startMatch(4);
+    let rolls = 0;
+    for (let step = 0; step < 20000 && st.winner === null; step++) {
+      if (st.dice === null) {
+        st = rollDice(st, rng);
+        rolls++;
+        // a roll on the table is the roll the last event names
+        if (st.dice !== null) expect(st.last?.dice).toBe(st.dice);
+        // and a roll that went nowhere still names itself
+        else if (st.winner === null) expect(st.last?.dice).toBeGreaterThanOrEqual(1);
+        continue;
+      }
+      const spent = st.dice;
+      st = applyMove(st, botMove(st, st.turn, BOT.Normal, rng));
+      expect(st.dice).toBeNull();
+      expect(st.last?.dice).toBe(spent);
+    }
+    expect(st.winner).not.toBeNull();
+    expect(rolls).toBeGreaterThan(50);
+  });
+});
+
 // ── winning ───────────────────────────────────────────────────────
 
 suite('winning', () => {
@@ -669,6 +732,8 @@ suite('narration', () => {
 
   it('says what just happened in one sentence', () => {
     expect(describe(null, name)).toBe('Roll to start');
+    expect(describe({ kind: 'roll', p: 0, dice: 6 }, name)).toBe('You rolled a 6');
+    expect(describe({ kind: 'roll', p: 2, dice: 3 }, name)).toBe('Seat 3 rolled a 3');
     expect(describe({ kind: 'move', p: 0, dice: 4 }, name)).toBe('You played a 4');
     expect(describe({ kind: 'capture', p: 0, dice: 3, captured: [{ p: 2, t: 1, from: 9 }] }, name)).toBe(
       'You sent Seat 3 back to the yard',

@@ -10,10 +10,11 @@
  * of lives puts a seat out for good.
  *
  * `step(world, dt, inputs)` is the whole simulation: turn, drive, shove out of
- * walls, fire, fly, bounce, hit, respawn, then check the clock. It knows nothing
- * about frames — the screen drives it from a requestAnimationFrame accumulator
- * at a fixed `DT`, the bots read the same world the renderer draws, and the
- * tests replay a whole match from a seed. One dt, one physics.
+ * the walls and off each other, fire, fly, bounce, hit, respawn, then check the
+ * clock. It knows nothing about frames — the screen drives it from a
+ * requestAnimationFrame accumulator at a fixed `DT`, the bots read the same
+ * world the renderer draws, and the tests replay a whole match from a seed. One
+ * dt, one physics.
  *
  * Pure data and pure transitions: no React, no clock, no `Math.random`. Chance
  * enters only through an `Rng`.
@@ -193,6 +194,55 @@ export function pushOut(walls: Rect[], x: number, y: number, r: number): Vec {
     if (!moved) break;
   }
   return { x: px, y: py };
+}
+
+/**
+ * Two hulls cannot share a patch of floor.
+ *
+ * Walls are resolved per tank by `pushOut`, but a tank is an obstacle too: every
+ * overlapping pair is parted along the line between their centres, half the
+ * overlap each so neither seat gets the better of the shove, and each half is
+ * then put back through `pushOut` so a hull shoved at a block ends up beside it
+ * rather than inside it. Three passes settle a heap. It is what lets a tank
+ * body-block, and it is what keeps two hulls from being drawn — and shot at — as
+ * one.
+ */
+export function separate(tanks: Tank[], walls: Rect[]): void {
+  const gap = TANK_R * 2;
+  for (let pass = 0; pass < 3; pass++) {
+    let moved = false;
+    for (let i = 0; i < tanks.length; i++) {
+      const a = tanks[i];
+      if (!a.alive) continue;
+      for (let j = i + 1; j < tanks.length; j++) {
+        const b = tanks[j];
+        if (!b.alive) continue;
+        let dx = b.x - a.x;
+        let dy = b.y - a.y;
+        let dist = Math.hypot(dx, dy);
+        if (dist >= gap) continue;
+        if (dist < 1e-9) {
+          // Exactly stacked: part them on a bearing fixed by the two seats, so a
+          // replay of the match is still the same replay.
+          const ang = (a.seat + b.seat * 0.5) * 1.3;
+          dx = Math.cos(ang);
+          dy = Math.sin(ang);
+          dist = 1;
+        }
+        const shove = (gap - dist) / 2;
+        const ux = (dx / dist) * shove;
+        const uy = (dy / dist) * shove;
+        const pa = pushOut(walls, a.x - ux, a.y - uy, TANK_R);
+        const pb = pushOut(walls, b.x + ux, b.y + uy, TANK_R);
+        a.x = pa.x;
+        a.y = pa.y;
+        b.x = pb.x;
+        b.y = pb.y;
+        moved = true;
+      }
+    }
+    if (!moved) break;
+  }
 }
 
 /** Liang–Barsky: does the segment touch the rect, grown by `pad`? */
@@ -400,6 +450,11 @@ export interface TankWorld {
   limit: number;
   livesPer: number;
   over: boolean;
+  /**
+   * The seat that took the arena. Null while it is still being played for, and
+   * null afterwards too when the last two hulls wrecked each other on the same
+   * tick: an out seat cannot be handed the arena, so nobody is.
+   */
   winner: number | null;
   nextId: number;
 }
@@ -432,8 +487,21 @@ export const standing = (w: TankWorld) => w.tanks.filter((t) => !t.out).map((t) 
 
 // ── setting up ────────────────────────────────────────────────────
 
-/** The lobby's minutes, kept inside something a phone match can actually run. */
-export const secondsFor = (minutes: number) => clamp(Math.round((Number(minutes) || 3) * 60), 60, 600);
+/**
+ * The lobby's minutes, as a round of the arena.
+ *
+ * Read as wall-clock minutes the setting is dead: a seat's three lives are spent
+ * in something like twenty seconds of arcade fire, so every length the lobby
+ * offers would sit above the longest match anybody ever plays, the clock would
+ * never once end a match, and two minutes and ten would be the same game. A
+ * lobby minute buys `ROUND_PER_MIN` seconds of floor instead, which lands the
+ * whole range where a match actually lives: the short end really is a timed
+ * scrap the clock decides, and the long end really does play out to the last
+ * hull rolling, with the clock left as the backstop for a table of cowards.
+ */
+export const ROUND_PER_MIN = 10;
+export const secondsFor = (minutes: number) =>
+  clamp(Math.round((Number(minutes) || 3) * ROUND_PER_MIN), 20, 100);
 /** The lobby's respawns, kept sane. */
 export const livesFor = (lives: number) => clamp(Math.round(Number(lives) || 3), 1, 9);
 export const seatsFor = (n: number) => clamp(Math.floor(n) || MIN_SEATS, MIN_SEATS, MAX_SEATS);
@@ -583,6 +651,26 @@ export function standings(w: TankWorld): number[] {
 /** 1 for the seat at the top of the board. */
 export const placeOf = (w: TankWorld, seat: number) => standings(w).indexOf(seat) + 1;
 
+/**
+ * Whoever has wrecked the most — how the clock decides a match, as against the
+ * board, which ranks a seat that is still rolling above one that is out however
+ * many hulls it took with it. On the clock the wrecks are the whole point: a
+ * seat that spent its last life taking three tanks down beat the one that sat in
+ * a corner keeping its lives, and the rules sheet promises exactly that.
+ */
+export function mostWrecks(w: TankWorld): number {
+  return w.tanks
+    .map((t) => t)
+    .sort(
+      (a, b) =>
+        b.kills - a.kills ||
+        a.deaths - b.deaths ||
+        b.lives - a.lives ||
+        Number(a.out) - Number(b.out) ||
+        a.seat - b.seat,
+    )[0].seat;
+}
+
 function muzzle(t: Tank, walls: Rect[]): Vec {
   const d = TANK_R + SHELL_R * 2.2;
   const x = t.x + Math.cos(t.turret) * d;
@@ -602,8 +690,9 @@ function shellBlocked(walls: Rect[], x: number, y: number): boolean {
  * One tick of the whole arena.
  *
  * Order matters and is fixed: clocks, respawns, then every tank turns, drives
- * and shoots off the same snapshot, then the shells fly and bounce, then the
- * hits land, then the match is asked whether it is finished. `inputs` is keyed
+ * and shoots off the same snapshot, then the hulls are parted from each other,
+ * then the shells fly and bounce, then the hits land, then the match is asked
+ * whether it is finished. `inputs` is keyed
  * by seat; a seat with no input coasts. Illegal orders are ignored rather than
  * thrown — a frame loop has nowhere to put an exception.
  */
@@ -687,6 +776,11 @@ export function step(w: TankWorld, dt: number, inputs: Record<number, Input> = {
       n.shots += 1;
     }
   }
+
+  // ── hulls part from each other ──────────────────────────────────
+  // Every tank has moved off the same snapshot, so two of them can have driven
+  // into the same patch of floor. Neither may keep it.
+  separate(tanks, walls);
 
   // ── shells fly and bounce ───────────────────────────────────────
   for (const s of w.shells) {
@@ -779,7 +873,14 @@ export function step(w: TankWorld, dt: number, inputs: Record<number, Input> = {
     winner: null,
     nextId,
   };
-  if (over) out.winner = lastOne && left.length === 1 ? left[0].seat : standings(out)[0];
+  if (over) {
+    // The last hull rolling takes the arena. The last two wrecking each other on
+    // the same tick leave nobody to take it: a seat that is out is out, and the
+    // arena cannot be handed to it — least of all to whichever of them happens
+    // to sit in the lower seat, which is always the player. Otherwise it is the
+    // clock that ended the match, and the clock counts wrecks.
+    out.winner = lastOne ? (left.length === 1 ? left[0].seat : null) : mostWrecks(out);
+  }
   return out;
 }
 

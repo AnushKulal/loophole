@@ -13,6 +13,7 @@ import {
   MIN_SEATS,
   ORB_POINTS,
   ORB_R,
+  PROJ_DT,
   RUNNER_R,
   SIGHT,
   SPEED_0,
@@ -32,6 +33,7 @@ import {
   generateTo,
   group,
   hitsSlab,
+  horizonFor,
   lineFor,
   livesFor,
   newCourse,
@@ -42,6 +44,7 @@ import {
   scoreOf,
   seatsFor,
   secondsFor,
+  sightFor,
   slabAt,
   speedAt,
   speedRamp,
@@ -464,9 +467,21 @@ describe('the lobby options', () => {
 
   it('sets the round length', () => {
     expect(secondsFor(1)).toBe(60);
-    expect(secondsFor(0.1)).toBe(40);
-    expect(secondsFor(99)).toBe(110);
+    expect(secondsFor(0.1)).toBe(60);
+    expect(secondsFor(99)).toBe(600);
     expect(startMatch(2, 3, 1, makeRng(1)).limit).toBe(60);
+    // An option that never arrived falls back to the lobby's own default.
+    expect(secondsFor(Number.NaN)).toBe(180);
+  });
+
+  it('gives every match length the lobby offers its own round', () => {
+    // The Arcade stepper runs from two minutes to ten in whole minutes, and a
+    // player who moves it has to get a different clock for it.
+    const minutes = [2, 3, 4, 5, 6, 7, 8, 9, 10];
+    const lengths = minutes.map(secondsFor);
+    expect(lengths).toEqual([120, 180, 240, 300, 360, 420, 480, 540, 600]);
+    expect(new Set(lengths).size).toBe(minutes.length);
+    for (const m of minutes) expect(startMatch(2, 3, m, makeRng(1)).limit).toBe(m * 60);
   });
 
   it('sets the seats, inside what the corridor holds', () => {
@@ -623,6 +638,53 @@ describe('the bot', () => {
     expect(SIGHT / SPEED_MAX).toBeLessThan(1);
     const never: Rng = () => 0.999;
     expect(botFlip(w, 0, BOT.Sharp, never, 0.05)).toBe(false);
+  });
+
+  it('is held to the sight line even at its sharpest', () => {
+    // The scene puts SIGHT of track in front of the runner, and that is the
+    // whole of a bot's licence: the best eyes reach it exactly, never past it.
+    expect(sightFor(1)).toBeCloseTo(SIGHT, 9);
+    expect(sightFor(0)).toBeLessThan(SIGHT);
+    expect(sightFor(0.4)).toBeLessThan(sightFor(0.8));
+    for (const d of DIFFS) {
+      expect(sightFor(BOT[d].skill)).toBeLessThanOrEqual(SIGHT);
+      // A projection walks in whole PROJ_DT steps, so it is the track those
+      // steps actually touch — not the horizon on paper — that has to fit.
+      for (let speed = SPEED_0; speed <= SPEED_MAX + 1e-9; speed += 0.01) {
+        const walked = Math.ceil(horizonFor(BOT[d], speed) / PROJ_DT) * PROJ_DT * speed;
+        expect(walked).toBeLessThanOrEqual(sightFor(BOT[d].skill) + 1e-9);
+      }
+    }
+  });
+
+  it('cannot be moved by a slab the player has not been shown', () => {
+    // At full tilt the sight line is the binding one. A wall further off than
+    // that — clear of it by more than the runner is wide — is track nobody has
+    // drawn yet, so adding it must not change a single decision.
+    const never: Rng = () => 0.999;
+    const states = [
+      { y: TRACK - RUNNER_R, vy: 0, flipped: false },
+      { y: 0.3, vy: 1.2, flipped: false },
+      { y: 0.75, vy: -1.2, flipped: true },
+      { y: RUNNER_R, vy: 0, flipped: true },
+    ];
+    const spans = [
+      { y0: 0.4, y1: TRACK },
+      { y0: 0, y1: 0.6 },
+    ];
+    for (const d of DIFFS) {
+      for (const s of states) {
+        for (const span of spans) {
+          for (let wx = SIGHT + 2 * RUNNER_R; wx <= 2.4; wx += 0.04) {
+            const clear = { ...rig([]), speed: SPEED_MAX };
+            clear.runners[0] = { ...clear.runners[0], ...s };
+            const walled = { ...rig([{ x: wx, w: 0.4, ...span }]), speed: SPEED_MAX };
+            walled.runners[0] = { ...walled.runners[0], ...s };
+            expect(botFlip(walled, 0, BOT[d], never, 0.05)).toBe(botFlip(clear, 0, BOT[d], never, 0.05));
+          }
+        }
+      }
+    }
   });
 
   it('projects the same physics the world runs', () => {

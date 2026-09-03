@@ -4,7 +4,8 @@
  * Legal move generation covers castling (including the rule that the king may
  * neither start, pass through, nor land on an attacked square), en passant and
  * promotion. A position is terminal on checkmate, stalemate, insufficient
- * material or the fifty-move rule, and either side may resign.
+ * material, threefold repetition or the fifty-move rule, and either side may
+ * resign.
  *
  * The opponent is a negamax search with alpha-beta pruning over material values
  * plus piece-square tables, extended by a capture-only quiescence search so it
@@ -114,6 +115,17 @@ export interface ChessState {
   full: number;
   /** Algebraic notation of every move played, in order. */
   moves: string[];
+  /**
+   * What each side has actually taken, in the order it came off the board.
+   * Kept rather than inferred from the gaps in an army, because a promotion
+   * fills a gap nobody made and empties one nobody took from.
+   */
+  captured: Record<Color, PieceType[]>;
+  /**
+   * A repetition key for every position that has stood since the last capture
+   * or pawn move, this one included. Three of the same key is a draw.
+   */
+  seen: string[];
   /** The move just played, so the screen can light both of its squares. */
   last: Move | null;
   /** Whoever resigned, if anybody did. */
@@ -146,7 +158,10 @@ export function fromFen(fen: string): ChessState {
     board[sq++] = piece(ch === ch.toUpperCase() ? 'w' : 'b', t);
   }
   if (sq !== 64) throw new Error('FEN does not describe 64 squares');
-  return {
+  // A FEN is a position with no history behind it: nothing was watched being
+  // taken and nothing has stood twice, so the captures are read off the gaps in
+  // each army — the one guess available — and the repetition record opens here.
+  const s: ChessState = {
     board,
     turn: turn === 'b' ? 'b' : 'w',
     castling: {
@@ -159,9 +174,13 @@ export function fromFen(fen: string): ChessState {
     half: Number(half) || 0,
     full: Number(full) || 1,
     moves: [],
+    captured: { w: missingFrom(board, 'b'), b: missingFrom(board, 'w') },
+    seen: [],
     last: null,
     resigned: null,
   };
+  s.seen.push(positionKey(s));
+  return s;
 }
 
 /** Writes the position back out, so a test can compare two states by string. */
@@ -556,7 +575,11 @@ function step(s: ChessState, m: Move): ChessState {
     ep: m.dbl ? sqAt(rowOf(m.from) + forwardOf(c), colOf(m.from)) : null,
     half: m.t === 'p' || m.cap ? 0 : s.half + 1,
     full: c === 'b' ? s.full + 1 : s.full,
+    // The bookkeeping a search never reads is carried across untouched and
+    // written by `applyMove`, which is the only place a move is really played.
     moves: s.moves,
+    captured: s.captured,
+    seen: s.seen,
     last: m,
     resigned: s.resigned,
   };
@@ -595,17 +618,25 @@ export function notation(s: ChessState, m: Move): string {
  * Play a move. Throws on an illegal one — ask `findMove` first.
  *
  * The whole position moves forward: the board, the castling rights, the
- * en-passant window, the fifty-move clock and the notation log. A promotion
- * with no piece named becomes a queen, which is what the picker offers first.
+ * en-passant window, the fifty-move clock, the notation log, the men taken and
+ * the repetition record. A promotion with no piece named becomes a queen,
+ * which is what the picker offers first.
  */
 export function applyMove(s: ChessState, m: Move): ChessState {
   if (s.resigned) throw new Error('The game is over');
   const legal = findMove(s, m.from, m.to, m.promo);
   if (!legal) throw new Error(`Illegal move ${nameOf(m.from)}${nameOf(m.to)}`);
   if (m.promo && legal.promo !== m.promo) throw new Error(`Illegal promotion ${nameOf(m.from)}${nameOf(m.to)}`);
+  const c = s.turn;
   const text = notation(s, legal);
   const next = step(s, legal);
-  return { ...next, moves: s.moves.concat(text) };
+  const captured: Record<Color, PieceType[]> = legal.cap
+    ? { ...s.captured, [c]: s.captured[c].concat(legal.cap) }
+    : s.captured;
+  // A capture or a pawn move draws a line under the record: no position before
+  // it can ever stand again, so the repetition history starts over from here.
+  const key = positionKey(next);
+  return { ...next, moves: s.moves.concat(text), captured, seen: next.half === 0 ? [key] : s.seen.concat(key) };
 }
 
 /** Concede. The position stops mattering. */
@@ -638,13 +669,33 @@ export function insufficient(s: ChessState): boolean {
   return false;
 }
 
-export type Status = 'playing' | 'checkmate' | 'stalemate' | 'insufficient' | 'fifty' | 'resigned';
+/** How many times one position must stand before it is a draw. */
+export const REPETITIONS = 3;
+
+/**
+ * What has to match for two positions to be the same one: where the men stand,
+ * who is to move, what either side may still castle, and whether a pawn may be
+ * taken en passant. That is the first four fields of the FEN — the two clocks
+ * are the part of it that says how long we have been here, not where.
+ */
+const positionKey = (s: ChessState): string => toFen(s).split(' ').slice(0, 4).join(' ');
+
+/** How many times the position now on the board has stood, this one included. */
+export function repetitions(s: ChessState): number {
+  const key = positionKey(s);
+  let n = 0;
+  for (const k of s.seen) if (k === key) n++;
+  return n;
+}
+
+export type Status = 'playing' | 'checkmate' | 'stalemate' | 'insufficient' | 'repetition' | 'fifty' | 'resigned';
 
 /** Where the position stands. */
 export function status(s: ChessState): Status {
   if (s.resigned) return 'resigned';
   if (legalMoves(s).length === 0) return inCheck(s) ? 'checkmate' : 'stalemate';
   if (insufficient(s)) return 'insufficient';
+  if (repetitions(s) >= REPETITIONS) return 'repetition';
   if (s.half >= FIFTY) return 'fifty';
   return 'playing';
 }
@@ -676,6 +727,8 @@ export function outcomeText(o: Outcome, nameFor: (c: Color) => string): string {
       return 'Stalemate — a draw';
     case 'insufficient':
       return 'Insufficient material — a draw';
+    case 'repetition':
+      return 'The same position three times — a draw';
     case 'fifty':
       return 'Fifty moves without a capture — a draw';
     default:
@@ -687,17 +740,32 @@ export function outcomeText(o: Outcome, nameFor: (c: Color) => string): string {
 
 const FULL_SET: Record<PieceType, number> = { p: 8, n: 2, b: 2, r: 2, q: 1, k: 1 };
 
-/** What `c` has taken off the board, biggest piece first. */
-export function capturedBy(s: ChessState, c: Color): PieceType[] {
-  const enemy = other(c);
+/**
+ * What is missing from `c`'s army, biggest piece first — the only reading of a
+ * position that arrives with no history behind it, so it is what `fromFen`
+ * opens the record with. A promoted man stands in the gap its pawn left, so
+ * every piece beyond a full set is counted back as one pawn nobody took.
+ *
+ * The arithmetic is also why this cannot be the answer once a game is running:
+ * a queen taken and a queen promoted cancel out on the board but are two
+ * different things, so from the first move on the record is kept, not redone.
+ */
+function missingFrom(board: Board, c: Color): PieceType[] {
   const alive: Record<PieceType, number> = { p: 0, n: 0, b: 0, r: 0, q: 0, k: 0 };
-  for (const p of s.board) if (p && p.c === enemy) alive[p.t]++;
+  for (const p of board) if (p && p.c === c) alive[p.t]++;
   const out: PieceType[] = [];
-  for (const t of ['q', 'r', 'b', 'n', 'p'] as PieceType[]) {
+  let promoted = 0;
+  for (const t of ['q', 'r', 'b', 'n'] as PieceType[]) {
+    promoted += Math.max(0, alive[t] - FULL_SET[t]);
     for (let i = 0; i < Math.max(0, FULL_SET[t] - alive[t]); i++) out.push(t);
   }
+  for (let i = 0; i < Math.max(0, FULL_SET.p - alive.p - promoted); i++) out.push('p');
   return out;
 }
+
+/** What `c` has taken off the board, biggest piece first. */
+export const capturedBy = (s: ChessState, c: Color): PieceType[] =>
+  s.captured[c].slice().sort((a, b) => VALUE[b] - VALUE[a]);
 
 /** Material lead for `c`, in pawns. Positive means ahead. */
 export function materialLead(s: ChessState, c: Color): number {

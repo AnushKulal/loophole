@@ -365,8 +365,13 @@ export const scoreOf = (r: Runner) => Math.round(r.dist * DIST_POINTS) + r.orbs 
 
 // ── setting up ────────────────────────────────────────────────────
 
-/** The lobby's minutes, kept inside something a runner can actually survive. */
-export const secondsFor = (minutes: number) => clamp(Math.round((Number(minutes) || 3) * 60), 40, 110);
+/**
+ * The lobby's minutes, in seconds. The Arcade stepper offers two to ten of them
+ * and every step has to buy a different round, so the clamp spans the whole
+ * range it can hand over — it is here to catch an option that never arrived,
+ * not to trim the one the player chose.
+ */
+export const secondsFor = (minutes: number) => clamp(Math.round((Number(minutes) || 3) * 60), 60, 600);
 /** The lobby's respawns, kept sane. */
 export const livesFor = (lives: number) => clamp(Math.round(Number(lives) || 3), 1, 9);
 export const seatsFor = (n: number) => clamp(Math.floor(n) || MIN_SEATS, MIN_SEATS, MAX_SEATS);
@@ -606,6 +611,26 @@ export const PROJ_DT = 1 / 24;
  */
 export const FLIP_COOLDOWN = 0.09;
 
+/**
+ * How far ahead a bot of this skill is allowed to read the corridor. It reaches
+ * `SIGHT` at skill 1 and stops there: the sharpest bot sees exactly the track
+ * the glass is showing the player, and a clumsy one rather less of it.
+ */
+export const sightFor = (skill: number) => SIGHT * (0.62 + 0.38 * clamp(skill, 0, 1));
+
+/**
+ * The seconds a bot may project over at this speed: how far ahead it can think
+ * at all, capped by its eyes. A projection walks in whole `PROJ_DT` steps, so
+ * the cap is rounded down to a whole one of them — a part step would still land
+ * its last sample on track the player has not been shown.
+ */
+export function horizonFor(bot: BotProfile, speed: number): number {
+  const skill = clamp(bot.skill, 0, 1);
+  const think = (0.55 + 0.34 * Math.max(1, bot.depth)) * (0.62 + 0.38 * skill);
+  const steps = Math.floor(sightFor(skill) / Math.max(0.1, speed) / PROJ_DT);
+  return Math.min(think, steps * PROJ_DT);
+}
+
 export interface Projection {
   /** Seconds survived, capped at the horizon. */
   time: number;
@@ -713,11 +738,7 @@ export function botFlip(w: FlipWorld, seat: number, bot: BotProfile, rng: Rng, d
 
   // Eyes: never further than the track a player can see, and a clumsy bot sees
   // rather less of even that.
-  const sight = SIGHT * (0.72 + 0.38 * skill);
-  const horizon = Math.min(
-    (0.55 + 0.34 * Math.max(1, bot.depth)) * (0.62 + 0.38 * skill),
-    sight / Math.max(0.1, w.speed),
-  );
+  const horizon = horizonFor(bot, w.speed);
   const stay = bestPlan(w, seat, false, horizon, bot.depth);
   const turn = bestPlan(w, seat, true, horizon, bot.depth);
 

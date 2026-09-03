@@ -26,6 +26,8 @@ import {
 } from '../../game/contract';
 import {
   COLOURS,
+  MAX_SEATS,
+  MIN_SEATS,
   UC,
   UNAME,
   applyCard,
@@ -37,6 +39,7 @@ import {
   faceOf,
   isValid,
   nextSeat,
+  takeStack,
   type Card,
   type CardColour,
   type Colour,
@@ -48,24 +51,26 @@ import { radius as R } from '../../theme/tokens';
 /**
  * UNO.
  *
- * A full 108-card round for four hands, seat 0 being you. The three things you
- * play from are always on screen at once: the colour in force, the card on the
- * pile, and your hand — where anything you may legally play lifts out of the
- * row and brightens, so a legal move is something you see rather than something
- * you work out. Everything else (the deck, the direction, who is close to going
- * out) sits in the seat strip and the header.
+ * A full 108-card round for the seats the lobby agreed — two to six hands, seat
+ * 0 being you. The three things you play from are always on screen at once: the
+ * colour in force, the card on the pile, and your hand — where anything you may
+ * legally play lifts out of the row and brightens, so a legal move is something
+ * you see rather than something you work out. Everything else (the deck, the
+ * direction, who is close to going out) sits in the seat strip and the header.
  *
  * The rules live in `src/game/uno.ts` and are pure; this screen owns the state
- * and the clock, and drives the three bots off `BOT[difficulty]`.
+ * and the clock, and drives the bots off `BOT[difficulty]`.
  */
-
-/** The engine deals four hands, so the table is you and three seats. */
-const SEATS = 4;
 
 const clamp = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
 
 /** Deep enough that `drawTo` and `applyCard` can mutate without touching state. */
-const clone = (u: UnoState): UnoState => ({ ...u, deck: u.deck.slice(), hands: u.hands.map((h) => h.slice()) });
+const clone = (u: UnoState): UnoState => ({
+  ...u,
+  deck: u.deck.slice(),
+  discard: u.discard.slice(),
+  hands: u.hands.map((h) => h.slice()),
+});
 
 /** How a card reads out loud — "Coral draw two" rather than "R +2". */
 const VALUE_NAME: Record<string, string> = {
@@ -81,13 +86,23 @@ const say = (c: Card) => `${UNAME[c.c]} ${VALUE_NAME[c.v] ?? c.v}`;
 const played = (c: Card, chosen: CardColour | null) =>
   c.c === 'W' ? `${VALUE_NAME[c.v] ?? c.v} → ${UNAME[chosen ?? 'W']}` : say(c);
 
+/** What the table is waiting on you for — a live +2 stack is not just "your move". */
+const yourCue = (u: UnoState) => (u.draw > 0 ? `Take ${u.draw} or answer with a +2` : 'Your move');
+
 // ── moves ───────────────────────────────────────────────────────────
 
 /**
  * Seat `seat` plays the card at `idx`. An empty hand ends the round there and
  * then — the card still lands on the pile so you can see what went out on.
  */
-function playFrom(prev: UnoState, seat: number, idx: number, chosen: CardColour | null, who: (i: number) => string): UnoState {
+function playFrom(
+  prev: UnoState,
+  seat: number,
+  idx: number,
+  chosen: CardColour | null,
+  who: (i: number) => string,
+  rng: Rng,
+): UnoState {
   const u = clone(prev);
   const hand = u.hands[seat];
   const card = hand[idx];
@@ -99,43 +114,60 @@ function playFrom(prev: UnoState, seat: number, idx: number, chosen: CardColour 
 
   if (!hand.length) {
     u.winner = seat;
+    u.discard.push(u.top);
     u.top = card;
     u.colour = card.c === 'W' ? (chosen ?? u.colour) : card.c;
     u.log = seat === 0 ? 'You went out' : `${who(seat)} went out`;
     return u;
   }
 
-  applyCard(u, card, chosen, seat);
+  applyCard(u, card, chosen, seat, rng);
   u.log =
     seat === 0
       ? hand.length === 1
         ? 'One card left — say it'
         : 'Waiting on the table'
       : `${who(seat)} played ${played(card, chosen)}`;
-  if (u.turn === 0 && seat !== 0) u.log = 'Your move';
+  if (u.turn === 0 && seat !== 0) u.log = yourCue(u);
   return u;
 }
 
 /**
- * Seat `seat` takes one off the deck. A drawn card that happens to fit goes
+ * Seat `seat` takes off the deck. A live +2 stack is taken whole and ends the
+ * turn; otherwise it is one card, and a drawn card that happens to fit goes
  * straight back down when `playIt` is set — that is the human's draw pile, and
  * the sharper bots do the same rather than sitting on a live card.
  */
-function drawFrom(prev: UnoState, seat: number, playIt: boolean, who: (i: number) => string): UnoState {
+function drawFrom(prev: UnoState, seat: number, playIt: boolean, who: (i: number) => string, rng: Rng): UnoState {
   const u = clone(prev);
-  drawTo(u, seat, 1);
-  const hand = u.hands[seat];
-  const card = hand[hand.length - 1];
 
-  if (playIt && card.c !== 'W' && isValid(card, u)) {
+  if (u.draw > 0) {
+    const owed = u.draw;
+    takeStack(u, seat, rng);
+    u.log = seat === 0 ? `You took ${owed} cards` : `${who(seat)} took ${owed} cards`;
+    if (u.turn === 0 && seat !== 0) u.log = yourCue(u);
+    return u;
+  }
+
+  drawTo(u, seat, 1, rng);
+  const hand = u.hands[seat];
+  // Deck and discards can both be dry, in which case nothing was taken at all.
+  const drew = hand.length > prev.hands[seat].length;
+  const card = drew ? hand[hand.length - 1] : null;
+
+  if (card && playIt && card.c !== 'W' && isValid(card, u, hand)) {
     hand.pop();
-    applyCard(u, card, null, seat);
+    applyCard(u, card, null, seat, rng);
     u.log = seat === 0 ? `Drew ${say(card)} and played it` : `${who(seat)} drew ${say(card)} and played it`;
   } else {
-    u.turn = nextSeat(u.dir, seat, false);
-    u.log = seat === 0 ? 'You drew a card' : `${who(seat)} drew a card`;
+    u.turn = nextSeat(u.dir, seat, false, u.hands.length);
+    u.log = !drew
+      ? 'Nothing left to draw — the turn passes'
+      : seat === 0
+        ? 'You drew a card'
+        : `${who(seat)} drew a card`;
   }
-  if (u.turn === 0 && seat !== 0) u.log = 'Your move';
+  if (u.turn === 0 && seat !== 0) u.log = yourCue(u);
   return u;
 }
 
@@ -147,12 +179,14 @@ function drawFrom(prev: UnoState, seat: number, playIt: boolean, who: (i: number
  */
 function botPick(u: UnoState, seat: number, bot: BotProfile, rng: Rng): number {
   const hand = u.hands[seat];
-  const legal = hand.map((c, i) => (isValid(c, u) ? i : -1)).filter((i) => i >= 0);
+  // `isValid` sees the whole hand, so a +4 held alongside the live colour is
+  // never in this list — the bots punish with what the rules allow them.
+  const legal = hand.map((c, i) => (isValid(c, u, hand) ? i : -1)).filter((i) => i >= 0);
   if (!legal.length) return -1;
   if (rng() < bot.blunder || rng() > bot.skill) return pick(legal, rng);
 
   if (bot.depth >= 2) {
-    const target = u.hands[nextSeat(u.dir, seat, false)];
+    const target = u.hands[nextSeat(u.dir, seat, false, u.hands.length)];
     if (target.length <= 2) {
       const punish = ['+4', '+2', 'skip'].map((v) => legal.find((i) => hand[i].v === v)).find((i) => i !== undefined);
       if (punish !== undefined) return punish;
@@ -167,22 +201,28 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
   const t = useTheme();
   const bot = BOT[config.difficulty];
 
-  // Four hands are dealt, so any seat the lobby did not fill is a house seat.
+  // Board option: how many seats sit down. Only the lobby's own players are
+  // dealt in — a seat nobody filled is a seat that does not exist.
   const roster = [config.you, ...config.opponents];
-  const table: Player[] = Array.from(
-    { length: SEATS },
-    (_, i) => roster[i] ?? { name: `Seat ${i + 1}`, mark: '●', grad: cardGrad(COLOURS[i % 4]), bot: true },
-  );
-  const who = (i: number) => table[i].name;
+  const wanted = clamp(Math.round(config.options.players) || roster.length, MIN_SEATS, MAX_SEATS);
+  const table: Player[] = roster.slice(0, wanted);
+  const seats = Math.max(MIN_SEATS, table.length);
+  /** Only reached if a lobby somehow starts one-handed; every seat still gets a name and a row. */
+  const seatAt = (i: number): Player =>
+    table[i] ?? { name: `Seat ${i + 1}`, mark: '●', grad: cardGrad(COLOURS[i % COLOURS.length]), bot: true };
+  const who = (i: number) => seatAt(i).name;
 
   /** Board option: how long a turn may be held before it plays itself. */
   const clock = clamp(Math.round(config.options.turn) || 20, 5, 90);
+  /** UNO's own lobby rule: a +2 may be answered with a +2 instead of drawing. */
+  const stacking = config.options.stack !== false;
 
-  // One seeded stream drives every bot decision, exactly as the tests do.
-  const rng = useRef<Rng | null>(null);
-  if (!rng.current) rng.current = makeRng(Math.floor(Math.random() * 0x7fffffff));
+  // One seeded stream drives the deal, every reshuffle and every bot decision.
+  const seed = useRef<Rng | null>(null);
+  if (!seed.current) seed.current = makeRng(Math.floor(Math.random() * 0x7fffffff));
+  const rng = seed.current;
 
-  const [st, setSt] = useState<UnoState>(() => deal());
+  const [st, setSt] = useState<UnoState>(() => deal(seats, rng, stacking));
   const [emote, setEmote] = useState<string | null>(null);
   const [secs, setSecs] = useState(clock);
   const stRef = useRef(st);
@@ -200,11 +240,11 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
     const id = setTimeout(() => {
       setSt((cur) => {
         if (cur.winner !== null || cur.turn !== seat) return cur;
-        const i = botPick(cur, seat, bot, rng.current as Rng);
-        if (i < 0) return drawFrom(cur, seat, bot.depth >= 2, who);
+        const i = botPick(cur, seat, bot, rng);
+        if (i < 0) return drawFrom(cur, seat, bot.depth >= 2, who, rng);
         const card = cur.hands[seat][i];
         const rest = cur.hands[seat].filter((_, k) => k !== i);
-        return playFrom(cur, seat, i, card.c === 'W' ? bestColour(rest) : null, who);
+        return playFrom(cur, seat, i, card.c === 'W' ? bestColour(rest) : null, who, rng);
       });
     }, bot.think);
     return () => clearTimeout(id);
@@ -226,8 +266,8 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
       clearInterval(id);
       const cur = stRef.current;
       if (cur.winner !== null || cur.turn !== 0) return;
-      setSt(drawFrom(cur, 0, true, who));
-      onToast('Time — you drew');
+      setSt(drawFrom(cur, 0, true, who, rng));
+      onToast(cur.draw > 0 ? `Time — you took ${cur.draw}` : 'Time — you drew');
     }, 1000);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -246,25 +286,30 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
     if (!myTurn) return onToast('Wait for your turn');
     const card = st.hands[0][i];
     if (!card) return;
-    if (!isValid(card, st)) return onToast('That card does not match');
+    if (!isValid(card, st, st.hands[0])) {
+      if (st.draw > 0) return onToast(`Answer with a +2 or take ${st.draw}`);
+      // A +4 is only yours to play when you are out of the colour in force.
+      if (card.v === '+4') return onToast(`You still hold ${UNAME[st.colour]}`);
+      return onToast('That card does not match');
+    }
     // A wild needs a colour before it can resolve — open the picker.
     if (card.c === 'W') return setSt({ ...st, need: true, pending: i });
-    setSt(playFrom(st, 0, i, null, who));
+    setSt(playFrom(st, 0, i, null, who, rng));
   };
 
   const chooseColour = (c: Colour) => {
     if (st.pending === null) return;
-    setSt(playFrom(st, 0, st.pending, c, who));
+    setSt(playFrom(st, 0, st.pending, c, who, rng));
   };
 
   const drawOne = () => {
     if (over) return;
     if (!myTurn) return onToast('Wait for your turn');
-    setSt(drawFrom(st, 0, true, who));
+    setSt(drawFrom(st, 0, true, who, rng));
   };
 
   const again = () => {
-    setSt(deal());
+    setSt(deal(seats, rng, stacking));
     setSecs(clock);
   };
 
@@ -283,29 +328,35 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
       note: won
         ? 'Hand emptied before anybody could stack a +4 on you.'
         : `${mine} card${mine === 1 ? '' : 's'} still in your hand when it ended.`,
-      rows: table
-        .map((p, i) => ({
+      // One row per seat that was dealt in, so nobody at the table is missing.
+      rows: Array.from({ length: seats }, (_, i) => {
+        const p = seatAt(i);
+        return {
           n: p.name,
           d: i === w ? 'Went out' : `${st.hands[i].length} cards left`,
           s: i === w ? '+240' : '+40',
           win: i === w,
           mark: p.mark,
           grad: p.grad,
-        }))
-        .sort((a, b) => (b.win ? 1 : 0) - (a.win ? 1 : 0)),
+        };
+      }).sort((a, b) => (b.win ? 1 : 0) - (a.win ? 1 : 0)),
     });
   };
 
   // ── chrome ────────────────────────────────────────────────────────
 
-  const seats: SeatInfo[] = [1, 2, 3].map((i) => ({
-    name: table[i].name,
-    mark: table[i].mark,
-    grad: table[i].grad,
-    sub: `${st.hands[i].length} card${st.hands[i].length === 1 ? '' : 's'}`,
-    active: st.turn === i && !over,
-    out: st.winner === i,
-  }));
+  const strip: SeatInfo[] = Array.from({ length: seats - 1 }, (_, k) => {
+    const i = k + 1;
+    const p = seatAt(i);
+    return {
+      name: p.name,
+      mark: p.mark,
+      grad: p.grad,
+      sub: `${st.hands[i].length} card${st.hands[i].length === 1 ? '' : 's'}`,
+      active: st.turn === i && !over,
+      out: st.winner === i,
+    };
+  });
 
   return (
     <GameShell>
@@ -318,7 +369,7 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
         onExit={onExit}
       />
 
-      <SeatStrip seats={seats} />
+      <SeatStrip seats={strip} />
 
       <View style={{ flex: 1, minHeight: 0, alignItems: 'center', justifyContent: 'center', gap: 14, paddingHorizontal: 20 }}>
         <View style={{ position: 'absolute', top: 0, left: 0, right: 0, alignItems: 'center' }} pointerEvents="none">
@@ -328,7 +379,7 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
         <ColourPill colour={st.colour} dir={st.dir} />
 
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
-          <DrawPile onPress={drawOne} live={myTurn} left={st.deck.length} />
+          <DrawPile onPress={drawOne} live={myTurn} left={st.deck.length} owed={st.draw} />
           <TopCard card={st.top} />
         </View>
 
@@ -428,16 +479,23 @@ function TopCard({ card }: { card: Card }) {
   );
 }
 
-/** The deck. Tapping it takes one card, and plays it if it happens to fit. */
-function DrawPile({ onPress, live, left }: { onPress: () => void; live: boolean; left: number }) {
+/**
+ * The deck. Tapping it takes one card, and plays it if it happens to fit —
+ * or takes the whole +2 pile when one is stacked on you.
+ */
+function DrawPile({ onPress, live, left, owed }: { onPress: () => void; live: boolean; left: number; owed: number }) {
   const t = useTheme();
   return (
-    <Tap onPress={onPress} label={`Draw a card, ${left} left in the deck`} style={{ opacity: live ? 1 : 0.55 }}>
+    <Tap
+      onPress={onPress}
+      label={owed > 0 ? `Take ${owed} cards, ${left} left in the deck` : `Draw a card, ${left} left in the deck`}
+      style={{ opacity: live ? 1 : 0.55 }}
+    >
       <Glass radius={16} borderColor={live ? t.line2 : undefined} style={{ width: 74, height: 106 }}>
         <View style={{ width: 72, height: 104, alignItems: 'center', justifyContent: 'center' }}>
           <Glyph d="M12 5v14M5 12h14" size={26} width={2.2} glow={live ? t.acc : undefined} />
-          <Kicker color={t.dim2} tracking={0.95} style={{ position: 'absolute', bottom: 9 }}>
-            DRAW
+          <Kicker color={owed > 0 ? t.gold : t.dim2} tracking={0.95} style={{ position: 'absolute', bottom: 9 }}>
+            {owed > 0 ? `TAKE ${owed}` : 'DRAW'}
           </Kicker>
         </View>
       </Glass>
@@ -498,7 +556,7 @@ function Hand({ hand, state, live, onTap }: { hand: Card[]; state: UnoState; liv
         }}
       >
         {hand.map((c, i) => {
-          const playable = live && isValid(c, state);
+          const playable = live && isValid(c, state, hand);
           return (
             <Tap
               key={`${c.c}${c.v}-${i}`}
@@ -506,7 +564,9 @@ function Hand({ hand, state, live, onTap }: { hand: Card[]; state: UnoState; liv
               label={`${say(c)}, card ${i + 1} of ${hand.length}${playable ? ', playable' : ''}`}
               style={{ transform: [{ translateY: playable ? -10 : 0 }], opacity: playable ? 1 : 0.55 }}
             >
-              <View style={{ borderRadius: 16, padding: 2, borderWidth: 2, borderColor: playable ? t.rim : 'transparent' }}>
+              {/* The ring is drawn on the page, not on glass, so it takes the accent — `rim`
+                  is the specular highlight and goes white-on-white in Day. */}
+              <View style={{ borderRadius: 16, padding: 2, borderWidth: 2, borderColor: playable ? t.acc : 'transparent' }}>
                 <CardFace card={c} w={62} h={92} />
               </View>
             </Tap>
@@ -522,7 +582,7 @@ export const game: PlayableGame = {
   Screen,
   rules: [
     'Match the top card by colour or number.',
-    'Skip, reverse and +2 pass the pain along. Wilds let you pick the colour.',
+    'Skip, reverse and +2 pass the pain along. A wild picks the colour — a +4 only when you hold none of it.',
     'No playable card means you draw one. First to empty their hand wins.',
   ],
 };

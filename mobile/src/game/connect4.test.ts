@@ -119,7 +119,7 @@ describe('legal and illegal moves', () => {
       }
     expect(full(b)).toBe(true);
     for (const c of ALL) expect(place(b, c, 'you')).toBeNull();
-    expect(botMove(b)).toBeNull();
+    expect(botMove(b, makeRng(1))).toBeNull();
   });
 });
 
@@ -214,8 +214,41 @@ describe('four in a line wins — across, down or diagonal', () => {
 describe('the bot', () => {
   afterEach(() => vi.restoreAllMocks());
 
-  it('opens in the centre', () => {
-    expect(botMove(emptyBoard())).toBe(3);
+  it('opens in the centre, or at worst one column off it', () => {
+    // An empty board has nothing to take and nothing to block, so the centre
+    // bias is the whole of the decision — and it is the roll, not the global.
+    expect(botMove(emptyBoard(), () => 0)).toBe(3);
+    expect(botMove(emptyBoard(), () => 0.99)).toBe(2);
+    for (let seed = 1; seed <= 50; seed++) expect([3, 2]).toContain(botMove(emptyBoard(), makeRng(seed)) as number);
+  });
+
+  it('takes every roll from the Rng it is handed, never Math.random', () => {
+    // The screen seeds one stream for a whole match and these tests seed their
+    // own; an engine that reaches for the global makes both a fiction, and the
+    // suite itself flaky.
+    const spy = vi.spyOn(Math, 'random');
+
+    const play = (rng: Rng) => {
+      let b = emptyBoard();
+      let p: Disc = 'bot';
+      const cols: number[] = [];
+      while (!full(b) && !findWin(b, 'you') && !findWin(b, 'bot')) {
+        // Both seats play the engine, one through the mirror, so every ply is a
+        // decision it made rather than one handed to it.
+        const c = botMove(p === 'bot' ? b : swap(b), rng) as number;
+        expect(legal(b)).toContain(c);
+        cols.push(c);
+        b = place(b, c, p) as Board;
+        p = p === 'you' ? 'bot' : 'you';
+      }
+      return cols;
+    };
+
+    const first = play(makeRng(77));
+    expect(first.length).toBeGreaterThan(6);
+    expect(play(makeRng(77))).toEqual(first);
+    expect(play(makeRng(78))).not.toEqual(first);
+    expect(spy).not.toHaveBeenCalled();
   });
 
   it('takes its own four rather than blocking yours', () => {
@@ -232,7 +265,7 @@ describe('the bot', () => {
     ]);
     expect(findWin(b, 'bot')).toBeNull();
     expect(findWin(place(b, 0, 'you') as Board, 'you')).not.toBeNull();
-    const c = botMove(b) as number;
+    const c = botMove(b, makeRng(5)) as number;
     expect(c).toBe(4);
     expect(findWin(place(b, c, 'bot') as Board, 'bot')).not.toBeNull();
   });
@@ -250,7 +283,7 @@ describe('the bot', () => {
     expect(legal(b).every((c) => findWin(place(b, c, 'bot') as Board, 'bot') === null)).toBe(true);
     // Column 0 is plugged, so column 4 is the only end of your three.
     expect(findWin(place(b, 4, 'you') as Board, 'you')).not.toBeNull();
-    expect(botMove(b)).toBe(4);
+    expect(botMove(b, makeRng(5))).toBe(4);
   });
 
   it('blocks a vertical three as readily as a horizontal one', () => {
@@ -262,7 +295,7 @@ describe('the bot', () => {
       '.y....b',
       '.y....b',
     ]);
-    expect(botMove(b)).toBe(1);
+    expect(botMove(b, makeRng(5))).toBe(1);
   });
 
   it('returns a legal column from every position it can reach', () => {
@@ -276,7 +309,7 @@ describe('the bot', () => {
         // positions handed to it are not only the ones it steers towards.
         const c =
           p === 'bot'
-            ? (botMove(b) as number)
+            ? (botMove(b, rng) as number)
             : open[Math.floor(rng() * open.length)];
         expect(open).toContain(c);
         b = place(b, c, p) as Board;
@@ -295,20 +328,23 @@ describe('the bot', () => {
       'by.byyb',
       'yb.ybby',
     ]);
-    for (let i = 0; i < 40; i++) expect([2, 5]).toContain(botMove(b) as number);
+    const rng = makeRng(31337);
+    for (let i = 0; i < 40; i++) expect([2, 5]).toContain(botMove(b, rng) as number);
   });
 });
 
 describe('a full match', () => {
-  /** Both seats play the engine, one of them through the mirror. */
+  /**
+   * Both seats play the engine, one of them through the mirror, off a single
+   * seeded stream handed straight to it — the same way the screen drives it.
+   */
   function selfPlay(rng: Rng) {
-    vi.spyOn(Math, 'random').mockImplementation(rng);
     let b = emptyBoard();
     let p: Disc = 'you';
     const moves: number[] = [];
     for (let ply = 0; ply < COLS * ROWS; ply++) {
       if (findWin(b, 'you') || findWin(b, 'bot') || full(b)) break;
-      const c = (p === 'bot' ? botMove(b) : botMove(swap(b))) as number;
+      const c = (p === 'bot' ? botMove(b, rng) : botMove(swap(b), rng)) as number;
       expect(legal(b)).toContain(c);
       moves.push(c);
       b = place(b, c, p) as Board;
@@ -320,7 +356,6 @@ describe('a full match', () => {
   it('reaches a terminal state with at most one winner', () => {
     for (let seed = 1; seed <= 25; seed++) {
       const { board } = selfPlay(makeRng(seed));
-      vi.restoreAllMocks();
 
       const yours = findWin(board, 'you');
       const theirs = findWin(board, 'bot');
@@ -341,7 +376,6 @@ describe('a full match', () => {
     const outcomes = new Set<string>();
     for (let seed = 1; seed <= 40; seed++) {
       const { board } = selfPlay(makeRng(seed * 7919));
-      vi.restoreAllMocks();
       outcomes.add(findWin(board, 'you') ? 'you' : findWin(board, 'bot') ? 'bot' : 'draw');
     }
     expect(outcomes.has('you')).toBe(true);
@@ -350,11 +384,8 @@ describe('a full match', () => {
 
   it('replays identically from the same seed, and differently from another', () => {
     const a = selfPlay(makeRng(4242));
-    vi.restoreAllMocks();
     const b = selfPlay(makeRng(4242));
-    vi.restoreAllMocks();
     const c = selfPlay(makeRng(4243));
-    vi.restoreAllMocks();
 
     expect(a.moves).toEqual(b.moves);
     expect(a.board).toEqual(b.board);

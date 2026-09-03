@@ -172,9 +172,15 @@ export interface Move {
   captures: Capture[];
 }
 
-export type EventKind = 'move' | 'capture' | 'home' | 'forfeit' | 'stuck' | 'win';
+export type EventKind = 'roll' | 'move' | 'capture' | 'home' | 'forfeit' | 'stuck' | 'win';
 
-/** The last thing that happened, for the screen to narrate with real names. */
+/**
+ * The last thing that happened, for the screen to narrate with real names.
+ *
+ * A roll that lands with somewhere to go is an event in its own right, so
+ * `last.dice` is always the die a screen is looking at: the one waiting on the
+ * table while `dice` holds it, and the one just spent once it is gone.
+ */
 export interface LudoEvent {
   kind: EventKind;
   p: number;
@@ -338,7 +344,9 @@ function pass(st: LudoState): LudoState {
 /**
  * Take a die. A third six in a row forfeits the turn outright; a roll with
  * nowhere to go passes it on. Otherwise the roll sits on the table until the
- * seat spends it on one of `moves`.
+ * seat spends it on one of `moves` — and is recorded in `last`, so a screen
+ * reading `last.dice` sees the die actually on the table rather than the one
+ * spent on the previous move.
  */
 export function rollDice(st: LudoState, rng: Rng): LudoState {
   if (st.winner !== null || st.dice !== null) return st;
@@ -360,7 +368,7 @@ export function rollDice(st: LudoState, rng: Rng): LudoState {
   if (!moves.length) {
     return { ...pass({ ...st, rolls }), last: { kind: 'stuck', p, dice: d } };
   }
-  return { ...st, rolls, dice: d, sixes, moves };
+  return { ...st, rolls, dice: d, sixes, moves, last: { kind: 'roll', p, dice: d } };
 }
 
 /**
@@ -545,6 +553,8 @@ export function botTurn(st: LudoState, bot: BotProfile, rng: Rng): LudoState {
 export function describe(ev: LudoEvent | null, name: (p: number) => string): string {
   if (!ev) return 'Roll to start';
   switch (ev.kind) {
+    case 'roll':
+      return `${name(ev.p)} rolled a ${ev.dice}`;
     case 'capture':
       return `${name(ev.p)} sent ${name(ev.captured?.[0]?.p ?? ev.p)} back to the yard`;
     case 'home':

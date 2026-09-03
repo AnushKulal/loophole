@@ -1,4 +1,12 @@
-/** Connect 4 on a 7×6 grid stored row-major: index = row * 7 + col, row 0 is the top. */
+/**
+ * Connect 4 on a 7×6 grid stored row-major: index = row * 7 + col, row 0 is the top.
+ *
+ * Pure data and pure transitions — no React, no clock, no `Math.random`. The one
+ * decision that needs chance, the bot's centre bias, takes an `Rng`, so a whole
+ * match replays from a seed exactly as the tests run it.
+ */
+
+import type { Rng } from './contract';
 
 export type Disc = 'you' | 'bot';
 export type Board = (Disc | null)[];
@@ -53,8 +61,12 @@ export function place(b: Board, col: number, p: Disc): Board | null {
 /**
  * The bot's column: take a win if it has one, otherwise block yours,
  * otherwise favour the centre.
+ *
+ * The centre bias is the only step that needs chance, and it draws it from the
+ * `rng` it is handed rather than the global — the screen seeds one stream for a
+ * whole match, and the tests seed their own, so both replay move for move.
  */
-export function botMove(b: Board): number | null {
+export function botMove(b: Board, rng: Rng): number | null {
   const order = [3, 2, 4, 1, 5, 0, 6].filter((c) => lowest(b, c) >= 0);
   if (!order.length) return null;
 
@@ -66,5 +78,5 @@ export function botMove(b: Board): number | null {
     const n = place(b, c, 'you');
     if (n && findWin(n, 'you')) return c;
   }
-  return order[Math.random() < 0.7 ? 0 : Math.min(1, order.length - 1)];
+  return order[rng() < 0.7 ? 0 : Math.min(1, order.length - 1)];
 }
