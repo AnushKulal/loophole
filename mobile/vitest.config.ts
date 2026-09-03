@@ -5,7 +5,7 @@ import { defineConfig } from 'vitest/config';
  *  the exported web build. */
 export default defineConfig({
   test: {
-    include: ['src/game/**/*.test.ts'],
+    include: ['src/game/**/*.test.ts', 'plugins/**/*.test.ts'],
     environment: 'node',
   },
 });
