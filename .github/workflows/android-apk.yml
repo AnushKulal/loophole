@@ -1,10 +1,21 @@
 name: Android APK
 
-# Builds an installable Loophole APK and attaches it to the run.
+# Builds an installable Loophole APK, publishes it as a GitHub Release, and
+# puts a QR code on the release page so you can install it by pointing a phone
+# camera at the screen.
 #
 # This builds on the runner with Gradle rather than through EAS, so it needs no
-# Expo account and no secrets. Add a keystore (see the `release` job) only when
-# you want a signed build for distribution.
+# Expo account and no secrets. Adding a keystore (see "Signing" below) is
+# optional but recommended — without one each run signs with a throwaway key,
+# and Android refuses to install a new APK over one signed by a different key.
+#
+# Signing: create a keystore, then add four repository secrets under
+# Settings → Secrets and variables → Actions:
+#   ANDROID_KEYSTORE_BASE64   base64 of the .jks file
+#   ANDROID_KEYSTORE_PASSWORD
+#   ANDROID_KEY_ALIAS
+#   ANDROID_KEY_PASSWORD
+# docs/SHIP_THE_APK.md has the keytool command.
 
 on:
   push:
@@ -20,8 +31,12 @@ on:
       variant:
         description: 'Which APK to build'
         type: choice
-        default: debug
-        options: [debug, release]
+        default: release
+        options: [release, debug]
+      publish:
+        description: 'Publish a GitHub Release with a QR code'
+        type: boolean
+        default: true
 
 concurrency:
   group: android-${{ github.ref }}
@@ -31,11 +46,16 @@ defaults:
   run:
     working-directory: mobile
 
+env:
+  VARIANT: ${{ inputs.variant || 'release' }}
+
 jobs:
   build:
     name: Build APK
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    permissions:
+      contents: write # to cut the release the QR code points at
 
     steps:
       - uses: actions/checkout@v4
@@ -63,6 +83,57 @@ jobs:
       - name: Test the game engines
         run: npm test
 
+      # Every build gets its own versionCode so a new APK installs over an old
+      # one instead of being rejected as a downgrade.
+      - name: Stamp the build number
+        run: |
+          node -e '
+            const fs = require("fs");
+            const app = JSON.parse(fs.readFileSync("app.json", "utf8"));
+            app.expo.android.versionCode = Number(process.env.GITHUB_RUN_NUMBER);
+            fs.writeFileSync("app.json", JSON.stringify(app, null, 2) + "\n");
+          '
+          echo "VERSION=$(node -p 'require("./app.json").expo.version')" >> "$GITHUB_ENV"
+
+      # Signing material has to be in place before prebuild, because the config
+      # plugin decides there whether the release build type gets a real key.
+      - name: Prepare the release keystore
+        if: env.VARIANT == 'release'
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          keystore="$RUNNER_TEMP/loophole.jks"
+          if [ -n "$KEYSTORE_B64" ]; then
+            echo "$KEYSTORE_B64" | base64 -d > "$keystore"
+            store="$STORE_PASSWORD"; alias="$KEY_ALIAS"; key="$KEY_PASSWORD"
+            echo "SIGNED_WITH=your keystore" >> "$GITHUB_ENV"
+          else
+            # No keystore configured. Generate one so the release APK is still
+            # installable — but say so loudly, because it is different every
+            # run and Android will not upgrade across a key change.
+            echo "::warning::No ANDROID_KEYSTORE_BASE64 secret. Signing with a throwaway key generated for this run — to install a later build you will have to uninstall this one first."
+            store="$(openssl rand -hex 24)"; alias=loophole; key="$store"
+            keytool -genkeypair -v -keystore "$keystore" -alias "$alias" \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass "$store" -keypass "$key" \
+              -dname "CN=Loophole, OU=Loophole, O=Loophole, L=, S=, C=IN"
+            echo "SIGNED_WITH=a throwaway key generated for this run" >> "$GITHUB_ENV"
+          fi
+          # Gradle reads these as project properties. Masked so the log cannot
+          # leak the password of a real keystore.
+          echo "::add-mask::$store"
+          echo "::add-mask::$key"
+          {
+            echo "ORG_GRADLE_PROJECT_LOOPHOLE_STORE_FILE=$keystore"
+            echo "ORG_GRADLE_PROJECT_LOOPHOLE_STORE_PASSWORD=$store"
+            echo "ORG_GRADLE_PROJECT_LOOPHOLE_KEY_ALIAS=$alias"
+            echo "ORG_GRADLE_PROJECT_LOOPHOLE_KEY_PASSWORD=$key"
+          } >> "$GITHUB_ENV"
+
       # Generates the native android/ project from app.json. It is not committed,
       # so the config stays the single source of truth.
       - name: Prebuild native project
@@ -77,50 +148,92 @@ jobs:
           key: gradle-${{ runner.os }}-${{ hashFiles('mobile/android/**/*.gradle*', 'mobile/android/gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: gradle-${{ runner.os }}-
 
-      # A debug APK is signed with the auto-generated debug keystore, so it
-      # installs on any phone with "install unknown apps" enabled — which is all
-      # you need to hand it to friends for testing.
-      - name: Build debug APK
-        if: inputs.variant != 'release'
+      - name: Build the APK
         working-directory: mobile/android
-        run: ./gradlew assembleDebug --no-daemon
+        run: ./gradlew assemble${{ env.VARIANT == 'release' && 'Release' || 'Debug' }} --no-daemon
 
-      - name: Decode release keystore
-        if: inputs.variant == 'release' && env.KEYSTORE_B64 != ''
-        env:
-          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-        run: echo "$KEYSTORE_B64" | base64 -d > android/app/release.keystore
-
-      - name: Build release APK
-        if: inputs.variant == 'release'
-        working-directory: mobile/android
-        env:
-          LOOPHOLE_STORE_FILE: release.keystore
-          LOOPHOLE_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          LOOPHOLE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          LOOPHOLE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: ./gradlew assembleRelease --no-daemon
-
-      - name: Locate the APK
+      - name: Name the APK
         id: apk
-        run: echo "path=$(find android/app/build/outputs/apk -name '*.apk' | head -1)" >> "$GITHUB_OUTPUT"
+        run: |
+          set -euo pipefail
+          built="$(find android/app/build/outputs/apk -name '*.apk' | head -1)"
+          name="loophole-$VERSION-$VARIANT.apk"
+          mv "$built" "$RUNNER_TEMP/$name"
+          echo "path=$RUNNER_TEMP/$name" >> "$GITHUB_OUTPUT"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
 
-      - name: Upload APK
+      # Confirms the APK really carries the key we think it does, rather than
+      # silently falling back to the debug key.
+      - name: Report the signature
+        run: |
+          apksigner="$(find "$ANDROID_HOME/build-tools" -name apksigner | sort | tail -1)"
+          [ -n "$apksigner" ] && "$apksigner" verify --print-certs "${{ steps.apk.outputs.path }}" | head -20
+
+      - name: Upload APK to the run
         uses: actions/upload-artifact@v4
         with:
-          name: loophole-${{ inputs.variant || 'debug' }}-apk
-          path: mobile/${{ steps.apk.outputs.path }}
+          name: loophole-${{ env.VARIANT }}-apk
+          path: ${{ steps.apk.outputs.path }}
           if-no-files-found: error
           retention-days: 30
+
+      # A run artifact needs a GitHub login to download, so it cannot be shared
+      # by QR. A release asset on a public repo is a plain URL, which can.
+      - name: Publish a release with a QR code
+        id: release
+        if: github.event_name == 'workflow_dispatch' && inputs.publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APK: ${{ steps.apk.outputs.path }}
+          APK_NAME: ${{ steps.apk.outputs.name }}
+        run: |
+          set -euo pipefail
+          tag="v$VERSION-build.$GITHUB_RUN_NUMBER"
+          url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download/$tag/$APK_NAME"
+
+          npx -y qrcode --type=png --width 600 --output "$RUNNER_TEMP/qr.png" "$url"
+
+          cat > "$RUNNER_TEMP/notes.md" <<EOF
+          ## Install Loophole
+
+          Point an Android phone's camera at this code, or [download the APK]($url).
+
+          <img src="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download/$tag/qr.png" width="260" alt="QR code linking to the APK">
+
+          The first time, Android will ask you to allow installing apps from your
+          browser — that is expected for an app that does not come from the Play
+          Store. Signed with ${SIGNED_WITH:-the debug key}.
+
+          On iPhone this APK will not install; see \`docs/SHIP_THE_APK.md\` for the
+          Expo Go and TestFlight routes.
+
+          Built from \`$GITHUB_SHA\` by [run $GITHUB_RUN_NUMBER]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID).
+          EOF
+
+          gh release create "$tag" "$APK" "$RUNNER_TEMP/qr.png" \
+            --title "Loophole $VERSION (build $GITHUB_RUN_NUMBER)" \
+            --notes-file "$RUNNER_TEMP/notes.md"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "page=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/$tag" >> "$GITHUB_OUTPUT"
+          echo "qr=$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download/$tag/qr.png" >> "$GITHUB_OUTPUT"
 
       - name: Summarise
         run: |
           {
-            echo "### Loophole APK"
+            echo "### Loophole ${{ env.VARIANT }} APK"
             echo ""
-            echo "Built \`${{ steps.apk.outputs.path }}\`"
+            if [ -n "${{ steps.release.outputs.url }}" ]; then
+              echo "Scan this to install it on an Android phone:"
+              echo ""
+              echo '<img src="${{ steps.release.outputs.qr }}" width="220" alt="QR code linking to the APK">'
+              echo ""
+              echo "- [Release page](${{ steps.release.outputs.page }})"
+              echo "- [Direct download](${{ steps.release.outputs.url }})"
+            else
+              echo "Download \`${{ steps.apk.outputs.name }}\` from the **Artifacts** section of this run."
+              echo ""
+              echo "To get a scannable link instead, run this workflow from the Actions tab with **Publish a GitHub Release** ticked."
+            fi
             echo ""
-            echo "Download it from the **Artifacts** section of this run, transfer it to an"
-            echo "Android phone, and open it. You will need to allow installing from unknown"
-            echo "sources the first time."
+            echo "Signed with ${SIGNED_WITH:-the debug key}."
           } >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,116 @@
+name: Expo Update (iOS / Expo Go)
+
+# Publishes the JS bundle to EAS Update and prints a QR code for it.
+#
+# This is the iPhone route. Android has an APK; iOS has no equivalent you can
+# just send someone, so instead the app is loaded inside a host app — Expo Go
+# from the App Store, or a development build. Scan the QR this prints and the
+# host app opens Loophole.
+#
+# One-time setup, from your own machine — EAS Update needs a project id and the
+# expo-updates runtime, and only you can create those:
+#
+#   cd mobile
+#   npx eas-cli login
+#   npx eas-cli init              # writes extra.eas.projectId into app.json
+#   npx expo install expo-updates
+#   npx eas-cli update:configure  # writes the updates.url and runtimeVersion
+#   git commit -am "Configure EAS Update" && git push
+#
+# Then create an access token at https://expo.dev/settings/access-tokens (the
+# free tier is enough) and add it as an EXPO_TOKEN secret under
+# Settings → Secrets and variables → Actions. After that this workflow runs on
+# its own.
+#
+# If your SDK's Expo Go cannot open a published update, `npm run share` on your
+# own machine always works — it serves the app over a tunnel and prints the
+# same kind of QR. See docs/SHIP_THE_APK.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'EAS Update branch to publish to'
+        type: string
+        default: preview
+      message:
+        description: 'What changed'
+        type: string
+        default: ''
+
+defaults:
+  run:
+    working-directory: mobile
+
+jobs:
+  update:
+    name: Publish update
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check for a token
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::EXPO_TOKEN is not set. Add it under Settings → Secrets and variables → Actions, or use 'npm run share' locally instead — that needs no account."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Test the game engines
+        run: npm test
+
+      - name: Publish to EAS Update
+        id: publish
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          set -euo pipefail
+          npx eas-cli@latest update \
+            --branch "${{ inputs.branch }}" \
+            --message "${{ inputs.message || format('build {0}', github.run_number) }}" \
+            --non-interactive --json > update.json
+          # eas prints an array, one entry per platform; they share a group id.
+          group="$(node -p 'JSON.parse(require("fs").readFileSync("update.json","utf8"))[0].group')"
+          echo "url=https://expo.dev/preview/update?message=&updateGroupId=$group" >> "$GITHUB_OUTPUT"
+
+      - name: Draw the QR code
+        run: |
+          npx -y qrcode --type=png --width 600 --output "$RUNNER_TEMP/qr.png" \
+            "${{ steps.publish.outputs.url }}"
+
+      - name: Upload the QR code
+        uses: actions/upload-artifact@v4
+        with:
+          name: expo-go-qr
+          path: ${{ runner.temp }}/qr.png
+          if-no-files-found: error
+
+      - name: Summarise
+        run: |
+          {
+            echo "### Loophole on iPhone"
+            echo ""
+            echo "Published to the \`${{ inputs.branch }}\` branch."
+            echo ""
+            echo "1. Install **Expo Go** from the App Store."
+            echo "2. Open this link on the phone, or scan the QR in the **expo-go-qr** artifact:"
+            echo ""
+            echo "   ${{ steps.publish.outputs.url }}"
+            echo ""
+            echo "If Expo Go will not open it, run \`npm run share\` on your own machine and scan that QR instead."
+          } >> "$GITHUB_STEP_SUMMARY"

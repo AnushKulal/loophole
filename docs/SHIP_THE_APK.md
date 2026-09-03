@@ -1,44 +1,97 @@
-# Shipping the APK
+# Getting Loophole onto a phone
 
-This repo has no git remote, so the Actions pipeline that builds the APK has
-nowhere to run yet and the tracking issue below could not be filed. Everything
-needed is committed — these are the three commands that finish the job.
+Two routes, because Android and iOS are not alike: Android takes an APK you can
+hand to anyone, iOS has no equivalent and has to load the app inside a host app.
 
-## 1. Create the repo and push
+Both are automated. The only thing that cannot be done from here is the first
+push — this checkout has no remote yet.
+
+## 0. Push it
 
 ```bash
-gh repo create loophole --private --source=. --remote=origin --push
-# or, without the gh CLI: create it on github.com, then
-#   git remote add origin git@github.com:<you>/loophole.git
-#   git push -u origin main
+# On github.com: New repository → name it "loophole" → Public → Create.
+# Do not add a README, .gitignore or licence; this repo already has them.
+git remote add origin https://github.com/<you>/loophole.git
+git push -u origin implement-loophole-v5:main
 ```
 
-## 2. Get the APK
+## 1. Android — an APK, and a QR code to install it
 
-The **Android APK** workflow runs automatically on the first push. To run it on
-demand:
+**Actions → Android APK → Run workflow**, leave `variant: release` and
+`publish: true`, and run it.
+
+Roughly fifteen minutes later it publishes a GitHub Release holding the APK and
+a QR code. Open the release page on a laptop and point a phone camera at the
+code; it downloads and installs. Android asks once for permission to install
+apps from your browser, which is expected for anything that does not come from
+the Play Store.
+
+You can also run it from the CLI:
 
 ```bash
-gh workflow run "Android APK" -f variant=debug
+gh workflow run "Android APK" -f variant=release -f publish=true
 gh run watch
-gh run download --name loophole-debug-apk
 ```
 
-Or from the browser: **Actions → Android APK → Run workflow**, then download it
-from the run's **Artifacts** section.
+### Signing
 
-Transfer the `.apk` to an Android phone and open it. The first install asks you
-to allow "install unknown apps" for whichever app you opened it from.
-
-It builds with Gradle on the runner, so it needs **no Expo account and no
-secrets**. `eas-build.yml` is there if you would rather Expo's cloud handled
-signing and update channels — that one needs an `EXPO_TOKEN`.
-
-## 3. File the tracking issue
+Without a keystore each run signs with a throwaway key. The APK installs, but
+Android will not upgrade an app across a change of signing key, so testers have
+to uninstall before taking a new build. Fix that once:
 
 ```bash
-gh issue create --title "Ship a testable Loophole APK to friends" --body-file docs/SHIP_THE_APK.md
+keytool -genkeypair -v -keystore loophole.jks -alias loophole \
+  -keyalg RSA -keysize 2048 -validity 10000
+base64 -w0 loophole.jks   # macOS: base64 -i loophole.jks
 ```
+
+Add four repository secrets under **Settings → Secrets and variables → Actions**:
+
+| Secret | Value |
+| --- | --- |
+| `ANDROID_KEYSTORE_BASE64` | the base64 above |
+| `ANDROID_KEYSTORE_PASSWORD` | the store password you chose |
+| `ANDROID_KEY_ALIAS` | `loophole` |
+| `ANDROID_KEY_PASSWORD` | the key password you chose |
+
+Keep `loophole.jks` somewhere safe and out of the repo. Lose it and you cannot
+ship an upgrade to anyone who already installed the app — you have to publish
+under a new package id.
+
+The signing itself is wired in by `mobile/plugins/withReleaseSigning.js`.
+Expo's template points the release build at the *debug* key, so without that
+plugin `assembleRelease` would quietly produce a debug-signed APK.
+
+## 2. iPhone — Expo Go
+
+An iOS build cannot be sideloaded the way an APK can; Apple only allows the App
+Store or TestFlight, and TestFlight needs a paid Apple Developer account. Until
+then, iPhones run Loophole inside **Expo Go**, a free host app from the App
+Store.
+
+### The route that works today
+
+```bash
+cd mobile
+npm run share      # expo start --tunnel
+```
+
+That serves the app over a tunnel and prints a QR code in the terminal. Install
+Expo Go on the iPhone, scan the code with the Camera app, and Loophole opens.
+It works from anywhere, not just your Wi-Fi. The catch is that it only works
+while that command is running — close the terminal and the link dies.
+
+### A link that outlives your terminal
+
+`.github/workflows/expo-update.yml` publishes the app to EAS Update and prints a
+permanent QR code. It needs a free Expo account and a one-time `eas init` from
+your machine; the steps are in the workflow's header comment.
+
+### TestFlight
+
+`.github/workflows/eas-build.yml` builds a real `.ipa` through Expo's cloud.
+That is the route to TestFlight and the App Store, and the point at which the
+$99/year Apple Developer account becomes unavoidable.
 
 ---
 
@@ -49,21 +102,24 @@ which is what the original design brief was for.
 
 ### Done
 
-- [x] All 14 games playable against real bots
+- [x] All 14 games playable against real bots, 677 engine tests green
 - [x] The full 23-screen app rebuilt in Expo / React Native
-- [x] `android-apk.yml` — builds a debug APK on the runner, no account needed
-- [x] `eas-build.yml` — optional cloud build through Expo
+- [x] `android-apk.yml` — release APK, published as a GitHub Release with a QR
+      code, no Expo account and no secrets needed
+- [x] Real release signing via a config plugin, with a generated key as fallback
+- [x] `expo-update.yml` — the Expo Go route for iPhones
+- [x] `eas-build.yml` — cloud builds through Expo, for TestFlight
 - [x] App icon, adaptive icon, splash and `com.loophole.app` package id
-- [x] Engine tests run in CI before any build
+- [x] Typecheck and engine tests run in CI before any build
 
 ### To do
 
-- [ ] Push to a GitHub remote so Actions can run
-- [ ] Download the first APK from the run artifacts and install it on a phone
+- [ ] Push to the GitHub remote so Actions can run
+- [ ] Run **Android APK** and install the first release APK from the QR code
+- [ ] Generate a keystore and add the four secrets, so later builds upgrade
+      cleanly instead of needing an uninstall
 - [ ] Smoke-test on a real device: native blur, gestures, the arcade frame rate
-- [ ] Decide whether to sign a release build (add `ANDROID_KEYSTORE_BASE64`,
-      `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD`
-      as repo secrets, then run the workflow with `variant=release`)
+- [ ] `eas init` if you want the permanent Expo Go link
 - [ ] Decide the fate of `app/` — the web build. It is the visual reference and
       also installs as a PWA; delete it once the native build is signed off, or
       keep it as the browser version.
@@ -75,3 +131,6 @@ which is what the original design brief was for.
   phone.
 - The two arcade titles and Carrom run physics at 60fps; they are the most
   likely to need tuning on low-end hardware.
+- The release APK has never been built — this container cannot reach
+  `dl.google.com`, so the Android SDK is unavailable and the Gradle half of the
+  workflow is unexercised. The first run on Actions is its first real test.
