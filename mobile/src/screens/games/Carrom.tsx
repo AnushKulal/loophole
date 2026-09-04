@@ -591,8 +591,8 @@ function BoardArt({
   const S = (v: number) => v * size;
 
   // Two discs that read as white and black in either theme.
-  const whiteFill = t.blurTint === 'dark' ? t.ink : t.bg2;
-  const blackFill = t.blurTint === 'dark' ? t.bg : t.ink;
+  const whiteFill = t.isDark ? t.ink : t.bg2;
+  const blackFill = t.isDark ? t.bg : t.ink;
   const fillOf = (k: Piece['kind']) =>
     k === 'white' ? whiteFill : k === 'black' ? blackFill : k === 'queen' ? t.pink : t.cyan;
 

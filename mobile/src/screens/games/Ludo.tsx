@@ -176,7 +176,7 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
    *  apart on the board by colour and by the owner's mark, not by gradient. */
   const seatColor = [t.acc, t.pink, t.gold, t.lime];
   /** Legible on a solid fill of any of those, in either theme. */
-  const onSeat = t.blurTint === 'dark' ? t.bg : '#fff';
+  const onSeat = t.isDark ? t.bg : '#fff';
 
   /** Board option: seconds before a turn auto-plays itself. */
   const clock = clamp(Math.round(config.options.turn) || 20, 8, 120);
