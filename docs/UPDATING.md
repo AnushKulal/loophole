@@ -86,9 +86,27 @@ Commits must be pushed first, because the build runs from what is on GitHub. The
 run publishes a release with the APK and a QR code you can scan from the release
 page. Roughly fifteen minutes.
 
-## What to send when something looks wrong
+## Showing me the phone
 
-A screenshot says what it looks like; a log says why. Both, ideally:
+I run on an isolated VM with no USB hardware, so adb here reaches nothing —
+the cable goes from your phone to your computer, and nothing bridges that gap.
+`snap.sh` is the way across it:
+
+```bash
+cd mobile
+./scripts/snap.sh "day mode home"
+```
+
+That captures the screen, the crash buffer, the recent app log, and the device
+details that change how a layout lands — physical size, density, Android
+version — then pushes them to `device-reports/` where I can read them. Tell me
+the report name it prints and I can see what you see.
+
+`--no-push` captures without pushing, if you want to look first.
+
+It writes outside `mobile/`, so it never triggers a build.
+
+For a quick look without the rest:
 
 ```bash
 ./scripts/logcat.sh --screenshot
