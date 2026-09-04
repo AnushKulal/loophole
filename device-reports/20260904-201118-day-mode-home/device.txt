@@ -1,0 +1,5 @@
+device:  Nothing A015
+android: 16 (API 36)
+screen:  Physical size: 1080x2400
+density: Physical density: 420
+label:   day mode home

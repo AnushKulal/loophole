@@ -1,0 +1,74 @@
+--------- beginning of crash
+09-04 07:51:56.536  1021  1021 I libpq_sec: mtk-brm-commit-id:8d52b75ecea4b0c2129c05428261104d5b4c7e6f
+09-04 07:51:56.536  1021  1021 I libpq_sec: mtk-brm-change-id:Idfe06ff5198c0d6cc7248bb4a94299f37013c3e3
+09-04 07:51:56.536  1021  1021 I libpq_sec: mtk-brm-merge-id:none
+09-04 07:51:56.537  1019  1019 I libpq_sec: mtk-brm-commit-id:8d52b75ecea4b0c2129c05428261104d5b4c7e6f
+09-04 07:51:56.537  1019  1019 I libpq_sec: mtk-brm-change-id:Idfe06ff5198c0d6cc7248bb4a94299f37013c3e3
+09-04 07:51:56.537  1019  1019 I libpq_sec: mtk-brm-merge-id:none
+09-04 07:51:56.818  1093  1161 I libged  : mtk-brm-commit-id:8f279a13f0709684183c66949c3aedba30471847
+09-04 07:51:56.818  1093  1161 I libged  : mtk-brm-change-id:I9678c768ba1e3699d9c1b78051980c2e6eb41dfa
+09-04 07:51:56.818  1093  1161 I libged  : mtk-brm-merge-id:none
+09-04 07:51:56.832  1093  1161 I libGLES_mali: mtk-brm-commit-id:2dd3679a7a9ae1ac1c71018445b123e29438be5c
+09-04 07:51:56.832  1093  1161 I libGLES_mali: mtk-brm-change-id:I2fd435266d7e8eadf0bdf45a2881b673239705c1
+09-04 07:51:56.832  1093  1161 I libGLES_mali: mtk-brm-merge-id:none
+09-04 07:51:57.086  1200  1200 I thermal_core: mtk-brm-commit-id:234641ae27aad1cfcf52a5ba536c107c965a52ab
+09-04 07:51:57.086  1200  1200 I thermal_core: mtk-brm-change-id:Ieb2106d5ec215adedae5ff15a92923dc35fdb2bc
+09-04 07:51:57.086  1200  1200 I thermal_core: mtk-brm-merge-id:none
+09-04 07:51:57.088  1198  1198 I libneuralnetworks_sl_driver: mtk-brm-commit-id:161f105d8fdcda4d5f9ff10858623788849cd706
+09-04 07:51:57.088  1198  1198 I libneuralnetworks_sl_driver: mtk-brm-change-id:I3cc60e15bedb425deae97e4ba62ce9795469d0f0
+09-04 07:51:57.088  1198  1198 I libneuralnetworks_sl_driver: mtk-brm-merge-id:none
+09-04 07:51:57.088  1198  1198 I neuralnetworks_shim: mtk-brm-commit-id:25a38658d8fcdbb20664f319d3ecf9d75fd3654c
+09-04 07:51:57.088  1198  1198 I neuralnetworks_shim: mtk-brm-change-id:I98bca291cad1df955fc3a2dd4a672c689604df9b
+09-04 07:51:57.088  1198  1198 I neuralnetworks_shim: mtk-brm-merge-id:none
+09-04 07:51:57.129  1198  1198 I cpu_nn  : mtk-brm-commit-id:e0b1e6a299e09326d1e3c00df0bee88777f15fb0
+09-04 07:51:57.129  1198  1198 I cpu_nn  : mtk-brm-change-id:Ia06225ca2806a5f28be95902c2303b12e9a90c38
+09-04 07:51:57.129  1198  1198 I cpu_nn  : mtk-brm-merge-id:none
+09-04 07:51:57.152  1198  1198 I cmdl    : mtk-brm-commit-id:83b79bc206164073c4933dac9048e8bbf2468a2f
+09-04 07:51:57.152  1198  1198 I cmdl    : mtk-brm-change-id:I3f996dc2e36f9014a83a3c7740956ca173b56f36
+09-04 07:51:57.152  1198  1198 I cmdl    : mtk-brm-merge-id:none
+09-04 07:51:57.155  1198  1198 I gpu_nn  : mtk-brm-commit-id:0b5fce9d2ecbb9be75db033475f121621364bbd0
+09-04 07:51:57.157  1198  1198 I gpu_nn  : mtk-brm-change-id:Icf488c65b434d1938ee3d916fb07216f278b708b
+09-04 07:51:57.157  1198  1198 I gpu_nn  : mtk-brm-merge-id:none
+09-04 07:51:57.165  1195  1195 I libimsma_adapt: mtk-brm-commit-id:86b746c21fd235c214611f3344cf70649e895fd7
+09-04 07:51:57.166  1195  1195 I libimsma_adapt: mtk-brm-change-id:I44c926fb2a62b0816d0a8d12e3957bca373f1721
+09-04 07:51:57.166  1195  1195 I libimsma_adapt: mtk-brm-merge-id:none
+09-04 07:51:57.334  1262  1262 I emdlogger: mtk-brm-commit-id:9d634ad4aaec05afd61a48cc390c2f3e7ba213ba
+09-04 07:51:57.335  1262  1262 I emdlogger: mtk-brm-change-id:I95f7f5b11ef3b8f02e5bc26abd93bf70033f9e48
+09-04 07:51:57.335  1262  1262 I emdlogger: mtk-brm-merge-id:none
+09-04 07:51:57.437  1298  1298 I libpq_sec: mtk-brm-commit-id:8d52b75ecea4b0c2129c05428261104d5b4c7e6f
+09-04 07:51:57.437  1298  1298 I libpq_sec: mtk-brm-change-id:Idfe06ff5198c0d6cc7248bb4a94299f37013c3e3
+09-04 07:51:57.437  1298  1298 I libpq_sec: mtk-brm-merge-id:none
+09-04 07:51:57.441  1294  1294 I libpq_sec: mtk-brm-commit-id:8d52b75ecea4b0c2129c05428261104d5b4c7e6f
+09-04 07:51:57.441  1294  1294 I libpq_sec: mtk-brm-change-id:Idfe06ff5198c0d6cc7248bb4a94299f37013c3e3
+09-04 07:51:57.441  1294  1294 I libpq_sec: mtk-brm-merge-id:none
+09-04 07:51:59.231  1270  1270 I mcnr_algo: mtk-brm-commit-id:dd4929e6a71bd0be06b2d18234833692e8dec44f
+09-04 07:51:59.231  1270  1270 I mcnr_algo: mtk-brm-change-id:I4260c971d731b542818aac96725266c809617407
+09-04 07:51:59.231  1270  1270 I mcnr_algo: mtk-brm-merge-id:none
+09-04 07:51:59.278  1270  1270 I libpq_sec: mtk-brm-commit-id:8d52b75ecea4b0c2129c05428261104d5b4c7e6f
+09-04 07:51:59.278  1270  1270 I libpq_sec: mtk-brm-change-id:Idfe06ff5198c0d6cc7248bb4a94299f37013c3e3
+09-04 07:51:59.278  1270  1270 I libpq_sec: mtk-brm-merge-id:none
+09-04 07:52:13.333  2963  2963 I thermal_core: mtk-brm-commit-id:74ef16098784dd698d10950c8fd3f47295ee3fc0
+09-04 07:52:13.333  2963  2963 I thermal_core: mtk-brm-change-id:I4b22c22d8511bdb8c07debbac82b1564676111e8
+09-04 07:52:13.333  2963  2963 I thermal_core: mtk-brm-merge-id:none
+09-04 07:52:13.846  3059  3075 E AndroidRuntime: FATAL EXCEPTION: CollPoll-Startup
+09-04 07:52:13.846  3059  3075 E AndroidRuntime: Process: com.butterflyinnovations.collpoll, PID: 3059
+09-04 07:52:13.846  3059  3075 E AndroidRuntime: java.lang.ExceptionInInitializerError
+09-04 07:52:13.846  3059  3075 E AndroidRuntime: 	at com.butterflyinnovations.collpoll.CollPollApplication.C(SourceFile:16)
+09-04 07:52:13.846  3059  3075 E AndroidRuntime: 	at com.butterflyinnovations.collpoll.CollPollApplication.b(SourceFile:1)
+09-04 07:52:13.846  3059  3075 E AndroidRuntime: 	at com.butterflyinnovations.collpoll.y.run(SourceFile:1)
+09-04 07:52:13.846  3059  3075 E AndroidRuntime: 	at java.lang.Thread.run(Thread.java:1572)
+09-04 07:52:13.846  3059  3075 E AndroidRuntime: Caused by: java.lang.IllegalStateException: SharedPreferences in credential encrypted storage are not available until after user (id 0) is unlocked
+09-04 07:52:13.846  3059  3075 E AndroidRuntime: 	at android.app.ContextImpl.getSharedPreferences(ContextImpl.java:631)
+09-04 07:52:13.846  3059  3075 E AndroidRuntime: 	at android.app.ContextImpl.getSharedPreferences(ContextImpl.java:609)
+09-04 07:52:13.846  3059  3075 E AndroidRuntime: 	at android.content.ContextWrapper.getSharedPreferences(ContextWrapper.java:223)
+09-04 07:52:13.846  3059  3075 E AndroidRuntime: 	at com.butterflyinnovations.collpoll.common.Utils.h1(SourceFile:4)
+09-04 07:52:13.846  3059  3075 E AndroidRuntime: 	at com.butterflyinnovations.collpoll.lokilogs.loggers.LokiHelper.lokiConfig_delegate$lambda$0(SourceFile:9)
+09-04 07:52:13.846  3059  3075 E AndroidRuntime: 	at com.butterflyinnovations.collpoll.lokilogs.loggers.LokiHelper.e(SourceFile:1)
+09-04 07:52:13.846  3059  3075 E AndroidRuntime: 	at com.butterflyinnovations.collpoll.lokilogs.loggers.e.invoke(SourceFile:1)
+09-04 07:52:13.846  3059  3075 E AndroidRuntime: 	at ss.z.getValue(SourceFile:21)
+09-04 07:52:13.846  3059  3075 E AndroidRuntime: 	at com.butterflyinnovations.collpoll.lokilogs.loggers.LokiHelper.getLokiConfig(SourceFile:3)
+09-04 07:52:13.846  3059  3075 E AndroidRuntime: 	at com.butterflyinnovations.collpoll.lokilogs.LokiLogger.<clinit>(SourceFile:18)
+09-04 07:52:13.846  3059  3075 E AndroidRuntime: 	... 4 more
+09-04 07:55:21.124  1060  1060 I liboemcrypto: mtk-brm-commit-id:2ac2eaf078e450db639c9d9ce1e2992c9a84c413
+09-04 07:55:21.124  1060  1060 I liboemcrypto: mtk-brm-change-id:I35994c7049d4885db17fa9fe4c7b40a25996d294
+09-04 07:55:21.124  1060  1060 I liboemcrypto: mtk-brm-merge-id:none
