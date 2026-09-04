@@ -527,10 +527,20 @@ class Store {
   signUp = (email: string, password: string, name: string) =>
     this.attempt(() => auth.signUp(email, password, name), () => this.setState({ scr: 'onboard' }));
 
-  resetPassword = (email: string) =>
+  /**
+   * Firebase mails a link; a device account has no mail to send to, so the
+   * screen supplies the new password and this changes it in place. The notice
+   * says which of the two actually happened.
+   */
+  resetPassword = (email: string, nextPassword?: string) =>
     this.attempt(async () => {
-      await auth.sendPasswordReset(email);
-      this.setAuth({ notice: `Password reset sent to ${email.trim()}. Check your inbox.` });
+      await auth.sendPasswordReset(email, nextPassword);
+      this.setAuth({
+        notice:
+          auth.backend() === 'device'
+            ? 'Password changed. Sign in with the new one.'
+            : `Password reset sent to ${email.trim()}. Check your inbox.`,
+      });
       return null;
     });
 

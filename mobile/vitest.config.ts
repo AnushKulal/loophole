@@ -11,8 +11,8 @@ export default defineConfig({
   test: {
     include: ['src/game/**/*.test.ts', 'src/auth/**/*.test.ts', 'plugins/**/*.test.ts'],
     environment: 'node',
-    // The keystore is the auth module's one platform import, and it pulls in
-    // React Native, which does not parse here.
-    alias: { 'expo-secure-store': stub('expo-secure-store') },
+    // The keystore adapter is the auth module's one platform import, and it
+    // pulls in React Native, which does not parse in a node environment.
+    alias: { './storage': stub('storage') },
   },
 });

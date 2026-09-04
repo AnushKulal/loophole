@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { StatusBar, View } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Clipboard from 'expo-clipboard';
@@ -18,6 +18,7 @@ import {
 
 import { store, useStore } from './src/store/useStore';
 import { TABBED } from './src/store/store';
+import { ScreenTransition } from './src/components/motion';
 import { ThemeProvider, useTheme } from './src/theme/theme';
 import { Background } from './src/components/Background';
 import { ChatSheet, OfflineBanner, RulesSheet, TabBar, Toast } from './src/components/AppChrome';
@@ -102,11 +103,24 @@ function Shell() {
     }
   };
 
+  // Which way the stack is moving, so the incoming screen arrives from the
+  // side a finger would have swiped from. Leaving the tab bar behind is going
+  // deeper; getting it back is coming out.
+  const previous = useRef(s.scr);
+  const wasTabbed = TABBED.includes(previous.current);
+  const isTabbed = TABBED.includes(s.scr);
+  const depth = previous.current === s.scr ? 'none' : wasTabbed && !isTabbed ? 'in' : !wasTabbed && isTabbed ? 'out' : 'none';
+  useEffect(() => {
+    previous.current = s.scr;
+  }, [s.scr]);
+
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
       <Background />
       <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>
-        {screen()}
+        <ScreenTransition screenKey={s.scr} depth={depth}>
+          {screen()}
+        </ScreenTransition>
         {TABBED.includes(s.scr) && <TabBar scr={s.scr} />}
       </View>
 

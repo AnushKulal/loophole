@@ -12,8 +12,9 @@
 
 import { isConfigured } from './config';
 import * as fb from './firebase';
+import * as local from './local';
 import { FirebaseAuthError, type Account, type Credentials } from './firebase';
-import { isSessionDead, toAuthError, UNCONFIGURED, type AuthError } from './errors';
+import { isSessionDead, NEEDS_NEW_PASSWORD, toAuthError, UNCONFIGURED, type AuthError } from './errors';
 import { clearSession, loadSession, needsRefresh, saveSession } from './session';
 
 export type { Account, AuthError };
@@ -28,6 +29,10 @@ export const __setClock = (fn: () => number) => {
 
 export const currentAccount = (): Account | null => account;
 let account: Account | null = null;
+
+const setAccount = (a: Account | null) => {
+  account = a;
+};
 
 function adopt(c: Credentials) {
   tokens = { idToken: c.idToken, refreshToken: c.refreshToken, expiresAt: c.expiresAt };
@@ -51,7 +56,32 @@ const fail = (e: unknown): never => {
   throw new AuthFailure(toAuthError(e instanceof FirebaseAuthError ? e.code : undefined));
 };
 
+/**
+ * Which provider is answering.
+ *
+ * Firebase when a project is configured, the on-device store otherwise. This is
+ * read per call rather than cached so that a build which gains a key does not
+ * need a restart to use it.
+ */
+export const backend = (): 'firebase' | 'device' => (isConfigured() ? 'firebase' : 'device');
+
+/** A device account has no tokens to refresh; the uid is the whole session. */
+async function adoptLocal(next: Account) {
+  tokens = null;
+  setAccount(next);
+  await saveSession({ refreshToken: `device:${next.uid}`, account: next });
+}
+
 export async function signUp(email: string, password: string, name: string): Promise<Account> {
+  if (backend() === 'device') {
+    try {
+      const account = await local.signUp(email, password, name);
+      await adoptLocal(account);
+      return account;
+    } catch (e) {
+      return fail(e);
+    }
+  }
   try {
     const c = await fb.signUp(email, password, name, clock());
     adopt(c);
@@ -63,6 +93,15 @@ export async function signUp(email: string, password: string, name: string): Pro
 }
 
 export async function signIn(email: string, password: string): Promise<Account> {
+  if (backend() === 'device') {
+    try {
+      const account = await local.signIn(email, password);
+      await adoptLocal(account);
+      return account;
+    } catch (e) {
+      return fail(e);
+    }
+  }
   try {
     const c = await fb.signIn(email, password, clock());
     // signInWithPassword omits displayName on some projects; fetch it so the
@@ -79,7 +118,21 @@ export async function signIn(email: string, password: string): Promise<Account> 
   }
 }
 
-export async function sendPasswordReset(email: string): Promise<void> {
+/**
+ * On Firebase this sends a reset link. On a device account there is no mail to
+ * send, so the caller must supply the new password and the screen has to say
+ * what actually happened rather than implying an email is on its way.
+ */
+export async function sendPasswordReset(email: string, nextPassword?: string): Promise<void> {
+  if (backend() === 'device') {
+    if (!nextPassword) throw new AuthFailure(NEEDS_NEW_PASSWORD);
+    try {
+      await local.resetPassword(email, nextPassword);
+      return;
+    } catch (e) {
+      fail(e);
+    }
+  }
   try {
     await fb.sendPasswordReset(email);
   } catch (e) {
@@ -101,10 +154,22 @@ export async function signOut(): Promise<void> {
  * does not silently sign you out.
  */
 export async function restore(): Promise<Account | null> {
-  if (!isConfigured()) return null;
-
   const stored = await loadSession();
   if (!stored) return null;
+
+  // A device session carries the uid instead of a refresh token. Nothing to
+  // exchange — just look the account back up.
+  if (stored.refreshToken.startsWith('device:')) {
+    const found = await local.byUid(stored.refreshToken.slice('device:'.length));
+    if (!found) {
+      await clearSession();
+      return null;
+    }
+    setAccount(found);
+    return found;
+  }
+
+  if (!isConfigured()) return null;
 
   try {
     const fresh = await fb.refresh(stored.refreshToken, clock());

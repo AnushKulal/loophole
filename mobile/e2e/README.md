@@ -9,10 +9,9 @@ What they do not cover is anything native: blur fidelity, gesture feel, frame
 rate, and the keystore-backed session all need a physical device.
 
 ```bash
-npm run build:web                       # export and serve on :8080
-node e2e/acceptance.mjs 8080            # 38 cases across the whole app
-node e2e/login.mjs 8080 unconfigured    # the sign-in screen with no project
-node e2e/login.mjs 8080 configured      # ...and with one
+npm run build:web             # export and serve on :8080
+node e2e/acceptance.mjs       # 38 cases across the whole app
+node e2e/device-login.mjs     # sign up, sign in, sign out, session restore
 ```
 
 `SHOT_DIR=/some/path` changes where screenshots land; a failing case writes

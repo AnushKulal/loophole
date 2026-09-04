@@ -7,7 +7,7 @@ import { useTheme } from '../theme/theme';
 import { ArrowRight, Glass, Glyph, Gradient, H, P, Tap } from '../components/base';
 import { FadeIn } from '../components/GameChrome';
 import { font } from '../theme/tokens';
-import { isConfigured } from '../auth/config';
+import { backend } from '../auth/auth';
 import { formProblem, type Field } from '../auth/validate';
 
 type Mode = 'signIn' | 'signUp';
@@ -48,7 +48,10 @@ export default function SignIn({ s }: { s: State }) {
   const confirmRef = useRef<TextInput>(null);
   const nameRef = useRef<TextInput>(null);
 
-  const configured = isConfigured();
+  // Firebase when a project is configured, this phone otherwise. Either way
+  // there is a real form here — the difference is only how far the account
+  // travels, and the copy below says which one you are getting.
+  const onDevice = backend() === 'device';
   const { busy, error, notice } = s.auth;
 
   // A local validation failure and a server error occupy the same slot; local
@@ -84,12 +87,24 @@ export default function SignIn({ s }: { s: State }) {
     else store.signUp(email, password, name);
   };
 
+  /**
+   * On Firebase this only needs an address. On a device account there is
+   * nowhere to send a link, so the password field doubles as "the one you want
+   * instead" and has to be valid before this will do anything.
+   */
   const forgot = () => {
     if (busy) return;
-    const found = formProblem('signIn', { email, password: 'ignored', confirm: '', name: '' });
+    const found = formProblem('signIn', {
+      email,
+      // Off-device the password is irrelevant to a reset; on-device it *is*
+      // the reset, so it has to pass the same rules as a new one.
+      password: onDevice ? password : 'ignored',
+      confirm: '',
+      name: '',
+    });
     if (found) return setLocal(found);
     setLocal(null);
-    store.resetPassword(email);
+    store.resetPassword(email, onDevice ? password : undefined);
   };
 
   const input = {
@@ -119,189 +134,157 @@ export default function SignIn({ s }: { s: State }) {
             {mode === 'signIn' ? 'Welcome back' : 'Get a name on the board'}
           </H>
           <P size={14} color={t.dim} style={{ lineHeight: 20, marginBottom: 24, maxWidth: 290 }}>
-            {!configured
-              ? 'This build has no Firebase project configured, so accounts are unavailable.'
-              : mode === 'signIn'
-                ? 'Your account carries your level, your tint and your friends between devices.'
-                : 'Six characters is the minimum. Pick something you have not used elsewhere.'}
+            {mode === 'signUp'
+              ? 'Six characters is the minimum. Pick something you have not used elsewhere.'
+              : onDevice
+                ? 'Your account lives on this phone. Everything you unlock is kept between sessions.'
+                : 'Your account carries your level, your tint and your friends between devices.'}
           </P>
 
-          {!configured ? (
-            <>
-              <Glass radius={18} style={{ marginBottom: 16 }}>
-              <View style={{ padding: 18, gap: 8 }}>
-                <H size={13.5}>Accounts are switched off</H>
-                <P size={13} color={t.dim} style={{ lineHeight: 19 }}>
-                  Fill in DEFAULTS in src/auth/config.ts, or set
-                  EXPO_PUBLIC_FIREBASE_API_KEY and EXPO_PUBLIC_FIREBASE_PROJECT_ID in a .env file,
-                  then rebuild.
-                </P>
-              </View>
-            </Glass>
+          <Row
+            bad={badField === 'email'}
+            icon={
+              <Glyph
+                d="M3 8l9 6 9-6"
+                size={18}
+                color={t.acc}
+                width={2}
+                extra={<Rect x={2.5} y={5} width={19} height={14} rx={3} fill="none" stroke={t.acc} strokeWidth={2} />}
+              />
+            }
+          >
+            <TextInput
+              value={email}
+              onChangeText={edit(setEmail)}
+              placeholder="Email address"
+              placeholderTextColor={t.dim2}
+              accessibilityLabel="Email address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="email"
+              keyboardType="email-address"
+              inputMode="email"
+              returnKeyType="next"
+              editable={!busy}
+              onSubmitEditing={() => (mode === 'signUp' ? nameRef : passwordRef).current?.focus()}
+              style={input}
+            />
+          </Row>
 
-            <Tap onPress={store.playAnyway} label="Play without an account" style={{ marginTop: 4 }}>
-              <Gradient radius={999}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 17, paddingHorizontal: 20 }}>
-                  <H size={15.5} weight={700} color="#fff" style={{ marginRight: 'auto' }}>
-                    Play without an account
-                  </H>
-                  <ArrowRight />
-                </View>
-              </Gradient>
+          {mode === 'signUp' && (
+            <Row
+              bad={badField === 'name'}
+              icon={<Glyph d="M12 3a4 4 0 100 8 4 4 0 000-8zM4 21a8 8 0 0116 0" size={18} color={t.cyan} width={2} />}
+            >
+              <TextInput
+                ref={nameRef}
+                value={name}
+                onChangeText={edit(setName)}
+                placeholder="Display name"
+                placeholderTextColor={t.dim2}
+                accessibilityLabel="Display name"
+                autoCapitalize="words"
+                autoComplete="name"
+                maxLength={24}
+                returnKeyType="next"
+                editable={!busy}
+                onSubmitEditing={() => passwordRef.current?.focus()}
+                style={input}
+              />
+            </Row>
+          )}
+
+          <Row
+            bad={badField === 'password'}
+            icon={
+              <Glyph
+                d="M8 10V7a4 4 0 018 0v3"
+                size={18}
+                color={t.acc}
+                width={2}
+                extra={<Rect x={4.5} y={10} width={15} height={10} rx={2.5} fill="none" stroke={t.acc} strokeWidth={2} />}
+              />
+            }
+          >
+            <TextInput
+              ref={passwordRef}
+              value={password}
+              onChangeText={edit(setPassword)}
+              placeholder="Password"
+              placeholderTextColor={t.dim2}
+              accessibilityLabel="Password"
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete={mode === 'signIn' ? 'current-password' : 'new-password'}
+              secureTextEntry={!show}
+              returnKeyType={mode === 'signIn' ? 'go' : 'next'}
+              editable={!busy}
+              onSubmitEditing={() => (mode === 'signIn' ? submit() : confirmRef.current?.focus())}
+              style={input}
+            />
+            <Tap onPress={() => setShow(!show)} label={show ? 'Hide password' : 'Show password'}>
+              <P size={12} weight={600} color={t.dim}>
+                {show ? 'Hide' : 'Show'}
+              </P>
             </Tap>
-            <P size={12.5} color={t.dim2} style={{ lineHeight: 18, marginTop: 12, textAlign: 'center' }}>
-              Every game works. Nothing is saved between installs.
+          </Row>
+
+          {mode === 'signUp' && (
+            <Row
+              bad={badField === 'confirm'}
+              icon={<Glyph d="M4 12.5l5 5L20 7" size={18} color={t.g2} width={2.2} />}
+            >
+              <TextInput
+                ref={confirmRef}
+                value={confirm}
+                onChangeText={edit(setConfirm)}
+                placeholder="Confirm password"
+                placeholderTextColor={t.dim2}
+                accessibilityLabel="Confirm password"
+                autoCapitalize="none"
+                autoCorrect={false}
+                secureTextEntry={!show}
+                returnKeyType="go"
+                editable={!busy}
+                onSubmitEditing={submit}
+                style={input}
+              />
+            </Row>
+          )}
+
+          {!!message && (
+            <P size={13} color={t.pink} style={{ marginTop: 2, marginBottom: 8, lineHeight: 18 }}>
+              {message}
             </P>
-            </>
-          ) : (
-            <>
-              <Row
-                bad={badField === 'email'}
-                icon={
-                  <Glyph
-                    d="M3 8l9 6 9-6"
-                    size={18}
-                    color={t.acc}
-                    width={2}
-                    extra={<Rect x={2.5} y={5} width={19} height={14} rx={3} fill="none" stroke={t.acc} strokeWidth={2} />}
-                  />
-                }
-              >
-                <TextInput
-                  value={email}
-                  onChangeText={edit(setEmail)}
-                  placeholder="Email address"
-                  placeholderTextColor={t.dim2}
-                  accessibilityLabel="Email address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  autoComplete="email"
-                  keyboardType="email-address"
-                  inputMode="email"
-                  returnKeyType="next"
-                  editable={!busy}
-                  onSubmitEditing={() => (mode === 'signUp' ? nameRef : passwordRef).current?.focus()}
-                  style={input}
-                />
-              </Row>
+          )}
+          {!!notice && !message && (
+            <P size={13} color={t.g2} style={{ marginTop: 2, marginBottom: 8, lineHeight: 18 }}>
+              {notice}
+            </P>
+          )}
 
-              {mode === 'signUp' && (
-                <Row
-                  bad={badField === 'name'}
-                  icon={<Glyph d="M12 3a4 4 0 100 8 4 4 0 000-8zM4 21a8 8 0 0116 0" size={18} color={t.cyan} width={2} />}
-                >
-                  <TextInput
-                    ref={nameRef}
-                    value={name}
-                    onChangeText={edit(setName)}
-                    placeholder="Display name"
-                    placeholderTextColor={t.dim2}
-                    accessibilityLabel="Display name"
-                    autoCapitalize="words"
-                    autoComplete="name"
-                    maxLength={24}
-                    returnKeyType="next"
-                    editable={!busy}
-                    onSubmitEditing={() => passwordRef.current?.focus()}
-                    style={input}
-                  />
-                </Row>
-              )}
+          <Tap onPress={submit} label={mode === 'signIn' ? 'Sign in' : 'Create account'} style={{ marginTop: 6 }} disabled={busy}>
+            <Gradient radius={999}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 17, paddingHorizontal: 20, opacity: busy ? 0.7 : 1 }}>
+                <H size={15.5} weight={700} color="#fff" style={{ marginRight: 'auto' }}>
+                  {busy ? 'Just a moment…' : mode === 'signIn' ? 'Sign in' : 'Create account'}
+                </H>
+                {busy ? <ActivityIndicator color="#fff" /> : <ArrowRight />}
+              </View>
+            </Gradient>
+          </Tap>
 
-              <Row
-                bad={badField === 'password'}
-                icon={
-                  <Glyph
-                    d="M8 10V7a4 4 0 018 0v3"
-                    size={18}
-                    color={t.acc}
-                    width={2}
-                    extra={<Rect x={4.5} y={10} width={15} height={10} rx={2.5} fill="none" stroke={t.acc} strokeWidth={2} />}
-                  />
-                }
-              >
-                <TextInput
-                  ref={passwordRef}
-                  value={password}
-                  onChangeText={edit(setPassword)}
-                  placeholder="Password"
-                  placeholderTextColor={t.dim2}
-                  accessibilityLabel="Password"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  autoComplete={mode === 'signIn' ? 'current-password' : 'new-password'}
-                  secureTextEntry={!show}
-                  returnKeyType={mode === 'signIn' ? 'go' : 'next'}
-                  editable={!busy}
-                  onSubmitEditing={() => (mode === 'signIn' ? submit() : confirmRef.current?.focus())}
-                  style={input}
-                />
-                <Tap onPress={() => setShow(!show)} label={show ? 'Hide password' : 'Show password'}>
-                  <P size={12} weight={600} color={t.dim}>
-                    {show ? 'Hide' : 'Show'}
-                  </P>
-                </Tap>
-              </Row>
-
-              {mode === 'signUp' && (
-                <Row
-                  bad={badField === 'confirm'}
-                  icon={<Glyph d="M4 12.5l5 5L20 7" size={18} color={t.g2} width={2.2} />}
-                >
-                  <TextInput
-                    ref={confirmRef}
-                    value={confirm}
-                    onChangeText={edit(setConfirm)}
-                    placeholder="Confirm password"
-                    placeholderTextColor={t.dim2}
-                    accessibilityLabel="Confirm password"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    secureTextEntry={!show}
-                    returnKeyType="go"
-                    editable={!busy}
-                    onSubmitEditing={submit}
-                    style={input}
-                  />
-                </Row>
-              )}
-
-              {!!message && (
-                <P size={13} color={t.pink} style={{ marginTop: 2, marginBottom: 8, lineHeight: 18 }}>
-                  {message}
-                </P>
-              )}
-              {!!notice && !message && (
-                <P size={13} color={t.g2} style={{ marginTop: 2, marginBottom: 8, lineHeight: 18 }}>
-                  {notice}
-                </P>
-              )}
-
-              <Tap onPress={submit} label={mode === 'signIn' ? 'Sign in' : 'Create account'} style={{ marginTop: 6 }} disabled={busy}>
-                <Gradient radius={999}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 17, paddingHorizontal: 20, opacity: busy ? 0.7 : 1 }}>
-                    <H size={15.5} weight={700} color="#fff" style={{ marginRight: 'auto' }}>
-                      {busy ? 'Just a moment…' : mode === 'signIn' ? 'Sign in' : 'Create account'}
-                    </H>
-                    {busy ? <ActivityIndicator color="#fff" /> : <ArrowRight />}
-                  </View>
-                </Gradient>
-              </Tap>
-
-              {mode === 'signIn' && (
-                <Tap onPress={forgot} label="Forgot your password?" style={{ alignSelf: 'center', marginTop: 14 }} disabled={busy}>
-                  <P size={13} weight={600} color={t.dim}>
-                    Forgot your password?
-                  </P>
-                </Tap>
-              )}
-            </>
+          {mode === 'signIn' && (
+            <Tap onPress={forgot} label="Forgot your password?" style={{ alignSelf: 'center', marginTop: 14 }} disabled={busy}>
+              <P size={13} weight={600} color={t.dim}>
+                {onDevice ? 'Reset the password on this phone' : 'Forgot your password?'}
+              </P>
+            </Tap>
           )}
 
           <View style={{ flex: 1, minHeight: 18 }} />
 
-          {configured && (
-            <Tap
+          <Tap
               onPress={() => swap(mode === 'signIn' ? 'signUp' : 'signIn')}
               label={mode === 'signIn' ? 'Create new account' : 'I already have an account'}
               disabled={busy}
@@ -327,10 +310,9 @@ export default function SignIn({ s }: { s: State }) {
                     />
                   </View>
                 </Gradient>
-                <H size={14.5}>{mode === 'signIn' ? 'Create new account' : 'I already have an account'}</H>
-              </View>
-            </Tap>
-          )}
+              <H size={14.5}>{mode === 'signIn' ? 'Create new account' : 'I already have an account'}</H>
+            </View>
+          </Tap>
         </ScrollView>
       </KeyboardAvoidingView>
     </FadeIn>

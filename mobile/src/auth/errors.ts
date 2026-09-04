@@ -61,6 +61,9 @@ const TABLE: Record<string, AuthError> = {
   USER_NOT_FOUND: { message: 'Your session expired. Sign in again.' },
   INVALID_REFRESH_TOKEN: { message: 'Your session expired. Sign in again.' },
   INVALID_GRANT_TYPE: { message: 'Your session expired. Sign in again.' },
+  STORAGE_UNAVAILABLE: {
+    message: 'This device would not let the app save an account. Check that storage is not restricted.',
+  },
   API_KEY_INVALID: {
     message: 'The Firebase API key is wrong. Check EXPO_PUBLIC_FIREBASE_API_KEY.',
   },
@@ -69,6 +72,12 @@ const TABLE: Record<string, AuthError> = {
 export const NETWORK: AuthError = {
   message: 'Could not reach the server. Check your connection and try again.',
   retryable: true,
+};
+
+/** Device accounts reset the password in place, so the screen must collect one. */
+export const NEEDS_NEW_PASSWORD: AuthError = {
+  message: 'Type the new password you want, then tap reset again.',
+  field: 'password',
 };
 
 export const UNCONFIGURED: AuthError = {
