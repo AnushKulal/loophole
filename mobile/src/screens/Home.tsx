@@ -1,7 +1,7 @@
-import { useId, useRef, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Circle, Defs, Pattern, Rect } from 'react-native-svg';
+import { Circle, Rect } from 'react-native-svg';
 import { store, type State } from '../store/useStore';
 import { TINTS } from '../data/progression';
 import { DIM, FEATURED, GAME_LEVEL, GAME_XP, gameByName, type Category } from '../data/games';
@@ -35,20 +35,40 @@ const neonFor = (t: Tokens, cat: Category) => (cat === 'Deduction' ? t.acc : cat
  * repeating `background-image`; RN has no such thing, so it is an SVG pattern
  * of one horizontal and one vertical hairline per cell.
  */
+/**
+ * The faint graph-paper texture on the big cards.
+ *
+ * Drawn as plain Views rather than an SVG pattern. react-native-svg renders
+ * into its own surface, and Android does not clip a native surface to the
+ * parent's corner radius — so the texture showed up as a hard-edged rectangle
+ * sitting inside every rounded card, with the pattern's own outer edge reading
+ * as a border. A handful of 1px Views clip like any other view and cost less.
+ *
+ * `onLayout` rather than a fixed count: the cards differ in size and a fixed
+ * count would either run out early on the tall one or overdraw on the small.
+ */
 function GridWash({ cell, opacity }: { cell: number; opacity: number }) {
-  const id = `grid${useId().replace(/[^a-zA-Z0-9]/g, '')}${cell}`;
+  const [size, setSize] = useState({ w: 0, h: 0 });
   const ink = `rgba(255,255,255,${opacity})`;
+
+  const lines = [];
+  for (let x = cell; x < size.w; x += cell) {
+    lines.push(<View key={`v${x}`} style={{ position: 'absolute', left: x, top: 0, bottom: 0, width: 1, backgroundColor: ink }} />);
+  }
+  for (let y = cell; y < size.h; y += cell) {
+    lines.push(<View key={`h${y}`} style={{ position: 'absolute', top: y, left: 0, right: 0, height: 1, backgroundColor: ink }} />);
+  }
+
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      <Svg width="100%" height="100%">
-        <Defs>
-          <Pattern id={id} x={0} y={0} width={cell} height={cell} patternUnits="userSpaceOnUse">
-            <Rect x={0} y={0} width={cell} height={1} fill={ink} />
-            <Rect x={0} y={0} width={1} height={cell} fill={ink} />
-          </Pattern>
-        </Defs>
-        <Rect x={0} y={0} width="100%" height="100%" fill={`url(#${id})`} />
-      </Svg>
+    <View
+      style={StyleSheet.absoluteFill}
+      pointerEvents="none"
+      onLayout={(e) => {
+        const { width, height } = e.nativeEvent.layout;
+        setSize((prev) => (prev.w === width && prev.h === height ? prev : { w: width, h: height }));
+      }}
+    >
+      {lines}
     </View>
   );
 }

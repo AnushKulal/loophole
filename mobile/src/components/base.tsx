@@ -1,6 +1,5 @@
 import { useRef, type ReactNode } from 'react';
 import { Animated, Platform, Pressable, StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Path, Polygon, Line as SvgLine, Text as SvgText } from 'react-native-svg';
 import { useTheme } from '../theme/theme';
@@ -13,7 +12,7 @@ import { useReducedMotion } from './motion';
  *
  * Three CSS features the design leans on have no RN equivalent, so they are
  * reconstructed here rather than approximated per-screen:
- *   backdrop-filter  -> a real native blur layer (expo-blur)
+ *   backdrop-filter  -> a layered translucent fill (see Glass)
  *   inset box-shadow -> an explicit specular rim drawn over the pane
  *   conic-gradient   -> an SVG arc with a dashed stroke
  */
@@ -81,25 +80,37 @@ export function Kicker({ children, color, tracking = 1.4, style }: { children: R
 // ── surfaces ──────────────────────────────────────────────────────
 
 /**
- * A translucent pane: native blur, a tinted fill, a hairline border and the
- * bright top rim that reads as a specular highlight. This is the core surface
- * of the whole design.
+ * A translucent pane: a tinted fill, a hairline border and a faint top rim.
+ *
+ * There is deliberately no native blur here any more. `expo-blur` renders into
+ * its own surface, and Android does not clip a native surface to its parent's
+ * corner radius — so every card had a hard-edged rectangle sitting inside its
+ * rounded outline, in both themes. It also tinted far more heavily than on iOS,
+ * which bleached day mode.
+ *
+ * What the design actually needs from `backdrop-filter` is a surface that reads
+ * as lifted off a coloured ground. A translucent fill over the light pools does
+ * that, and does it identically on every platform.
+ *
+ * The rule this file now follows: every layer carries its own `borderRadius`.
+ * Nothing relies on the parent clipping it.
  */
 export function Glass({
   style,
   radius = R.xl,
   children,
-  intensity,
   elevated = true,
   borderColor,
+  fill,
 }: {
   style?: StyleProp<ViewStyle>;
   radius?: number;
   children?: ReactNode;
-  intensity?: number;
   /** Drop shadow under the pane. Off for panes inside a scrolling list. */
   elevated?: boolean;
   borderColor?: string;
+  /** Overrides the panel tint, for the few surfaces that sit brighter. */
+  fill?: string;
 }) {
   const t = useTheme();
   return (
@@ -108,27 +119,45 @@ export function Glass({
         elevated && {
           borderRadius: radius,
           shadowColor: t.shadowColor,
-          shadowOffset: { width: 0, height: 8 },
-          shadowRadius: 18,
+          shadowOffset: { width: 0, height: 6 },
+          shadowRadius: 14,
           shadowOpacity: t.shadowOpacity,
-          elevation: 6,
+          elevation: 3,
         },
         style,
       ]}
     >
-      <View style={{ borderRadius: radius, overflow: 'hidden', borderWidth: 1, borderColor: borderColor ?? t.line }}>
-        <BlurView
-          intensity={intensity ?? (Platform.OS === 'android' ? t.blurIntensityAndroid : t.blurIntensity)}
-          tint={t.blurTint}
-          // Android needs the Dimezis implementation for a true backdrop blur.
-          experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : undefined}
-          style={StyleSheet.absoluteFill}
-        />
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: t.panel }]} />
-        {/* specular rim — the inset highlight the CSS drew with box-shadow */}
+      <View
+        style={{
+          borderRadius: radius,
+          overflow: 'hidden',
+          borderWidth: 1,
+          borderColor: borderColor ?? t.line,
+          backgroundColor: fill ?? t.panel,
+        }}
+      >
+        {/* A little more light at the top than the bottom, which is what sells
+            a pane as tilted toward a light source. Its own radius, so the
+            corners stay round even where clipping would not save us. */}
         <LinearGradient
-          colors={[t.rim, 'transparent']}
-          style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, opacity: 0.55 }}
+          colors={[t.panelTop, 'transparent']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={[StyleSheet.absoluteFill, { borderRadius: radius }]}
+          pointerEvents="none"
+        />
+        {/* The specular rim. Kept faint — at full strength it reads as a bright
+            bar stuck to the top edge rather than as light catching an edge. */}
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: radius * 0.5,
+            right: radius * 0.5,
+            height: 1,
+            backgroundColor: t.rim,
+            opacity: t.rimOpacity,
+          }}
           pointerEvents="none"
         />
         {children}
@@ -171,11 +200,18 @@ export function Gradient({
           colors={(colors ?? t.gradv) as [string, string, ...string[]]}
           start={{ x: 0.2, y: 0 }}
           end={{ x: 0.8, y: 1 }}
-          style={StyleSheet.absoluteFill}
+          style={[StyleSheet.absoluteFill, { borderRadius: radius }]}
         />
-        <LinearGradient
-          colors={[t.rim, 'transparent']}
-          style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, opacity: 0.7 }}
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: radius * 0.5,
+            right: radius * 0.5,
+            height: 1,
+            backgroundColor: t.rim,
+            opacity: 0.35,
+          }}
           pointerEvents="none"
         />
         {children}

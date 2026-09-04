@@ -33,18 +33,24 @@ export interface Tokens {
   onCyan: string;
   /** The indigo glass of every primary action, as gradient stops. */
   gradv: string[];
-  /** Native blur tint — expo-blur needs to know which way to lean. */
-  blurTint: 'dark' | 'light';
-  blurIntensity: number;
   /**
-   * Android blurs through a different implementation whose tint is far
-   * heavier at the same number. Left at the iOS value, day mode stacked a
-   * strong white wash under an already-white panel and the cards bleached out.
+   * Which theme this is. A handful of places need to pick between two literal
+   * colours rather than a token — a chess disc, a Ludo seat label — and this is
+   * the honest way to ask. They used to read `blurTint`, which meant the same
+   * thing only by accident.
    */
-  blurIntensityAndroid: number;
-  /** The bright top rim that reads as a specular highlight. */
+  isDark: boolean;
+  /**
+   * A touch more light at the top of a pane than the bottom. This is what
+   * carries the sense of a lit surface now that there is no native blur —
+   * transparent at the bottom so the pool colour behind still shows through.
+   */
+  panelTop: string;
+  /** The hairline that reads as light catching the top edge. */
   rim: string;
   rimLow: string;
+  /** Kept low deliberately: at full strength the rim reads as a stuck-on bar. */
+  rimOpacity: number;
   shadowColor: string;
   shadowOpacity: number;
   /**
@@ -66,8 +72,8 @@ const poolsFor = (...five: Pool[]): Tokens['pools'] => five.map(([rgb, alpha]) =
 export const dark: Tokens = {
   bg: '#0a1018',
   bg2: '#101a28',
-  panel: 'rgba(190,215,255,0.09)',
-  panel2: 'rgba(190,215,255,0.16)',
+  panel: 'rgba(150,180,235,0.10)',
+  panel2: 'rgba(160,190,240,0.17)',
   line: 'rgba(200,222,255,0.22)',
   line2: 'rgba(200,222,255,0.36)',
   ink: '#eef4ff',
@@ -89,10 +95,10 @@ export const dark: Tokens = {
   onLime: '#04241b',
   onCyan: '#062733',
   gradv: ['rgba(168,186,255,0.6)', 'rgba(112,132,242,0.34)', 'rgba(92,112,224,0.24)'],
-  blurTint: 'dark',
-  blurIntensity: 40,
-  blurIntensityAndroid: 26,
-  rim: 'rgba(255,255,255,0.5)',
+  isDark: true,
+  panelTop: 'rgba(190,215,255,0.07)',
+  rim: 'rgba(255,255,255,0.55)',
+  rimOpacity: 0.5,
   rimLow: 'rgba(255,255,255,0.14)',
   shadowColor: '#040a14',
   shadowOpacity: 0.55,
@@ -108,8 +114,8 @@ export const dark: Tokens = {
 export const light: Tokens = {
   bg: '#e7edf7',
   bg2: '#f6f9fd',
-  panel: 'rgba(255,255,255,0.58)',
-  panel2: 'rgba(255,255,255,0.82)',
+  panel: 'rgba(255,255,255,0.72)',
+  panel2: 'rgba(255,255,255,0.9)',
   line: 'rgba(22,32,46,0.12)',
   line2: 'rgba(22,32,46,0.22)',
   ink: '#16202e',
@@ -131,10 +137,10 @@ export const light: Tokens = {
   onLime: '#ffffff',
   onCyan: '#ffffff',
   gradv: ['#6d7ff0', '#4a58cc', '#3f4dc0'],
-  blurTint: 'light',
-  blurIntensity: 55,
-  blurIntensityAndroid: 16,
+  isDark: false,
+  panelTop: 'rgba(255,255,255,0.5)',
   rim: 'rgba(255,255,255,1)',
+  rimOpacity: 0.7,
   rimLow: 'rgba(255,255,255,0.6)',
   shadowColor: '#16202e',
   shadowOpacity: 0.16,

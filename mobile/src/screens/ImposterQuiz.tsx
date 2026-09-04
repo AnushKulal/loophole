@@ -167,17 +167,47 @@ function Shine() {
  * The dot grid printed on the card back. CSS tiled a radial-gradient; RN has no
  * repeating background, so it is an SVG pattern of one dot per 22×22 cell.
  */
+/**
+ * The dot texture behind the quiz card.
+ *
+ * Plain Views, not an SVG pattern: a native SVG surface is not clipped to the
+ * parent's corner radius on Android, so the texture showed as a hard rectangle
+ * inside the rounded card.
+ */
 function DotGrid() {
+  const [size, setSize] = useState({ w: 0, h: 0 });
+  const cell = 22;
+
+  const dots = [];
+  for (let y = cell / 2; y < size.h; y += cell) {
+    for (let x = cell / 2; x < size.w; x += cell) {
+      dots.push(
+        <View
+          key={`${x}-${y}`}
+          style={{
+            position: 'absolute',
+            left: x - 1.3,
+            top: y - 1.3,
+            width: 2.6,
+            height: 2.6,
+            borderRadius: 1.3,
+            backgroundColor: 'rgba(255,255,255,0.16)',
+          }}
+        />,
+      );
+    }
+  }
+
   return (
-    <View style={[StyleSheet.absoluteFill, { opacity: 0.5 }]} pointerEvents="none">
-      <Svg width="100%" height="100%">
-        <Defs>
-          <Pattern id="quizDots" patternUnits="userSpaceOnUse" width={22} height={22}>
-            <Circle cx={11} cy={11} r={1.3} fill="rgba(255,255,255,0.16)" />
-          </Pattern>
-        </Defs>
-        <Rect x={0} y={0} width="100%" height="100%" fill="url(#quizDots)" />
-      </Svg>
+    <View
+      style={[StyleSheet.absoluteFill, { opacity: 0.5 }]}
+      pointerEvents="none"
+      onLayout={(e) => {
+        const { width, height } = e.nativeEvent.layout;
+        setSize((prev) => (prev.w === width && prev.h === height ? prev : { w: width, h: height }));
+      }}
+    >
+      {dots}
     </View>
   );
 }
