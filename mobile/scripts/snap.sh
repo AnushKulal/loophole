@@ -74,7 +74,19 @@ fi
 
 git add "$DIR"
 git commit -q -m "Device report: $LABEL" -- "$DIR"
-git push -q origin HEAD 2>/dev/null || git push origin HEAD
+
+# Checked, not assumed: a push that fails on credentials would otherwise leave
+# the script claiming a report had arrived when it had not.
+if ! git push -q origin HEAD; then
+  printf '\033[33m%s\033[0m\n' "The push failed, so the report is only on this computer."
+  echo "Attach these two files in the chat instead:"
+  echo "  $PWD/$DIR/screen.png"
+  echo "  $PWD/$DIR/crash.log"
+  echo
+  echo "A 403 here means git is signed in as a different GitHub account than the"
+  echo "one that owns the repo."
+  exit 1
+fi
 
 REMOTE="$(git remote get-url origin | sed 's/\.git$//;s#git@github.com:#https://github.com/#')"
 blue "Pushed. Tell me:  device report $STAMP-${SLUG:-snap}"

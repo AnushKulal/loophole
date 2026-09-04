@@ -97,7 +97,24 @@ if ($NoPush) {
 
 git add $dir
 git commit -q -m "Device report: $Label" -- $dir
-git push -q origin HEAD
+
+# $LASTEXITCODE, not hope: a push can fail on credentials and still leave the
+# script looking successful, which sends someone off believing a report arrived
+# when it did not.
+git push -q origin HEAD 2>&1 | Write-Host
+if ($LASTEXITCODE -ne 0) {
+  Write-Host ""
+  Write-Host "The push failed, so the report is only on this computer." -ForegroundColor Yellow
+  Write-Host "Attach these two files in the chat instead:" -ForegroundColor Yellow
+  Write-Host "  $(Resolve-Path "$dir/screen.png")"
+  Write-Host "  $(Resolve-Path "$dir/crash.log")"
+  Write-Host ""
+  Write-Host "A 403 here means git is signed in as a different GitHub account"
+  Write-Host "than the one that owns the repo. Windows caches that:"
+  Write-Host "  Control Panel > Credential Manager > Windows Credentials"
+  Write-Host "  remove any git:https://github.com entry, then push again."
+  return
+}
 
 Blue "Pushed. Tell me:  device report $stamp-$slug"
 
