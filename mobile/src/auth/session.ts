@@ -2,15 +2,15 @@
  * Keeping the session between launches.
  *
  * The refresh token is the durable credential — anyone holding it can mint id
- * tokens for the account until it is revoked — so it goes in the platform
- * keystore via expo-secure-store, not AsyncStorage. The id token expires in an
- * hour and is refreshed on demand; there is no point storing it separately.
+ * tokens for the account until it is revoked — so it goes through `storage`,
+ * which is the platform keystore on a phone. The id token expires in an hour
+ * and is refreshed on demand; there is no point storing it separately.
  *
  * The scheduling decisions here are pure functions taking `now`, so the tests
  * can drive expiry without waiting an hour or stubbing the clock.
  */
 
-import * as SecureStore from 'expo-secure-store';
+import { getItem, removeItem, setItem } from './storage';
 import { type Account, type Credentials, type Tokens } from './firebase';
 
 const KEY = 'loophole.session.v1';
@@ -63,25 +63,15 @@ export const serialiseSession = (c: Pick<Credentials, 'refreshToken' | 'account'
  * be saved is not worth crashing over — you just sign in again next launch.
  */
 export async function saveSession(c: Pick<Credentials, 'refreshToken' | 'account'>): Promise<void> {
-  try {
-    await SecureStore.setItemAsync(KEY, serialiseSession(c));
-  } catch {
-    /* not fatal — the session simply will not survive a restart */
-  }
+  // Not fatal if it does not land — the session simply will not survive a
+  // restart, and the cost of that is signing in again.
+  await setItem(KEY, serialiseSession(c));
 }
 
 export async function loadSession(): Promise<StoredSession | null> {
-  try {
-    return parseSession(await SecureStore.getItemAsync(KEY));
-  } catch {
-    return null;
-  }
+  return parseSession(await getItem(KEY));
 }
 
 export async function clearSession(): Promise<void> {
-  try {
-    await SecureStore.deleteItemAsync(KEY);
-  } catch {
-    /* nothing stored, or no keystore */
-  }
+  await removeItem(KEY);
 }

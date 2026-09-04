@@ -36,22 +36,32 @@ export interface Tokens {
   /** Native blur tint — expo-blur needs to know which way to lean. */
   blurTint: 'dark' | 'light';
   blurIntensity: number;
+  /**
+   * Android blurs through a different implementation whose tint is far
+   * heavier at the same number. Left at the iOS value, day mode stacked a
+   * strong white wash under an already-white panel and the cards bleached out.
+   */
+  blurIntensityAndroid: number;
   /** The bright top rim that reads as a specular highlight. */
   rim: string;
   rimLow: string;
   shadowColor: string;
   shadowOpacity: number;
-  /** The five soft light pools the glass refracts, as radial-ish overlays. */
-  pools: { colors: string[]; style: { top?: number | string; left?: number | string; right?: number | string; bottom?: number | string; width: number; height: number } }[];
+  /**
+   * The five soft light pools the glass refracts.
+   *
+   * Colour and alpha are kept apart on purpose. They used to be one `rgba()`
+   * string handed to an SVG `stop-color`, and react-native-svg's Android
+   * renderer drops the alpha channel there — so every pool drew at full
+   * strength on a phone while looking correct in a browser. Splitting them
+   * means the alpha goes to `stop-opacity`, which every renderer honours.
+   */
+  pools: { rgb: string; alpha: number }[];
 }
 
-const poolsFor = (a: string, b: string, c: string, d: string, e: string): Tokens['pools'] => [
-  { colors: [a, 'transparent'], style: { top: -180, left: -60, width: 560, height: 460 } },
-  { colors: [b, 'transparent'], style: { top: 150, left: -140, width: 420, height: 380 } },
-  { colors: [c, 'transparent'], style: { top: 420, right: -150, width: 440, height: 380 } },
-  { colors: [d, 'transparent'], style: { bottom: 40, left: -120, width: 400, height: 340 } },
-  { colors: [e, 'transparent'], style: { bottom: -60, right: -110, width: 340, height: 300 } },
-];
+type Pool = [rgb: string, alpha: number];
+
+const poolsFor = (...five: Pool[]): Tokens['pools'] => five.map(([rgb, alpha]) => ({ rgb, alpha }));
 
 export const dark: Tokens = {
   bg: '#0a1018',
@@ -81,16 +91,17 @@ export const dark: Tokens = {
   gradv: ['rgba(168,186,255,0.6)', 'rgba(112,132,242,0.34)', 'rgba(92,112,224,0.24)'],
   blurTint: 'dark',
   blurIntensity: 40,
+  blurIntensityAndroid: 26,
   rim: 'rgba(255,255,255,0.5)',
   rimLow: 'rgba(255,255,255,0.14)',
   shadowColor: '#040a14',
   shadowOpacity: 0.55,
   pools: poolsFor(
-    'rgba(170,196,255,0.34)',
-    'rgba(139,164,255,0.24)',
-    'rgba(77,212,240,0.18)',
-    'rgba(52,211,166,0.16)',
-    'rgba(248,160,124,0.13)',
+    ['#aac4ff', 0.34],
+    ['#8ba4ff', 0.24],
+    ['#4dd4f0', 0.18],
+    ['#34d3a6', 0.16],
+    ['#f8a07c', 0.13],
   ),
 };
 
@@ -122,16 +133,17 @@ export const light: Tokens = {
   gradv: ['#6d7ff0', '#4a58cc', '#3f4dc0'],
   blurTint: 'light',
   blurIntensity: 55,
+  blurIntensityAndroid: 16,
   rim: 'rgba(255,255,255,1)',
   rimLow: 'rgba(255,255,255,0.6)',
   shadowColor: '#16202e',
   shadowOpacity: 0.16,
   pools: poolsFor(
-    'rgba(140,170,255,0.3)',
-    'rgba(120,150,255,0.22)',
-    'rgba(90,200,230,0.18)',
-    'rgba(70,200,165,0.16)',
-    'rgba(248,160,124,0.14)',
+    ['#8caaff', 0.3],
+    ['#7896ff', 0.22],
+    ['#5ac8e6', 0.18],
+    ['#46c8a5', 0.16],
+    ['#f8a07c', 0.14],
   ),
 };
 

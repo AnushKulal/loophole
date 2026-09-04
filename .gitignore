@@ -8,3 +8,6 @@ ios/
 .env.local
 dist-cfg/
 e2e-shots/
+.native-fingerprint
+logcat-loophole.txt
+screen.png

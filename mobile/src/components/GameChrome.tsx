@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useTheme } from '../theme/theme';
+import { curve, duration, scaled, travel, USE_NATIVE_DRIVER } from '../theme/motion';
+import { useReducedMotion } from './motion';
 import { Avatar, Chip, CloseIcon, Glass, Glyph, Gradient, H, P, Tap } from './base';
 import { font, radius as R } from '../theme/tokens';
 
@@ -309,12 +311,31 @@ export function TableLog({ text }: { text: string }) {
 /** Fades and lifts its children in, standing in for the `vUp` keyframe. */
 export function FadeIn({ children, delay = 0, style }: { children: ReactNode; delay?: number; style?: StyleProp<ViewStyle> }) {
   const v = useRef(new Animated.Value(0)).current;
+  const reduced = useReducedMotion();
+
   useEffect(() => {
-    Animated.timing(v, { toValue: 1, duration: 300, delay, easing: Easing.out(Easing.quad), useNativeDriver: true }).start();
+    const anim = Animated.timing(v, {
+      toValue: 1,
+      duration: scaled(duration.medium4),
+      delay: scaled(delay),
+      easing: curve.decelerate,
+      useNativeDriver: USE_NATIVE_DRIVER,
+    });
+    anim.start();
+    return () => anim.stop();
   }, [v, delay]);
+
   return (
     <Animated.View
-      style={[{ opacity: v, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) }] }, style]}
+      style={[
+        {
+          opacity: v,
+          transform: reduced
+            ? undefined
+            : [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [travel.medium, 0] }) }],
+        },
+        style,
+      ]}
     >
       {children}
     </Animated.View>

@@ -1,10 +1,12 @@
-import { type ReactNode } from 'react';
-import { Platform, Pressable, StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
+import { useRef, type ReactNode } from 'react';
+import { Animated, Platform, Pressable, StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Path, Polygon, Line as SvgLine, Text as SvgText } from 'react-native-svg';
 import { useTheme } from '../theme/theme';
 import { font, radius as R } from '../theme/tokens';
+import { curve, duration, scaled, USE_NATIVE_DRIVER } from '../theme/motion';
+import { useReducedMotion } from './motion';
 
 /**
  * The design-system primitives, rebuilt for React Native.
@@ -116,7 +118,7 @@ export function Glass({
     >
       <View style={{ borderRadius: radius, overflow: 'hidden', borderWidth: 1, borderColor: borderColor ?? t.line }}>
         <BlurView
-          intensity={intensity ?? t.blurIntensity}
+          intensity={intensity ?? (Platform.OS === 'android' ? t.blurIntensityAndroid : t.blurIntensity)}
           tint={t.blurTint}
           // Android needs the Dimezis implementation for a true backdrop blur.
           experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : undefined}
@@ -396,28 +398,66 @@ export function Radar({
 // ── controls ──────────────────────────────────────────────────────
 
 /** A pressable that dims on touch, the RN stand-in for the design's hovers. */
+/**
+ * Every tappable surface in the app.
+ *
+ * The press dips the surface to 0.97 and dims it slightly: 100ms down on an
+ * accelerating curve, 200ms back on a decelerating one. Down has to be
+ * immediate or the touch reads as ignored; the return is the part that can
+ * afford to be watched. The scale is small on purpose — 0.97 reads as a press,
+ * anything deeper reads as a bug.
+ *
+ * `scale` can be turned off for surfaces where shrinking would look wrong: a
+ * full-bleed row, or something already inside a transform.
+ */
 export function Tap({
   onPress,
   style,
   children,
   label,
   disabled,
+  scale = true,
 }: {
   onPress: () => void;
   style?: StyleProp<ViewStyle>;
   children: ReactNode;
   label?: string;
   disabled?: boolean;
+  scale?: boolean;
 }) {
+  const p = useRef(new Animated.Value(0)).current;
+  const reduced = useReducedMotion();
+
+  const to = (v: number) =>
+    Animated.timing(p, {
+      toValue: v,
+      duration: scaled(v === 1 ? duration.short2 : duration.short4),
+      easing: v === 1 ? curve.accelerate : curve.decelerate,
+      useNativeDriver: USE_NATIVE_DRIVER,
+    }).start();
+
   return (
     <Pressable
       onPress={onPress}
+      onPressIn={() => !disabled && to(1)}
+      onPressOut={() => !disabled && to(0)}
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={({ pressed }) => [style, pressed && !disabled && { opacity: 0.72 }]}
+      accessibilityState={{ disabled: !!disabled }}
+      style={style}
     >
-      {children}
+      <Animated.View
+        style={{
+          opacity: disabled ? 0.55 : p.interpolate({ inputRange: [0, 1], outputRange: [1, 0.82] }),
+          transform:
+            scale && !reduced
+              ? [{ scale: p.interpolate({ inputRange: [0, 1], outputRange: [1, 0.97] }) }]
+              : undefined,
+        }}
+      >
+        {children}
+      </Animated.View>
     </Pressable>
   );
 }

@@ -398,8 +398,8 @@ function Parallax({ w, h, travel }: { w: number; h: number; travel: number }) {
       <Defs>
         {t.pools.slice(0, 3).map((p, i) => (
           <SvgGradient key={i} id={`pool${i}`} x1="0" y1="0" x2="0" y2="1">
-            <Stop offset="0" stopColor={p.colors[0]} stopOpacity={0.9} />
-            <Stop offset="1" stopColor={p.colors[0]} stopOpacity={0} />
+            <Stop offset="0" stopColor={p.rgb} stopOpacity={p.alpha * 2.6} />
+            <Stop offset="1" stopColor={p.rgb} stopOpacity={0} />
           </SvgGradient>
         ))}
       </Defs>

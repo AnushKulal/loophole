@@ -11,7 +11,7 @@ import { chromium } from 'playwright';
  * Usage: node acceptance.mjs [port]
  */
 
-const URL = `http://127.0.0.1:${process.argv[2] || '5197'}/`;
+const URL = `http://127.0.0.1:${process.argv[2] || '8080'}/`;
 const OUT = process.env.SHOT_DIR ?? 'e2e-shots';
 
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' });
@@ -95,16 +95,27 @@ await T_('B2', 'splash leads to sign-in', async () => {
 });
 
 G('Accounts');
-await T_('A1', 'an unconfigured build says so instead of offering a dead form', async () => {
+await T_('A1', 'the sign-in screen offers a real form', async () => {
   await shot('02-signin');
-  return has(/Accounts are switched off/i);
+  return (await page.getByLabel('Email address').count()) === 1;
 });
 
-await T_('A2', 'and still lets you in — the games need no account', async () => hasBtn(/Play without an account/));
+await T_('A2', 'creating an account asks for a name and a confirmation', async () => {
+  await B(/Create new account/).click();
+  await wait(600);
+  return (
+    (await page.getByLabel('Display name').count()) === 1 &&
+    (await page.getByLabel('Confirm password').count()) === 1
+  );
+});
 
-await T_('A3', 'the guest route reaches onboarding', async () => {
-  await B(/Play without an account/).click();
-  await wait(900);
+await T_('A3', 'a new account reaches onboarding', async () => {
+  await page.getByLabel('Email address').first().fill('acceptance@example.com');
+  await page.getByLabel('Display name').first().fill('Acceptance');
+  await page.getByLabel('Password').first().fill('secret123');
+  await page.getByLabel('Confirm password').first().fill('secret123');
+  await B(/^Create account$/).click();
+  await wait(2200);
   await shot('03-onboarding');
   return hasBtn(/Mark 1/);
 });
@@ -281,7 +292,7 @@ await T_('F5', 'and back to night', async () => {
   return true;
 });
 
-await T_('F6', 'signed-out settings shows no account row', async () => !(await has(/Signed in as/i)));
+await T_('F6', 'settings names the signed-in account', async () => has(/acceptance@example\.com/i));
 
 await T_('F7', 'the tint shop equips an accent', async () => {
   await home();
