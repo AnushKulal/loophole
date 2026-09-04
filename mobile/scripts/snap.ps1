@@ -19,12 +19,17 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-Set-Location (Join-Path $PSScriptRoot "..\..")   # repo root
+
+# Push rather than Set: the script would otherwise leave the shell sitting in
+# the repo root, so the next run of `.\scripts\snap.ps1` fails with a confusing
+# "not found" from the wrong directory.
+Push-Location (Join-Path $PSScriptRoot "..\..")   # repo root
+try {
 
 $PKG = "com.loophole.app"
 
 function Blue($m) { Write-Host $m -ForegroundColor Cyan }
-function Die($m)  { Write-Host $m -ForegroundColor Red; exit 1 }
+function Die($m)  { Write-Host $m -ForegroundColor Red; Pop-Location; exit 1 }
 
 if (-not (Get-Command adb -ErrorAction SilentlyContinue)) {
   Die @"
@@ -87,7 +92,7 @@ if ((Get-Item "$dir/crash.log").Length -gt 0) {
 
 if ($NoPush) {
   Blue "Not pushing (-NoPush). Open $dir/screen.png to look."
-  exit 0
+  return
 }
 
 git add $dir
@@ -95,3 +100,6 @@ git commit -q -m "Device report: $Label" -- $dir
 git push -q origin HEAD
 
 Blue "Pushed. Tell me:  device report $stamp-$slug"
+
+}
+finally { Pop-Location }
