@@ -4,3 +4,6 @@ dist/
 *.log
 android/
 ios/
+.env
+.env.local
+dist-cfg/

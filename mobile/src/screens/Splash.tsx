@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react';
-import { Animated, Easing, Pressable, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Animated, Easing, Pressable, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { store } from '../store/useStore';
+import type { State } from '../store/store';
 import { useTheme } from '../theme/theme';
 import { Glass, Glyph, Gradient, H, P, ArrowRight } from '../components/base';
 
@@ -42,12 +43,20 @@ function FloatTile({ d, tint, color, delay }: { d: string; tint: string; color: 
 }
 
 /** 01 · Splash — tap anywhere to enter. */
-export default function Splash() {
+export default function Splash({ s }: { s: State }) {
   const t = useTheme();
+  const [waiting, setWaiting] = useState(false);
+
+  // Tapping before the stored session has been checked leaves the button
+  // waiting rather than sending you to a sign-in screen you do not need.
+  const checking = waiting && s.auth.status === 'unknown';
 
   return (
     <Pressable
-      onPress={() => store.go('login')}
+      onPress={() => {
+        setWaiting(true);
+        store.enter();
+      }}
       accessibilityRole="button"
       accessibilityLabel="Enter Loophole"
       style={{ flex: 1, justifyContent: 'center', gap: 30, paddingHorizontal: 28, paddingTop: 80, paddingBottom: 66 }}
@@ -83,9 +92,9 @@ export default function Splash() {
       <Gradient radius={18}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 17, paddingHorizontal: 22 }}>
           <H size={16} weight={700} color="#fff" style={{ marginRight: 'auto' }}>
-            Enter
+            {checking ? 'Just a moment…' : 'Enter'}
           </H>
-          <ArrowRight size={21} />
+          {checking ? <ActivityIndicator color="#fff" /> : <ArrowRight size={21} />}
         </View>
       </Gradient>
     </Pressable>

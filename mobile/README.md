@@ -93,3 +93,44 @@ web`, which runs the same components through `react-native-web`) and driving it
 in a browser. That checks composition, layout and interaction; it does **not**
 check native-only rendering, so blur fidelity and gesture feel still need a real
 device or emulator.
+
+## Accounts
+
+Sign-in is Firebase Authentication over its REST API — no `firebase` SDK, so
+there is no native module and the same code runs on web, iOS and Android.
+
+`src/auth/` is the whole of it:
+
+```
+config.ts    the project's public apiKey and projectId
+validate.ts  form rules, pure
+errors.ts    Firebase's codes and prose, translated into sentences
+firebase.ts  the six REST calls, with a 15s timeout
+session.ts   the refresh token in the platform keystore
+auth.ts      the five functions the rest of the app calls
+```
+
+Screens never touch Firebase directly — they call `auth.ts` and read
+`state.auth`. Swapping provider means rewriting that one file.
+
+### Pointing it at your own project
+
+1. **console.firebase.google.com** → create a project
+2. **Project settings → Your apps → web** → copy `apiKey` and `projectId`
+3. **Authentication → Sign-in method → Email/Password → Enable**
+4. Put the two values in `DEFAULTS` in `src/auth/config.ts`, or in a `.env`:
+
+```
+EXPO_PUBLIC_FIREBASE_API_KEY=...
+EXPO_PUBLIC_FIREBASE_PROJECT_ID=...
+```
+
+Both are public client config — they identify the project, they do not
+authorise anything, and every Firebase web app ships them in its bundle.
+Access is controlled by your auth settings and security rules.
+
+If you change `.env`, export with `--clear`: Metro caches inlined env values,
+so a stale key survives an ordinary rebuild.
+
+With nothing configured the sign-in screen says so and offers **Play without an
+account** — every game runs locally and needs no account at all.
