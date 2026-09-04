@@ -54,9 +54,9 @@ function Shell() {
   const screen = () => {
     switch (s.scr) {
       case 'splash':
-        return <Splash />;
+        return <Splash s={s} />;
       case 'login':
-        return <SignIn />;
+        return <SignIn s={s} />;
       case 'onboard':
         return <Onboarding s={s} />;
       case 'home':
@@ -136,6 +136,9 @@ export default function App() {
     store.setClipboard((text) => {
       Clipboard.setStringAsync(text).catch(() => {});
     });
+    // Adopt a stored session before anything renders past the splash, so a
+    // signed-in user never sees the sign-in screen flash by.
+    void store.restoreSession();
     return () => store.dispose();
   }, []);
 

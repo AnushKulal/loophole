@@ -237,7 +237,18 @@ export default function Settings({ s }: { s: State }) {
           ))}
         </View>
 
-        <Tap onPress={store.signOut} label="Sign out" style={{ width: '100%', marginTop: 18 }}>
+        {!!s.auth.user && (
+          <View style={{ marginTop: 18, alignItems: 'center', gap: 3 }}>
+            <P size={12} color={t.dim2}>
+              Signed in as
+            </P>
+            <P size={13.5} weight={600} color={t.dim}>
+              {s.auth.user.email}
+            </P>
+          </View>
+        )}
+
+        <Tap onPress={store.signOut} label="Sign out" style={{ width: '100%', marginTop: 12 }}>
           <View
             style={{
               padding: 15,

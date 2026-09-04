@@ -2,6 +2,24 @@ import { CATEGORIES, GAMES, gameByName, type Category } from '../data/games';
 import { FROST_TIER, TINTS, inboxId, INBOX } from '../data/progression';
 import { MARKS, OTHERS, REPLIES, SEED, grad, type ThreadLine } from '../data/people';
 
+import * as auth from '../auth/auth';
+import { AuthFailure, type Account, type AuthError } from '../auth/auth';
+import { toAuthError } from '../auth/errors';
+
+/**
+ * `unknown` is the launch state: a stored session may or may not be waiting, so
+ * the splash holds until restore() answers. Without it the app flashes the
+ * sign-in screen at everyone who is already signed in.
+ */
+export interface AuthState {
+  status: 'unknown' | 'signedOut' | 'signedIn';
+  user: Account | null;
+  busy: boolean;
+  error: AuthError | null;
+  /** A confirmation, like "reset email sent" — not a failure. */
+  notice: string | null;
+}
+
 export type Screen =
   | 'splash' | 'login' | 'onboard' | 'home' | 'all' | 'config' | 'lobby'
   | 'quiz' | 'game' | 'results' | 'profile' | 'player' | 'board'
@@ -93,6 +111,8 @@ chatOpen: boolean;
   offline: boolean;
   empty: boolean;
 
+  auth: AuthState;
+
   addQuery: string;
   sent: string[];
   inboxGone: string[];
@@ -143,6 +163,8 @@ const initial = (): State => ({
   rulesFor: null,
   offline: false,
   empty: false,
+
+  auth: { status: 'unknown', user: null, busy: false, error: null, notice: null },
 
   addQuery: '',
   sent: [],
@@ -426,11 +448,98 @@ class Store {
     return INBOX.filter((x) => !this.state.inboxGone.includes(inboxId(x))).length;
   }
 
+  // ── accounts ─────────────────────────────────────────────────────
+
+  private setAuth = (patch: Partial<AuthState>) =>
+    this.setState({ auth: { ...this.state.auth, ...patch } });
+
+  /** Clears whatever the last attempt left on screen. */
+  clearAuthMessage = () => this.setAuth({ error: null, notice: null });
+
+  /**
+   * Runs one auth call with the busy flag and error handling every one of them
+   * needs, so the four actions below stay three lines each.
+   */
+  private attempt = async (run: () => Promise<Account | null>, onDone?: () => void) => {
+    if (this.state.auth.busy) return;
+    this.setAuth({ busy: true, error: null, notice: null });
+    try {
+      const user = await run();
+      if (user) {
+        this.setAuth({ status: 'signedIn', user, busy: false });
+        this.setState({ myName: user.name || user.email.split('@')[0] });
+      } else {
+        this.setAuth({ busy: false });
+      }
+      onDone?.();
+    } catch (e) {
+      this.setAuth({ busy: false, error: e instanceof AuthFailure ? e.detail : toAuthError(undefined) });
+    }
+  };
+
+  /**
+   * True when someone tapped through the splash before the session check
+   * finished. Kept off State because nothing renders it — it only decides
+   * where restoreSession lands.
+   */
+  private enterWaiting = false;
+
+  /** Called once on launch: adopt a stored session, or fall through to login. */
+  restoreSession = async () => {
+    const user = await auth.restore();
+    if (user) {
+      this.setAuth({ status: 'signedIn', user });
+      this.setState({ myName: user.name || user.email.split('@')[0] });
+    } else {
+      this.setAuth({ status: 'signedOut' });
+    }
+    if (this.enterWaiting) {
+      this.enterWaiting = false;
+      this.setState({ scr: user ? 'home' : 'login' });
+    }
+  };
+
+  /**
+   * The splash's only action. Signed-in players skip the sign-in screen
+   * entirely; if the session check is still in flight, this waits for it rather
+   * than showing a sign-in form that is about to be replaced.
+   */
+  enter = () => {
+    const { status } = this.state.auth;
+    if (status === 'unknown') {
+      this.enterWaiting = true;
+      return;
+    }
+    this.setState({ scr: status === 'signedIn' ? 'home' : 'login' });
+  };
+
+  /**
+   * The way out of a build with no Firebase project behind it. Without this the
+   * sign-in screen is a dead end and the whole app is unreachable — every game
+   * here runs locally and needs no account at all.
+   */
+  playAnyway = () => this.setState({ scr: 'onboard' });
+
+  signIn = (email: string, password: string) =>
+    this.attempt(() => auth.signIn(email, password), () => this.setState({ scr: 'home' }));
+
+  /** A new account has nothing set up yet, so it goes through onboarding. */
+  signUp = (email: string, password: string, name: string) =>
+    this.attempt(() => auth.signUp(email, password, name), () => this.setState({ scr: 'onboard' }));
+
+  resetPassword = (email: string) =>
+    this.attempt(async () => {
+      await auth.sendPasswordReset(email);
+      this.setAuth({ notice: `Password reset sent to ${email.trim()}. Check your inbox.` });
+      return null;
+    });
+
   // ── sign out ─────────────────────────────────────────────────────
 
   signOut = () => {
+    void auth.signOut();
     this.dispose();
-    this.state = { ...initial(), theme: this.state.theme };
+    this.state = { ...initial(), theme: this.state.theme, scr: 'login', auth: { status: 'signedOut', user: null, busy: false, error: null, notice: null } };
     this.listeners.forEach((fn) => fn());
   };
 }
