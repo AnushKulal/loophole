@@ -6,17 +6,16 @@
 #
 # Usage:
 #   .\scripts\snap.ps1 "day mode home"
-#   .\scripts\snap.ps1 "day mode home" -NoPush
+#
+# The report is written to disk for you to attach. It is deliberately not
+# pushed: the repo is public and a screenshot captures whatever is on screen.
 #
 # If PowerShell refuses to run it ("running scripts is disabled"), either:
 #   powershell -ExecutionPolicy Bypass -File scripts\snap.ps1 "day mode home"
 # or allow local scripts once, for your user only:
 #   Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 
-param(
-  [string]$Label = "snap",
-  [switch]$NoPush
-)
+param([string]$Label = "snap")
 
 $ErrorActionPreference = "Stop"
 
@@ -60,6 +59,12 @@ $stamp = Get-Date -Format "yyyyMMdd-HHmmss"
 $dir = "device-reports/$stamp-$slug"
 New-Item -ItemType Directory -Force -Path $dir | Out-Null
 
+# A screenshot is of whatever is on screen right now, which the first time was
+# a home screen rather than the app. Count down so there is time to get to it.
+Write-Host "Open the screen you want captured on the phone."
+5..1 | ForEach-Object { Write-Host -NoNewline "`r  capturing in $_... "; Start-Sleep 1 }
+Write-Host "`r                        `r" -NoNewline
+
 Blue "Capturing from $device..."
 
 # Screenshot via the phone's own storage rather than a pipe: PowerShell's
@@ -80,57 +85,28 @@ function Prop($name) { (adb -s $device shell getprop $name).Trim() }
 
 # The crash buffer survives the process dying, so it holds the last crash
 # whether or not one just happened. Empty is good news.
-adb -s $device logcat -b crash -d | Set-Content "$dir/crash.log"
+# Only this app's crashes. The buffer holds every crash on the phone, and
+# flagging an unrelated app's startup failure sends everyone chasing nothing.
+$blocks = (adb -s $device logcat -b crash -d) -join "`n" -split "(?=FATAL EXCEPTION)"
+($blocks | Where-Object { $_ -match [regex]::Escape($PKG) }) -join "`n" |
+  Set-Content "$dir/crash.log"
 adb -s $device logcat -d ReactNative:V ReactNativeJS:V AndroidRuntime:E "${PKG}:V" "*:S" |
   Select-Object -Last 400 | Set-Content "$dir/app.log"
 
 Blue "Wrote $dir"
 Get-Content "$dir/device.txt" | ForEach-Object { "  $_" }
-if ((Get-Item "$dir/crash.log").Length -gt 0) {
-  Write-Host "  crash.log is not empty - something crashed" -ForegroundColor Yellow
+if ((Get-Item "$dir/crash.log").Length -gt 2) {
+  Write-Host "  crash.log has a Loophole crash in it" -ForegroundColor Yellow
+} else {
+  Write-Host "  no Loophole crash"
 }
 
-if ($NoPush) {
-  Blue "Not pushing (-NoPush). Open $dir/screen.png to look."
-  return
-}
-
-git add $dir
-
-# Staged nothing means .gitignore swallowed the report, and the push would
-# then succeed having sent nothing — which looks identical to success from
-# here and identical to "you never ran it" from the other end.
-git diff --cached --quiet -- $dir
-if ($LASTEXITCODE -eq 0) {
-  Write-Host ""
-  Write-Host "Nothing was staged - .gitignore is excluding the report." -ForegroundColor Yellow
-  Write-Host "Run 'git pull' to pick up the fix, then try again. Meanwhile the" -ForegroundColor Yellow
-  Write-Host "files are on disk and can be attached directly:" -ForegroundColor Yellow
-  Write-Host "  $(Resolve-Path $dir)"
-  return
-}
-
-git commit -q -m "Device report: $Label" -- $dir
-
-# $LASTEXITCODE, not hope: a push can fail on credentials and still leave the
-# script looking successful, which sends someone off believing a report arrived
-# when it did not.
-git push -q origin HEAD 2>&1 | Write-Host
-if ($LASTEXITCODE -ne 0) {
-  Write-Host ""
-  Write-Host "The push failed, so the report is only on this computer." -ForegroundColor Yellow
-  Write-Host "Attach these two files in the chat instead:" -ForegroundColor Yellow
-  Write-Host "  $(Resolve-Path "$dir/screen.png")"
-  Write-Host "  $(Resolve-Path "$dir/crash.log")"
-  Write-Host ""
-  Write-Host "A 403 here means git is signed in as a different GitHub account"
-  Write-Host "than the one that owns the repo. Windows caches that:"
-  Write-Host "  Control Panel > Credential Manager > Windows Credentials"
-  Write-Host "  remove any git:https://github.com entry, then push again."
-  return
-}
-
-Blue "Pushed. Tell me:  device report $stamp-$slug"
+Blue "Attach these two files in the chat:"
+Write-Host "  $(Resolve-Path "$dir/screen.png")"
+Write-Host "  $(Resolve-Path "$dir/crash.log")"
+Write-Host ""
+Write-Host "Reports are not pushed: this repo is public, and a screenshot is whatever"
+Write-Host "was on screen - which the first time was a home screen, not the app."
 
 }
 finally { Pop-Location }

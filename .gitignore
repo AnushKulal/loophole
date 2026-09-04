@@ -12,9 +12,10 @@ e2e-shots/
 logcat-loophole.txt
 screen.png
 
-# ...but a device report exists to be committed, and the patterns above would
-# otherwise swallow every file one produces — the screenshot to `screen.png`
-# and both logs to `*.log`. `git add` then stages nothing, the commit is empty,
-# and the push succeeds having sent nothing at all.
-!device-reports/**/*.log
-!device-reports/**/*.png
+# Device reports are deliberately NOT committed. This repo is public, and a
+# phone screenshot is whatever was on screen at that moment — a home screen, a
+# notification, a personal photo. That is not something to publish by accident,
+# and a blob survives in git history long after the file is deleted.
+#
+# snap.sh / snap.ps1 leave reports on disk to be attached directly instead.
+device-reports/
