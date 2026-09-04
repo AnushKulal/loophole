@@ -162,16 +162,23 @@ jobs:
           echo "path=$RUNNER_TEMP/$name" >> "$GITHUB_OUTPUT"
           echo "name=$name" >> "$GITHUB_OUTPUT"
 
-      # Confirms the APK really carries the key we think it does, rather than
-      # silently falling back to the debug key.
+      # The fingerprint is the only way to tell which key actually signed the
+      # APK, and it belongs on the release page: a build that quietly fell back
+      # to a throwaway key looks identical otherwise, and the first sign of
+      # trouble is an install that Android refuses months later.
       - name: Report the signature
+        id: cert
         run: |
           apksigner="$(find "$ANDROID_HOME/build-tools" -name apksigner | sort | tail -1)"
-          if [ -n "$apksigner" ]; then
-            "$apksigner" verify --print-certs "${{ steps.apk.outputs.path }}" | head -20
-          else
+          if [ -z "$apksigner" ]; then
             echo "::warning::apksigner not found; cannot confirm which key signed the APK"
+            exit 0
           fi
+          certs="$("$apksigner" verify --print-certs "${{ steps.apk.outputs.path }}")"
+          echo "$certs" | head -20
+          sha="$(printf '%s' "$certs" | grep -m1 -i 'SHA-256 digest' | awk -F': ' '{print $2}')"
+          # Grouped into pairs so it can be read against `keytool -list -v`.
+          echo "sha256=$(printf '%s' "$sha" | tr 'a-f' 'A-F' | sed 's/../&:/g;s/:$//')" >> "$GITHUB_OUTPUT"
 
       - name: Upload APK to the run
         uses: actions/upload-artifact@v4
@@ -210,6 +217,15 @@ jobs:
           browser — that is expected for an app that does not come from the Play
           Store. Signed with ${SIGNED_WITH:-the debug key}.
 
+          Signing certificate SHA-256:
+
+          \`\`\`
+          ${{ steps.cert.outputs.sha256 }}
+          \`\`\`
+
+          Compare that against your own keystore to be sure this build carries it:
+          \`keytool -list -v -keystore loophole.jks | grep SHA256\`
+
           On iPhone this APK will not install; see \`docs/SHIP_THE_APK.md\` for the
           Expo Go and TestFlight routes.
 
@@ -242,4 +258,6 @@ jobs:
             fi
             echo ""
             echo "Signed with ${SIGNED_WITH:-the debug key}."
+            echo ""
+            echo "Certificate SHA-256: \`${{ steps.cert.outputs.sha256 }}\`"
           } >> "$GITHUB_STEP_SUMMARY"
