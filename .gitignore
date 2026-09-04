@@ -7,3 +7,4 @@ ios/
 .env
 .env.local
 dist-cfg/
+e2e-shots/
