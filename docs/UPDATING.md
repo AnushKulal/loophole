@@ -94,8 +94,20 @@ the cable goes from your phone to your computer, and nothing bridges that gap.
 
 ```bash
 cd mobile
-./scripts/snap.sh "day mode home"
+./scripts/snap.sh "day mode home"        # macOS, Linux
 ```
+
+```powershell
+cd mobile
+.\scripts\snap.ps1 "day mode home"       # Windows PowerShell
+```
+
+PowerShell cannot run `.sh` files — it offers to *open* them in Notepad instead,
+which is why the `.ps1` exists. If it refuses with "running scripts is
+disabled", either run it as
+`powershell -ExecutionPolicy Bypass -File scripts\snap.ps1 "..."`, or allow
+local scripts once for your user with
+`Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`.
 
 That captures the screen, the crash buffer, the recent app log, and the device
 details that change how a layout lands — physical size, density, Android
