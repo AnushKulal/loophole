@@ -96,6 +96,20 @@ if ($NoPush) {
 }
 
 git add $dir
+
+# Staged nothing means .gitignore swallowed the report, and the push would
+# then succeed having sent nothing — which looks identical to success from
+# here and identical to "you never ran it" from the other end.
+git diff --cached --quiet -- $dir
+if ($LASTEXITCODE -eq 0) {
+  Write-Host ""
+  Write-Host "Nothing was staged - .gitignore is excluding the report." -ForegroundColor Yellow
+  Write-Host "Run 'git pull' to pick up the fix, then try again. Meanwhile the" -ForegroundColor Yellow
+  Write-Host "files are on disk and can be attached directly:" -ForegroundColor Yellow
+  Write-Host "  $(Resolve-Path $dir)"
+  return
+}
+
 git commit -q -m "Device report: $Label" -- $dir
 
 # $LASTEXITCODE, not hope: a push can fail on credentials and still leave the
