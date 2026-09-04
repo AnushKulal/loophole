@@ -9,7 +9,7 @@ const stub = (name: string) =>
  *  the exported web build. */
 export default defineConfig({
   test: {
-    include: ['src/game/**/*.test.ts', 'src/auth/**/*.test.ts', 'plugins/**/*.test.ts'],
+    include: ['src/game/**/*.test.ts', 'src/auth/**/*.test.ts', 'src/theme/**/*.test.ts', 'plugins/**/*.test.ts'],
     environment: 'node',
     // The keystore adapter is the auth module's one platform import, and it
     // pulls in React Native, which does not parse in a node environment.

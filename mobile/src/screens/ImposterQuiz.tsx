@@ -17,7 +17,7 @@ import type { QuizPhase } from '../store/store';
 import { ANSWERS, MARKS, OTHERS, grad } from '../data/people';
 import { TINTS } from '../data/progression';
 import { useTheme } from '../theme/theme';
-import { font } from '../theme/tokens';
+import { font, fade } from '../theme/tokens';
 import { ArrowRight, Avatar, CloseIcon, Glass, Glyph, Gradient, H, Kicker, P, Ring, Tap } from '../components/base';
 import { FadeIn } from '../components/GameChrome';
 import { Loop } from './Splash';
@@ -152,7 +152,7 @@ function Shine() {
       }}
     >
       <LinearGradient
-        colors={['transparent', A(0.35), 'transparent'] as [string, string, string]}
+        colors={[fade(A(0.35)), A(0.35), fade(A(0.35))] as [string, string, string]}
         start={{ x: 0, y: 0.5 }}
         end={{ x: 1, y: 0.5 }}
         style={StyleSheet.absoluteFill}

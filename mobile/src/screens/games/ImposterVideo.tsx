@@ -16,7 +16,7 @@ import {
   TableLog,
 } from '../../components/GameChrome';
 import { useTheme } from '../../theme/theme';
-import { radius as R } from '../../theme/tokens';
+import { radius as R, fade } from '../../theme/tokens';
 import {
   BOT,
   makeRng,
@@ -247,7 +247,7 @@ function Clip({ scene, height, tag, grow }: { scene: Scene; height?: number; tag
           />
         ))}
       <LinearGradient
-        colors={[t.rim, 'transparent']}
+        colors={[t.rim, fade(t.rim)]}
         style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, opacity: 0.6 }}
         pointerEvents="none"
       />

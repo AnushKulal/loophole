@@ -7,7 +7,7 @@ import { TINTS } from '../data/progression';
 import { DIM, FEATURED, GAME_LEVEL, GAME_XP, gameByName, type Category } from '../data/games';
 import { MARKS } from '../data/people';
 import { useTheme } from '../theme/theme';
-import { NEON_ON_DARK, font, type Tokens } from '../theme/tokens';
+import { NEON_ON_DARK, font, type Tokens, fade } from '../theme/tokens';
 import { Avatar, Bar, Chevron, Glass, Glyph, H, P, Tap, gradStops } from '../components/base';
 import { FadeIn } from '../components/GameChrome';
 
@@ -248,7 +248,7 @@ export default function Home({ s }: { s: State }) {
                   style={StyleSheet.absoluteFill}
                 />
                 <LinearGradient
-                  colors={[t.rim, 'transparent']}
+                  colors={[t.rim, fade(t.rim)]}
                   style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, opacity: 0.7 }}
                   pointerEvents="none"
                 />

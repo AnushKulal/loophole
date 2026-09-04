@@ -180,3 +180,41 @@ export const font = {
 
 /** The design's radius scale. Nothing in this system is square. */
 export const radius = { sm: 8, md: 12, lg: 15, xl: 18, xxl: 20, card: 22, pane: 26, pill: 999 } as const;
+
+/**
+ * The zero-alpha end of a gradient, in the *same* hue as its start.
+ *
+ * React Native resolves the keyword `transparent` to `rgba(0,0,0,0)` — black,
+ * with no alpha. Android interpolates gradient stops in straight (rather than
+ * premultiplied) alpha, so a white highlight fading to `transparent` travels
+ * through grey towards black on its way out, leaving a dirty smear where the
+ * highlight should simply disappear.
+ *
+ * iOS and browsers premultiply and look correct, which is why every gradient in
+ * this app read fine in the harness and wrong on a phone.
+ *
+ * `fade('#fff')` gives `rgba(255,255,255,0)` — the same colour, gone.
+ */
+export function fade(color: string): string {
+  const rgb = toRgb(color);
+  return rgb ? `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0)` : 'rgba(0,0,0,0)';
+}
+
+/** Channel values from the colour notations this codebase actually uses. */
+function toRgb(color: string): [number, number, number] | null {
+  const c = color.trim();
+
+  const fn = c.match(/^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)/i);
+  if (fn) return [Number(fn[1]), Number(fn[2]), Number(fn[3])];
+
+  const hex = c.match(/^#([0-9a-f]{3,8})$/i)?.[1];
+  if (!hex) return null;
+  // #rgb and #rgba are shorthand: each digit doubles.
+  if (hex.length === 3 || hex.length === 4) {
+    return [0, 1, 2].map((i) => parseInt(hex[i] + hex[i], 16)) as [number, number, number];
+  }
+  if (hex.length === 6 || hex.length === 8) {
+    return [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16)) as [number, number, number];
+  }
+  return null;
+}

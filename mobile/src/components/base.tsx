@@ -3,7 +3,7 @@ import { Animated, Platform, Pressable, StyleSheet, Text, View, type StyleProp, 
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Path, Polygon, Line as SvgLine, Text as SvgText } from 'react-native-svg';
 import { useTheme } from '../theme/theme';
-import { font, radius as R } from '../theme/tokens';
+import { font, radius as R, fade } from '../theme/tokens';
 import { curve, duration, scaled, USE_NATIVE_DRIVER } from '../theme/motion';
 import { useReducedMotion } from './motion';
 
@@ -140,7 +140,7 @@ export function Glass({
             a pane as tilted toward a light source. Its own radius, so the
             corners stay round even where clipping would not save us. */}
         <LinearGradient
-          colors={[t.panelTop, 'transparent']}
+          colors={[t.panelTop, fade(t.panelTop)]}
           start={{ x: 0, y: 0 }}
           end={{ x: 0, y: 1 }}
           style={[StyleSheet.absoluteFill, { borderRadius: radius }]}
