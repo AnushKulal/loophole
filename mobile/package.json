@@ -33,7 +33,9 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "share": "expo start --tunnel",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:web": "expo export --platform web --clear && npx http-server dist -p 8080 -s",
+    "e2e": "node e2e/acceptance.mjs 8080"
   },
   "private": true
 }
