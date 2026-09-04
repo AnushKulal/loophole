@@ -11,3 +11,10 @@ e2e-shots/
 .native-fingerprint
 logcat-loophole.txt
 screen.png
+
+# ...but a device report exists to be committed, and the patterns above would
+# otherwise swallow every file one produces — the screenshot to `screen.png`
+# and both logs to `*.log`. `git add` then stages nothing, the commit is empty,
+# and the push succeeds having sent nothing at all.
+!device-reports/**/*.log
+!device-reports/**/*.png

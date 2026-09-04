@@ -73,6 +73,17 @@ if [ "$PUSH" = no ]; then
 fi
 
 git add "$DIR"
+
+# Staged nothing means .gitignore swallowed the report, and the push would then
+# succeed having sent nothing — indistinguishable from success at this end and
+# from "never ran" at the other.
+if git diff --cached --quiet -- "$DIR"; then
+  printf '\033[33m%s\033[0m\n' "Nothing was staged — .gitignore is excluding the report."
+  echo "Run 'git pull' to pick up the fix, then try again. The files are on disk:"
+  echo "  $PWD/$DIR"
+  exit 1
+fi
+
 git commit -q -m "Device report: $LABEL" -- "$DIR"
 
 # Checked, not assumed: a push that fails on credentials would otherwise leave
