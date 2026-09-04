@@ -176,8 +176,15 @@ jobs:
           fi
           certs="$("$apksigner" verify --print-certs "${{ steps.apk.outputs.path }}")"
           echo "$certs" | head -20
-          sha="$(printf '%s' "$certs" | grep -m1 -i 'SHA-256 digest' | awk -F': ' '{print $2}')"
-          # Grouped into pairs so it can be read against `keytool -list -v`.
+          # Match the digest itself rather than splitting the label off the
+          # front: apksigner's wording varies between build-tools versions, and
+          # a 64-character hex run is unambiguous where a field index is not.
+          sha="$(printf '%s' "$certs" | grep -m1 -oiE '\b[0-9a-f]{64}\b' || true)"
+          if [ -z "$sha" ]; then
+            echo "::warning::could not read the certificate digest out of apksigner's output"
+            exit 0
+          fi
+          # Grouped into pairs so it reads against `keytool -list -v`.
           echo "sha256=$(printf '%s' "$sha" | tr 'a-f' 'A-F' | sed 's/../&:/g;s/:$//')" >> "$GITHUB_OUTPUT"
 
       - name: Upload APK to the run
