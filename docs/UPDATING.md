@@ -15,7 +15,7 @@ cd mobile
 | | When | How long | Gives you |
 | --- | --- | --- | --- |
 | **USB** | The phone is plugged in | ~1 min after the first compile | A live log, which is the only way to see a native crash |
-| **OTA** | Nothing native changed | Seconds | The new JavaScript at next launch |
+| **OTA** | Nothing native changed | Seconds | The new JavaScript, at this launch |
 | **Build** | Anything native changed | ~15 min on Actions | A fresh APK and a QR code |
 
 ## Why the OTA/build split is not a judgement call
@@ -66,15 +66,42 @@ guessing at it over four.
 
 ## OTA
 
-Needs a free Expo account and a one-time `eas init`; the commands are in
-`.github/workflows/expo-update.yml`. EAS **Update** is not EAS **Build** — the
-build minutes that run out are Build's, and updates do not touch them. APKs come
-from GitHub Actions here, which has no such limit.
+`expo-updates` is installed and configured; one step remains, and only the
+account owner can do it:
 
-The phone applies an update on the *second* launch after it is published: the
-first fetches it in the background, the next one runs it. That is expo-updates'
-default and it is the right one — nobody should wait on a download at a splash
-screen.
+```bash
+cd mobile
+npx eas-cli login        # a free Expo account
+npx eas-cli init         # writes extra.eas.projectId and updates.url
+git add app.json && git commit -m "Configure EAS Update" && git push
+```
+
+Then create a token at <https://expo.dev/settings/access-tokens> and add it as
+an `EXPO_TOKEN` secret under **Settings → Secrets and variables → Actions**.
+
+One APK build after that carries the updater. Every JavaScript change from then
+on lands in seconds.
+
+### Why this is safe
+
+`app.json` sets `runtimeVersion: { policy: "fingerprint" }`. That derives the
+runtime from the actual native surface — dependencies, plugins, package id, SDK
+versions — so an update can only reach a binary built from the same native code.
+Change something native and the fingerprint changes, no installed phone matches,
+and nothing is delivered.
+
+The failure that prevents is the bad one: a JavaScript bundle calling a native
+module the installed APK does not have, delivered to every phone at once,
+crashing on launch, with no way back except a new APK. It is the same reasoning
+`ship.sh` uses, enforced by Expo rather than by a script.
+
+`fallbackToCacheTimeout` is 4000ms, so a waiting update applies at *this* launch
+rather than the next one — long enough for a normal connection, short enough
+that a bad one does not hold the splash screen.
+
+EAS **Update** is not EAS **Build**: the free build minutes that run out belong
+to Build, and updates do not touch them. APKs come from GitHub Actions here,
+which has no such limit.
 
 ## Build
 

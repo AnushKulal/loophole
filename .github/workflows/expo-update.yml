@@ -1,42 +1,49 @@
-name: Expo Update (iOS / Expo Go)
+name: OTA update
 
-# Publishes the JS bundle to EAS Update and prints a QR code for it.
+# Publishes the JavaScript bundle to EAS Update. Phones pick it up at next
+# launch — seconds, instead of the fifteen minutes an APK takes.
 #
-# This is the iPhone route. Android has an APK; iOS has no equivalent you can
-# just send someone, so instead the app is loaded inside a host app — Expo Go
-# from the App Store, or a development build. Scan the QR this prints and the
-# host app opens Loophole.
+# This is safe precisely because of `runtimeVersion: { policy: "fingerprint" }`
+# in app.json. That derives the runtime from the actual native surface —
+# dependencies, plugins, package id, SDK versions — so an update can only ever
+# reach a binary built from the same native code. Change something native and
+# the fingerprint changes, no installed phone matches, and nothing is delivered.
+# The failure this prevents is the bad one: a JS bundle calling a native module
+# the installed APK lacks, delivered to everyone at once, crashing on launch
+# with no way back except a new APK.
 #
-# One-time setup, from your own machine — EAS Update needs a project id and the
-# expo-updates runtime, and only you can create those:
+# ── one-time setup, from your own machine ────────────────────────────────────
 #
 #   cd mobile
-#   npx eas-cli login
-#   npx eas-cli init              # writes extra.eas.projectId into app.json
-#   npx expo install expo-updates
-#   npx eas-cli update:configure  # writes the updates.url and runtimeVersion
-#   git commit -am "Configure EAS Update" && git push
+#   npx eas-cli login          # a free Expo account
+#   npx eas-cli init           # writes extra.eas.projectId and updates.url
+#   git add app.json && git commit -m "Configure EAS Update" && git push
 #
-# Then create an access token at https://expo.dev/settings/access-tokens (the
-# free tier is enough) and add it as an EXPO_TOKEN secret under
-# Settings → Secrets and variables → Actions. After that this workflow runs on
-# its own.
+# Then create a token at https://expo.dev/settings/access-tokens and add it as
+# an EXPO_TOKEN secret under Settings → Secrets and variables → Actions.
 #
-# If your SDK's Expo Go cannot open a published update, `npm run share` on your
-# own machine always works — it serves the app over a tunnel and prints the
-# same kind of QR. See docs/SHIP_THE_APK.md.
+# One APK build after that carries the updater; everything from then on is OTA.
+#
+# EAS *Update* is not EAS *Build* — the free build minutes that run out belong
+# to Build, and updates do not touch them. APKs come from GitHub Actions here.
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'mobile/src/**'
+      - 'mobile/App.tsx'
+      - 'mobile/assets/**'
   workflow_dispatch:
     inputs:
       branch:
-        description: 'EAS Update branch to publish to'
+        description: 'EAS Update branch'
         type: string
         default: preview
-      message:
-        description: 'What changed'
-        type: string
-        default: ''
+
+concurrency:
+  group: ota-${{ github.ref }}
+  cancel-in-progress: true
 
 defaults:
   run:
@@ -44,74 +51,78 @@ defaults:
 
 jobs:
   update:
-    name: Publish update
+    name: Publish OTA
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
       # After the checkout, because every `run:` here starts in mobile/.
-      - name: Check for a token
+      # Skipped rather than failed when unconfigured: this workflow fires on
+      # every push to src/, and a red X on every commit until someone runs
+      # `eas init` trains people to ignore the X.
+      - name: Is OTA configured?
+        id: gate
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
-          if [ -z "$EXPO_TOKEN" ]; then
-            echo "::error::EXPO_TOKEN is not set. Add it under Settings → Secrets and variables → Actions, or use 'npm run share' locally instead — that needs no account."
-            exit 1
+          url="$(node -p "require('./app.json').expo.updates?.url ?? ''")"
+          if [ -z "$url" ]; then
+            echo "::notice::No updates.url in app.json — run 'npx eas-cli init' once. Skipping."
+            echo "go=no" >> "$GITHUB_OUTPUT"
+          elif [ -z "$EXPO_TOKEN" ]; then
+            echo "::warning::updates.url is set but EXPO_TOKEN is not. Add it under Settings → Secrets and variables → Actions."
+            echo "go=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=yes" >> "$GITHUB_OUTPUT"
           fi
 
       - uses: actions/setup-node@v4
+        if: steps.gate.outputs.go == 'yes'
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: mobile/package-lock.json
 
       - name: Install dependencies
+        if: steps.gate.outputs.go == 'yes'
         run: npm ci
 
+      # An OTA reaches phones in seconds and cannot be recalled, so the same
+      # gates the APK build runs apply here — more so, not less.
       - name: Typecheck
+        if: steps.gate.outputs.go == 'yes'
         run: npx tsc --noEmit
 
       - name: Test the game engines
+        if: steps.gate.outputs.go == 'yes'
         run: npm test
 
-      - name: Publish to EAS Update
+      - name: Publish
         id: publish
+        if: steps.gate.outputs.go == 'yes'
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
           set -euo pipefail
           npx eas-cli@latest update \
-            --branch "${{ inputs.branch }}" \
-            --message "${{ inputs.message || format('build {0}', github.run_number) }}" \
+            --branch "${{ inputs.branch || 'preview' }}" \
+            --message "$(git log -1 --pretty=%s)" \
             --non-interactive --json > update.json
-          # eas prints an array, one entry per platform; they share a group id.
           group="$(node -p 'JSON.parse(require("fs").readFileSync("update.json","utf8"))[0].group')"
-          echo "url=https://expo.dev/preview/update?message=&updateGroupId=$group" >> "$GITHUB_OUTPUT"
-
-      - name: Draw the QR code
-        run: |
-          npx -y qrcode --type=png --width 600 --output "$RUNNER_TEMP/qr.png" \
-            "${{ steps.publish.outputs.url }}"
-
-      - name: Upload the QR code
-        uses: actions/upload-artifact@v4
-        with:
-          name: expo-go-qr
-          path: ${{ runner.temp }}/qr.png
-          if-no-files-found: error
+          runtime="$(node -p 'JSON.parse(require("fs").readFileSync("update.json","utf8"))[0].runtimeVersion')"
+          echo "group=$group" >> "$GITHUB_OUTPUT"
+          echo "runtime=$runtime" >> "$GITHUB_OUTPUT"
 
       - name: Summarise
+        if: steps.gate.outputs.go == 'yes'
         run: |
           {
-            echo "### Loophole on iPhone"
+            echo "### OTA published"
             echo ""
-            echo "Published to the \`${{ inputs.branch }}\` branch."
+            echo "Runtime \`${{ steps.publish.outputs.runtime }}\` · group \`${{ steps.publish.outputs.group }}\`"
             echo ""
-            echo "1. Install **Expo Go** from the App Store."
-            echo "2. Open this link on the phone, or scan the QR in the **expo-go-qr** artifact:"
-            echo ""
-            echo "   ${{ steps.publish.outputs.url }}"
-            echo ""
-            echo "If Expo Go will not open it, run \`npm run share\` on your own machine and scan that QR instead."
+            echo "Phones running an APK built from this same runtime pick it up at next"
+            echo "launch. One built from a different native surface will not see it, which"
+            echo "is the point — it would crash if it did."
           } >> "$GITHUB_STEP_SUMMARY"

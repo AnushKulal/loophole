@@ -45,6 +45,12 @@
           }
         }
       ]
-    ]
+    ],
+    "updates": {
+      "fallbackToCacheTimeout": 4000
+    },
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    }
   }
 }
