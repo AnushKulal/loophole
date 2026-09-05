@@ -436,6 +436,7 @@ export function Tap({
   label,
   disabled,
   scale = true,
+  fill,
 }: {
   onPress: () => void;
   style?: StyleProp<ViewStyle>;
@@ -443,6 +444,18 @@ export function Tap({
   label?: string;
   disabled?: boolean;
   scale?: boolean;
+  /**
+   * Let the children fill a stretched tap target.
+   *
+   * `style` lands on the `Pressable`, so `flex: 1` there stretches the target
+   * to its row — but the press animation needs a node of its own between the
+   * two, and that node sizes to its content. The child's own `flex: 1` then
+   * measures against content height and the tap target is left taller than
+   * what is drawn inside it, which reads as a card that does not line up with
+   * the column beside it. Opt in wherever the child is meant to reach the
+   * bottom of the target.
+   */
+  fill?: boolean;
 }) {
   const p = useRef(new Animated.Value(0)).current;
   const reduced = useReducedMotion();
@@ -468,6 +481,7 @@ export function Tap({
     >
       <Animated.View
         style={{
+          flex: fill ? 1 : undefined,
           opacity: disabled ? 0.55 : p.interpolate({ inputRange: [0, 1], outputRange: [1, 0.82] }),
           transform:
             scale && !reduced

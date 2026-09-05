@@ -46,7 +46,7 @@ import {
   type UnoState,
 } from '../../game/uno';
 import { useTheme } from '../../theme/theme';
-import { radius as R } from '../../theme/tokens';
+import { radius as R, bloom } from '../../theme/tokens';
 
 /**
  * UNO.
@@ -467,11 +467,7 @@ function TopCard({ card }: { card: Card }) {
       style={{
         transform: [{ scale: s }],
         borderRadius: 18,
-        shadowColor: t.shadowColor,
-        shadowOffset: { width: 0, height: 12 },
-        shadowRadius: 24,
-        shadowOpacity: t.shadowOpacity,
-        elevation: 9,
+        ...bloom(t.shadowColor, 24, t.shadowOpacity, 12),
       }}
     >
       <CardFace card={card} w={86} h={124} radius={18} />

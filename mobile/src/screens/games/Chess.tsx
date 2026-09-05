@@ -41,7 +41,7 @@ import {
 } from '../../game/chess';
 import { ChessPiece, TakenPiece } from './ChessPieces';
 import { useTheme } from '../../theme/theme';
-import { radius as R } from '../../theme/tokens';
+import { radius as R, bloom } from '../../theme/tokens';
 
 /**
  * Chess.
@@ -471,14 +471,7 @@ function Board({
     // The shadow and the clip are separate nodes: a node that clips its
     // children on iOS clips its own shadow too.
     <View
-      style={{
-        borderRadius: R.lg,
-        shadowColor: t.shadowColor,
-        shadowOffset: { width: 0, height: 10 },
-        shadowRadius: 20,
-        shadowOpacity: t.shadowOpacity,
-        elevation: 8,
-      }}
+      style={{ borderRadius: R.lg, ...bloom(t.shadowColor, 20, t.shadowOpacity, 10) }}
     >
       <View style={{ borderRadius: R.lg, overflow: 'hidden', borderWidth: 1, borderColor: t.line2 }}>
         {ROWS.map((row) => (

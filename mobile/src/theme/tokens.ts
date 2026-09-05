@@ -216,6 +216,48 @@ export function fade(color: string): string {
   return rgb ? `rgba(${rgb[0]},${rgb[1]},${rgb[2]},0)` : 'rgba(0,0,0,0)';
 }
 
+/**
+ * A soft bloom around a rounded view, as a CSS box-shadow.
+ *
+ * This is the second half of the elevation bug that `raised` documents, and the
+ * half that could not be fixed by adding a background. A ring, a swatch, a
+ * shadow-casting wrapper — these have a radius and a border and deliberately no
+ * fill, because something shows through them. Android has nothing to derive an
+ * elevation shadow's shape from, so it uses the bounding rectangle, and a
+ * tinted glow around a circle comes out as a hard tinted square.
+ *
+ * `boxShadow` is drawn by a different path entirely: `OutsetBoxShadowDrawable`
+ * reads `borderRadius` off the view and strokes a round rect, with no
+ * background and no elevation involved. Because there is no elevation there is
+ * also no z-order side effect, which the old form had and nothing wanted.
+ *
+ * `blur` is the CSS blur radius, so the numbers from the design's
+ * `box-shadow: 0 0 18px rgba(…)` transfer across unchanged.
+ */
+export function bloom(color: string, blur: number, opacity = 1, dy = 0) {
+  return { boxShadow: `0px ${dy}px ${blur}px ${withAlpha(color, opacity)}` } as const;
+}
+
+/**
+ * `color` at `opacity`, multiplied through any alpha the colour already has —
+ * so fading a translucent token dims it rather than reviving it.
+ */
+export function withAlpha(color: string, opacity: number): string {
+  const rgb = toRgb(color);
+  if (!rgb) return color;
+  const a = alphaOf(color) * opacity;
+  return `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${Math.round(a * 1000) / 1000})`;
+}
+
+function alphaOf(color: string): number {
+  const c = color.trim();
+  const fn = c.match(/^rgba\(\s*[\d.]+[\s,]+[\d.]+[\s,]+[\d.]+[\s,/]+([\d.]+)\s*\)$/i);
+  if (fn) return Number(fn[1]);
+  const hex = c.match(/^#([0-9a-f]{4}|[0-9a-f]{8})$/i)?.[1];
+  if (!hex) return 1;
+  return hex.length === 4 ? parseInt(hex[3] + hex[3], 16) / 255 : parseInt(hex.slice(6, 8), 16) / 255;
+}
+
 /** Channel values from the colour notations this codebase actually uses. */
 function toRgb(color: string): [number, number, number] | null {
   const c = color.trim();

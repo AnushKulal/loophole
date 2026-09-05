@@ -17,7 +17,7 @@ import type { QuizPhase } from '../store/store';
 import { ANSWERS, MARKS, OTHERS, grad } from '../data/people';
 import { TINTS } from '../data/progression';
 import { useTheme } from '../theme/theme';
-import { font, fade } from '../theme/tokens';
+import { font, fade, bloom } from '../theme/tokens';
 import { ArrowRight, Avatar, CloseIcon, Glass, Glyph, Gradient, H, Kicker, P, Ring, Tap } from '../components/base';
 import { FadeIn } from '../components/GameChrome';
 import { Loop } from './Splash';
@@ -426,11 +426,7 @@ export default function ImposterQuiz({ s }: { s: State }) {
                 style={{
                   flex: 1,
                   borderRadius: 26,
-                  shadowColor: t.acc,
-                  shadowOffset: { width: 0, height: 0 },
-                  shadowRadius: 34,
-                  shadowOpacity: 0.3,
-                  elevation: 10,
+                  ...bloom(t.acc, 34, 0.3),
                 }}
               >
                 <View
@@ -535,11 +531,7 @@ export default function ImposterQuiz({ s }: { s: State }) {
               flex: 1,
               minHeight: 0,
               borderRadius: 26,
-              shadowColor: t.acc,
-              shadowOffset: { width: 0, height: 0 },
-              shadowRadius: 28,
-              shadowOpacity: 0.16,
-              elevation: 6,
+              ...bloom(t.acc, 28, 0.16),
             }}
           >
             <Glass radius={26} elevated={false} borderColor={A(0.4)} style={{ flex: 1, minHeight: 0 }}>
@@ -953,11 +945,7 @@ export default function ImposterQuiz({ s }: { s: State }) {
             <View
               style={{
                 borderRadius: 24,
-                shadowColor: t.acc,
-                shadowOffset: { width: 0, height: 0 },
-                shadowRadius: 30,
-                shadowOpacity: 0.45,
-                elevation: 10,
+                ...bloom(t.acc, 30, 0.45),
               }}
             >
               <View style={{ borderRadius: 24, overflow: 'hidden' }}>

@@ -23,6 +23,8 @@ const LINE_30 = 'rgba(150,180,255,0.3)';
 const LINE_35 = 'rgba(150,180,255,0.35)';
 const LINE_40 = 'rgba(150,180,255,0.4)';
 const CARD_GLOW = '#96b4ff';
+/** The light falling across the top of the Create tile. */
+const WASH_TOP = 'rgba(255,255,255,0.10)';
 
 /** Card width plus the rail gap — one press of the arrow advances exactly this. */
 const STEP = 208;
@@ -219,17 +221,34 @@ export default function Home({ s }: { s: State }) {
 
         {/* create / join / friends */}
         <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 20, paddingTop: 14 }}>
-          {/* This tile stretches to the taller right-hand column, and `Gradient`
-              clips to its own content, so the indigo glass is layered here. */}
-          <Tap onPress={() => store.go('config')} label="Create lobby" style={{ flex: 1.35 }}>
-            <View
-              style={{
-                flex: 1,
-                ...raised(t, 20, t.accFill, 'mid'),
-              }}
-            >
-              <View style={{ flex: 1, borderRadius: 20, overflow: 'hidden' }}>
-                <View style={[StyleSheet.absoluteFill, { backgroundColor: t.accFill }]} />
+          {/* The one accented tile on the screen, and the only one that has to
+              hold its own against a column of two. `fill` is what makes it
+              reach the bottom of that column — see `Tap`. */}
+          <Tap onPress={() => store.go('config')} label="Create lobby" style={{ flex: 1.35 }} fill>
+            <View style={{ flex: 1, ...raised(t, 20, t.accFill, 'mid') }}>
+              <View
+                style={{
+                  flex: 1,
+                  borderRadius: 20,
+                  overflow: 'hidden',
+                  // The same 1px rim the glass cards carry, so the three tiles
+                  // in this row read as one set rather than as a poster next to
+                  // two panes. Brighter here because the fill behind it is.
+                  borderWidth: 1,
+                  borderColor: LINE_40,
+                  backgroundColor: t.accFill,
+                }}
+              >
+                {/* Lit from above, like `Glass` — this is what the graph-paper
+                    texture used to stand in for. The texture read as printing
+                    on the card at this size; light reads as a surface. */}
+                <LinearGradient
+                  colors={[WASH_TOP, fade(WASH_TOP)]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 0, y: 1 }}
+                  style={[StyleSheet.absoluteFill, { borderRadius: 20 }]}
+                  pointerEvents="none"
+                />
                 {/* A hairline, inset from the corners. At 2px and 0.7 it read
                     as a bar stuck to the top edge rather than light catching
                     one. */}
@@ -237,8 +256,7 @@ export default function Home({ s }: { s: State }) {
                   style={{ position: 'absolute', top: 0, left: 10, right: 10, height: 1, backgroundColor: t.rim, opacity: 0.35 }}
                   pointerEvents="none"
                 />
-                <GridWash cell={16} opacity={0.06} />
-                <View style={{ padding: 18 }}>
+                <View style={{ flex: 1, padding: 18 }}>
                   <View
                     style={{
                       width: 36,
@@ -247,12 +265,14 @@ export default function Home({ s }: { s: State }) {
                       backgroundColor: 'rgba(255,255,255,0.22)',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      marginBottom: 14,
                     }}
                   >
                     <Glyph d="M12 5v14M5 12h14" size={19} color="#fff" width={2.6} />
                   </View>
-                  <H size={20} color="#fff" style={{ lineHeight: 21, letterSpacing: -0.4 }}>
+                  {/* Pushed to the bottom rather than following the chip: the
+                      tile is as tall as two cards, and a block of text stranded
+                      in the middle of it was most of what looked wrong. */}
+                  <H size={20} color="#fff" style={{ lineHeight: 21, letterSpacing: -0.4, marginTop: 'auto' }}>
                     {'Create\nlobby'}
                   </H>
                   <P size={11} color="#fff" style={{ opacity: 0.88, marginTop: 7 }}>

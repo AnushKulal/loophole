@@ -3,6 +3,7 @@ import { store, type State } from '../store/useStore';
 import { MARKS, PODIUM, RANKS, grad, type PodiumEntry } from '../data/people';
 import { TINTS } from '../data/progression';
 import { useTheme, type Tokens } from '../theme/theme';
+import { bloom } from '../theme/tokens';
 import { Avatar, Bar, Chevron, Glass, Glyph, H, Kicker, P, Tap } from '../components/base';
 import { FadeIn } from '../components/GameChrome';
 
@@ -71,11 +72,7 @@ function PodiumStep({ p }: { p: PodiumEntry }) {
             borderRadius: ring / 2,
             borderWidth: 2,
             borderColor: neon,
-            shadowColor: neon,
-            shadowOffset: { width: 0, height: 0 },
-            shadowRadius: 18,
-            shadowOpacity: 0.8,
-            elevation: 8,
+            ...bloom(neon, 18, 0.8),
           }}
         />
         {/* `calc(100% - 11px)` — the disc sits 5.5px inside the rim */}
@@ -239,11 +236,7 @@ export default function Leaderboard({ s }: { s: State }) {
             backgroundColor: YOU_FILL,
             borderWidth: 1,
             borderColor: t.acc,
-            shadowColor: YOU_GLOW,
-            shadowOffset: { width: 0, height: 0 },
-            shadowRadius: 22,
-            shadowOpacity: 0.3,
-            elevation: 8,
+            ...bloom(YOU_GLOW, 22, 0.3),
           }}
         >
           <H size={11} color={t.accLt} style={{ minWidth: 13 }}>

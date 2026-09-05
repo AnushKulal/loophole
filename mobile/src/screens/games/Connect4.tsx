@@ -18,7 +18,7 @@ import {
 import { BOT, makeRng, pick, type BotProfile, type GameScreenProps, type PlayableGame, type Player, type Rng } from '../../game/contract';
 import { COLS, ROWS, emptyBoard, findWin, lowest, place, botMove, type Board, type Disc, type Outcome } from '../../game/connect4';
 import { useTheme } from '../../theme/theme';
-import { radius as R } from '../../theme/tokens';
+import { radius as R, bloom } from '../../theme/tokens';
 
 /**
  * Connect 4.
@@ -586,11 +586,9 @@ function Slot({
         width: size,
         height: size,
         borderRadius: size / 2,
-        shadowColor: won ? t.acc : t.shadowColor,
-        shadowOffset: { width: 0, height: won ? 0 : 4 },
-        shadowRadius: won ? 14 : 8,
-        shadowOpacity: won ? 0.9 : t.shadowOpacity,
-        elevation: won ? 10 : 4,
+        // A disc has no fill of its own — the gradient inside paints it — so its
+        // shadow goes through `bloom`; `elevation` would square it off.
+        ...(won ? bloom(t.acc, 14, 0.9) : bloom(t.shadowColor, 8, t.shadowOpacity, 4)),
         transform: [{ translateY: y }, { scale: s }],
       }}
     >

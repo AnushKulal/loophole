@@ -6,6 +6,7 @@ import { store, type State } from '../store/useStore';
 import { buildSeats, type Seat } from '../lib/seats';
 import { chipsFor } from '../lib/options';
 import { useTheme, type Tokens } from '../theme/theme';
+import { bloom } from '../theme/tokens';
 import { ArrowRight, Avatar, Chevron, Glass, Glyph, Gradient, H, Kicker, P, Tap } from '../components/base';
 import { FadeIn } from '../components/GameChrome';
 
@@ -27,18 +28,19 @@ function paint(t: Tokens, css: string): string {
   return typeof v === 'string' ? v : t.ink;
 }
 
-/** A seat's `0 0 14px rgba(…)` bloom, restated as the four RN shadow props. */
+/**
+ * A seat's `0 0 14px rgba(…)` bloom.
+ *
+ * The ring it lights has a border and a radius and no fill — the avatar shows
+ * through it — so this cannot go through `elevation`; see `bloom` in
+ * theme/tokens for why that draws a square.
+ */
 function glow(css: string): ViewStyle | null {
   const m = /^0 0 (\d+(?:\.\d+)?)px rgba?\(([^)]+)\)$/.exec(css);
   if (!m) return null;
   const parts = m[2].split(',').map((x) => x.trim());
-  return {
-    shadowColor: `rgb(${parts.slice(0, 3).join(',')})`,
-    shadowOffset: { width: 0, height: 0 },
-    shadowRadius: Number(m[1]),
-    shadowOpacity: parts.length > 3 ? Number(parts[3]) : 1,
-    elevation: 6,
-  };
+  const rgb = `rgb(${parts.slice(0, 3).join(',')})`;
+  return bloom(rgb, Number(m[1]), parts.length > 3 ? Number(parts[3]) : 1);
 }
 
 /** Springs its children in, standing in for the `vPop` keyframe. */

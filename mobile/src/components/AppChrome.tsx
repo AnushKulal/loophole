@@ -9,7 +9,7 @@ import { findGame } from '../game/registry';
 import { useTheme } from '../theme/theme';
 import { CloseIcon, Glass, Glyph, Gradient, H, Kicker, P, Tap } from './base';
 import { FadeIn } from './GameChrome';
-import { font, radius as R, raised } from '../theme/tokens';
+import { font, radius as R, bloom } from '../theme/tokens';
 
 /**
  * The app-wide furniture that sits outside any one screen: the floating tab
@@ -35,6 +35,8 @@ const SCRIM_RULES = 'rgba(6,9,15,0.68)';
 const BADGE_FROM = 'rgba(139,164,255,0.4)';
 const BADGE_TO = 'rgba(139,164,255,0.12)';
 const BADGE_LINE = 'rgba(139,164,255,0.35)';
+/** The active nav pill's `0 0 16px rgba(150,180,255,.5)` bloom. */
+const NAV_GLOW = 'rgb(150,180,255)';
 const ALERT = '#ec8a6a';
 const ALERT_FILL = 'rgba(236,138,106,0.16)';
 const ALERT_LINE = 'rgba(236,138,106,0.45)';
@@ -127,12 +129,17 @@ export function TabBar({ scr }: { scr: Screen }) {
               style={({ pressed }) => [{ flex: 1 }, pressed && { opacity: 0.72 }]}
             >
               {on ? (
-                // `0 0 16px rgba(150,180,255,.5)` — an even bloom, so the glow is
-                // drawn here rather than with Gradient's offset drop shadow.
-                // The fill is repeated on this node deliberately: Android
-                // shapes the elevation shadow from the background drawable, and
-                // without one it drew a sharp indigo rectangle inside the pill.
-                <Gradient radius={14} glow={false} style={raised(t, 14, t.accFill, 'low')}>
+                // `0 0 16px rgba(150,180,255,.5)` — an even bloom, which is what
+                // makes the pill read as lit rather than as a slab laid on top
+                // of the bar. `bloom` rather than elevation: the fill is
+                // translucent, and an elevation shadow takes its shape from the
+                // background drawable, which is how a sharp indigo rectangle
+                // ended up inside the pill for three builds running.
+                <Gradient
+                  radius={14}
+                  glow={false}
+                  style={{ borderRadius: 14, backgroundColor: t.accFill, ...bloom(NAV_GLOW, 16, 0.5) }}
+                >
                   {cell}
                 </Gradient>
               ) : (

@@ -3,6 +3,7 @@ import { store, type State } from '../store/useStore';
 import { TINTS, type Tint } from '../data/progression';
 import { MARKS } from '../data/people';
 import { useTheme } from '../theme/theme';
+import { bloom } from '../theme/tokens';
 import { Avatar, Chevron, Glass, Gradient, H, P, Tap, gradStops } from '../components/base';
 import { FadeIn } from '../components/GameChrome';
 
@@ -28,14 +29,7 @@ function Swatch({ grad, size }: { grad: string; size: number }) {
   const r = size / 2;
   return (
     <View
-      style={{
-        borderRadius: r,
-        shadowColor: t.shadowColor,
-        shadowOffset: { width: 0, height: 6 },
-        shadowRadius: 14,
-        shadowOpacity: 0.4,
-        elevation: 5,
-      }}
+      style={{ borderRadius: r, ...bloom(t.shadowColor, 14, 0.4, 6) }}
     >
       <Gradient colors={gradStops(grad)} radius={r} glow={false}>
         <View style={{ width: size, height: size }} />
@@ -90,14 +84,7 @@ export default function TintShop({ s }: { s: State }) {
       {/* live preview — the equipped tint, on your own mark */}
       <View style={{ alignItems: 'center', gap: 10, paddingTop: 6, paddingHorizontal: 20, paddingBottom: 16 }}>
         <View
-          style={{
-            borderRadius: 41,
-            shadowColor: t.shadowColor,
-            shadowOffset: { width: 0, height: 12 },
-            shadowRadius: 28,
-            shadowOpacity: 0.5,
-            elevation: 8,
-          }}
+          style={{ borderRadius: 41, ...bloom(t.shadowColor, 28, 0.5, 12) }}
         >
           <Avatar mark={MARKS[s.mark]} grad={TINTS[s.tint].grad} size={82} fontSize={32} />
         </View>
@@ -125,15 +112,7 @@ export default function TintShop({ s }: { s: State }) {
                     label={tint.name}
                     style={[
                       { flex: 1 },
-                      on && {
-                        // the equipped tile's `0 0 18px` bloom, as the four RN shadow props
-                        borderRadius: 16,
-                        shadowColor: t.acc,
-                        shadowOffset: { width: 0, height: 0 },
-                        shadowRadius: 18,
-                        shadowOpacity: 0.6,
-                        elevation: 7,
-                      },
+                      on && { borderRadius: 16, ...bloom(t.acc, 18, 0.6) },
                     ]}
                   >
                     <Glass radius={16} elevated={false} borderColor={on ? t.acc : t.line}>
