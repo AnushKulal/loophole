@@ -186,22 +186,18 @@ export function Gradient({
       style={[
         glow && {
           borderRadius: radius,
-          shadowColor: t.acc,
-          shadowOffset: { width: 0, height: 8 },
-          shadowRadius: 20,
-          shadowOpacity: 0.5,
-          elevation: 8,
+          shadowColor: t.shadowColor,
+          shadowOffset: { width: 0, height: 4 },
+          shadowRadius: 10,
+          shadowOpacity: t.shadowOpacity,
+          // Android renders shadowColor as a tinted spot shadow, and an indigo
+          // one at elevation 8 bled a milky halo around every primary surface.
+          elevation: 2,
         },
         style,
       ]}
     >
-      <View style={{ borderRadius: radius, overflow: 'hidden' }}>
-        <LinearGradient
-          colors={(colors ?? t.gradv) as [string, string, ...string[]]}
-          start={{ x: 0.2, y: 0 }}
-          end={{ x: 0.8, y: 1 }}
-          style={[StyleSheet.absoluteFill, { borderRadius: radius }]}
-        />
+      <View style={{ borderRadius: radius, overflow: 'hidden', backgroundColor: colors?.[0] ?? t.accFill }}>
         <View
           style={{
             position: 'absolute',
@@ -536,7 +532,7 @@ export function Switch({ on, onPress, label }: { on: boolean; onPress: () => voi
       style={{ width: 54, height: 30, borderRadius: 999, borderWidth: 1, borderColor: on ? 'transparent' : t.line2, justifyContent: 'center', overflow: 'hidden' }}
     >
       {on ? (
-        <LinearGradient colors={t.gradv as [string, string, ...string[]]} style={StyleSheet.absoluteFill} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: t.accFill }]} />
       ) : (
         <View style={[StyleSheet.absoluteFill, { backgroundColor: t.track }]} />
       )}

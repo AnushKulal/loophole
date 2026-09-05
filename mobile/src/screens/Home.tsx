@@ -209,12 +209,7 @@ export default function Home({ s }: { s: State }) {
                   </P>
                 </View>
                 <View style={{ height: 6, borderRadius: 999, backgroundColor: t.track, overflow: 'hidden', marginTop: 8 }}>
-                  <LinearGradient
-                    colors={t.gradv as [string, string, ...string[]]}
-                    start={{ x: 0.2, y: 0 }}
-                    end={{ x: 0.8, y: 1 }}
-                    style={{ width: '68%', height: '100%' }}
-                  />
+                  <View style={{ width: "68%", height: "100%", backgroundColor: t.accFill }} />
                 </View>
               </Tap>
               <H size={11} color={t.lime}>
@@ -241,15 +236,12 @@ export default function Home({ s }: { s: State }) {
               }}
             >
               <View style={{ flex: 1, borderRadius: 20, overflow: 'hidden' }}>
-                <LinearGradient
-                  colors={t.gradv as [string, string, ...string[]]}
-                  start={{ x: 0.2, y: 0 }}
-                  end={{ x: 0.8, y: 1 }}
-                  style={StyleSheet.absoluteFill}
-                />
-                <LinearGradient
-                  colors={[t.rim, fade(t.rim)]}
-                  style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, opacity: 0.7 }}
+                <View style={[StyleSheet.absoluteFill, { backgroundColor: t.accFill }]} />
+                {/* A hairline, inset from the corners. At 2px and 0.7 it read
+                    as a bar stuck to the top edge rather than light catching
+                    one. */}
+                <View
+                  style={{ position: 'absolute', top: 0, left: 10, right: 10, height: 1, backgroundColor: t.rim, opacity: 0.35 }}
                   pointerEvents="none"
                 />
                 <GridWash cell={16} opacity={0.06} />

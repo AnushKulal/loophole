@@ -31,8 +31,22 @@ export interface Tokens {
   onPink: string;
   onLime: string;
   onCyan: string;
-  /** The indigo glass of every primary action, as gradient stops. */
-  gradv: string[];
+  /**
+   * The indigo of every primary action.
+   *
+   * A single colour, not a gradient. The design specified a diagonal three-stop
+   * ramp, and on a phone it banded: measured on a 1080x2400 screen it quantised
+   * to steps of 3 every 13 pixels, so every large surface carried visible
+   * stripes. A browser renders the same ramp smoothly, which is why it survived
+   * this long.
+   *
+   * A flat fill cannot band. The sense of a lit surface now comes from the
+   * hairline rim along the top edge, which is where it was doing most of the
+   * work anyway.
+   */
+  accFill: string;
+  /** A hair darker, for the pressed and secondary states. */
+  accFill2: string;
   /**
    * Which theme this is. A handful of places need to pick between two literal
    * colours rather than a token — a chess disc, a Ludo seat label — and this is
@@ -94,7 +108,8 @@ export const dark: Tokens = {
   onPink: '#2a0d1d',
   onLime: '#04241b',
   onCyan: '#062733',
-  gradv: ['rgba(168,186,255,0.6)', 'rgba(112,132,242,0.34)', 'rgba(92,112,224,0.24)'],
+  accFill: 'rgba(122,142,246,0.30)',
+  accFill2: 'rgba(104,124,232,0.22)',
   isDark: true,
   panelTop: 'rgba(190,215,255,0.07)',
   rim: 'rgba(255,255,255,0.55)',
@@ -136,7 +151,8 @@ export const light: Tokens = {
   onPink: '#ffffff',
   onLime: '#ffffff',
   onCyan: '#ffffff',
-  gradv: ['#6d7ff0', '#4a58cc', '#3f4dc0'],
+  accFill: '#5566de',
+  accFill2: '#4a58cc',
   isDark: false,
   panelTop: 'rgba(255,255,255,0.5)',
   rim: 'rgba(255,255,255,1)',

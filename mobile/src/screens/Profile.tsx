@@ -1,5 +1,4 @@
 import { ScrollView, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Circle } from 'react-native-svg';
 import { store, type State } from '../store/useStore';
 import { BADGES, TINTS } from '../data/progression';
@@ -146,12 +145,7 @@ export default function Profile({ s }: { s: State }) {
             </View>
             {/* the fill's glow sits inside an `overflow: hidden` track, so it never shows */}
             <View style={{ height: 6, borderRadius: 999, backgroundColor: t.track, overflow: 'hidden', marginTop: 8 }}>
-              <LinearGradient
-                colors={t.gradv as [string, string, ...string[]]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={{ width: '68%', height: '100%' }}
-              />
+              <View style={{ width: "68%", height: "100%", backgroundColor: t.accFill }} />
             </View>
           </View>
         </Glass>

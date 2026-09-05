@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { store, type State } from '../store/useStore';
 import { FRIENDS, GRADV, grad } from '../data/people';
 import { useTheme } from '../theme/theme';
@@ -82,12 +81,7 @@ function Bubble({ mine, text, delay }: { mine: boolean; text: string; delay: num
         }}
       >
         {mine && (
-          <LinearGradient
-            colors={t.gradv as [string, string, ...string[]]}
-            start={G_START}
-            end={G_END}
-            style={StyleSheet.absoluteFill}
-          />
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: t.accFill }]} />
         )}
         {/* `13.5px/1.4` — RN wants the leading in pixels */}
         <P size={13.5} color={mine ? '#fff' : t.ink} style={{ lineHeight: 18.9 }}>

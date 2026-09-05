@@ -704,14 +704,11 @@ export default function ImposterQuiz({ s }: { s: State }) {
                     includeFontPadding: false,
                   }}
                 />
-                {/* `--gradv` as a 2px rule; the Gradient primitive's specular rim
-                    would wash out a bar this thin, so the wash is drawn direct. */}
-                <LinearGradient
-                  colors={t.gradv as [string, string, ...string[]]}
-                  locations={[0, 0.45, 1]}
-                  start={G160_START}
-                  end={G160_END}
+                {/* A flat rule: at 2px a gradient has nowhere to resolve, and
+                    on Android it banded like every other large ramp did. */}
+                <View
                   style={{
+                    backgroundColor: t.accFill,
                     height: 2,
                     borderRadius: 999,
                     marginTop: 10,

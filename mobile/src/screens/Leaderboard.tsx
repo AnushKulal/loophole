@@ -1,5 +1,4 @@
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { store, type State } from '../store/useStore';
 import { MARKS, PODIUM, RANKS, grad, type PodiumEntry } from '../data/people';
 import { TINTS } from '../data/progression';
@@ -42,12 +41,7 @@ function XpBar({ pct }: { pct: number }) {
   return (
     <View style={{ height: 4, borderRadius: 999, backgroundColor: t.track, overflow: 'hidden', marginTop: 6 }}>
       <View style={{ width: `${Math.max(0, Math.min(1, pct)) * 100}%`, height: '100%' }}>
-        <LinearGradient
-          colors={t.gradv as [string, string, ...string[]]}
-          start={G_START}
-          end={G_END}
-          style={StyleSheet.absoluteFill}
-        />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: t.accFill }]} />
       </View>
     </View>
   );
