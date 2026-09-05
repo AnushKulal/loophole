@@ -7,7 +7,7 @@ import { TINTS } from '../data/progression';
 import { DIM, FEATURED, GAME_LEVEL, GAME_XP, gameByName, type Category } from '../data/games';
 import { MARKS } from '../data/people';
 import { useTheme } from '../theme/theme';
-import { NEON_ON_DARK, font, type Tokens, fade } from '../theme/tokens';
+import { NEON_ON_DARK, font, type Tokens, fade, raised } from '../theme/tokens';
 import { Avatar, Bar, Chevron, Glass, Glyph, H, P, Tap, gradStops } from '../components/base';
 import { FadeIn } from '../components/GameChrome';
 
@@ -51,11 +51,14 @@ function GridWash({ cell, opacity }: { cell: number; opacity: number }) {
   const [size, setSize] = useState({ w: 0, h: 0 });
   const ink = `rgba(255,255,255,${opacity})`;
 
+  // From 0, not from `cell`: starting a cell in left the outermost lines
+  // sitting inset from the edges, and that boundary read as another rectangle
+  // drawn inside the card.
   const lines = [];
-  for (let x = cell; x < size.w; x += cell) {
+  for (let x = 0; x < size.w; x += cell) {
     lines.push(<View key={`v${x}`} style={{ position: 'absolute', left: x, top: 0, bottom: 0, width: 1, backgroundColor: ink }} />);
   }
-  for (let y = cell; y < size.h; y += cell) {
+  for (let y = 0; y < size.h; y += cell) {
     lines.push(<View key={`h${y}`} style={{ position: 'absolute', top: y, left: 0, right: 0, height: 1, backgroundColor: ink }} />);
   }
 
@@ -137,12 +140,7 @@ export default function Home({ s }: { s: State }) {
             radius={18}
             fontSize={19}
             style={{
-              borderRadius: 18,
-              shadowColor: t.acc,
-              shadowOffset: { width: 0, height: 8 },
-              shadowRadius: 20,
-              shadowOpacity: 0.5,
-              elevation: 8,
+              ...raised(t, 18, t.accFill, 'mid'),
             }}
           >
             <View style={{ position: 'absolute', bottom: -5, left: 0, right: 0, alignItems: 'center' }}>
@@ -227,12 +225,7 @@ export default function Home({ s }: { s: State }) {
             <View
               style={{
                 flex: 1,
-                borderRadius: 20,
-                shadowColor: t.acc,
-                shadowOffset: { width: 0, height: 8 },
-                shadowRadius: 20,
-                shadowOpacity: 0.5,
-                elevation: 8,
+                ...raised(t, 20, t.accFill, 'mid'),
               }}
             >
               <View style={{ flex: 1, borderRadius: 20, overflow: 'hidden' }}>

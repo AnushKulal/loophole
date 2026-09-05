@@ -234,3 +234,39 @@ function toRgb(color: string): [number, number, number] | null {
   }
   return null;
 }
+
+/**
+ * The style for a raised surface.
+ *
+ * `backgroundColor` is the load-bearing part, and its absence is a bug that
+ * took four rounds to find. Android derives an elevation shadow's shape from
+ * the view's *background drawable*: with no background there is nothing to
+ * derive from, so it falls back to the bounding rectangle and draws a
+ * sharp-cornered shadow behind a rounded card. Tint that shadow — as the design
+ * does, with the indigo accent — and the result is a hard indigo rectangle
+ * sitting inside every raised surface.
+ *
+ * iOS reads `shadowColor`/`shadowRadius` and never looks at the background, so
+ * the same code is correct there. It is Android-only, and invisible to a
+ * browser, which is why it survived so long.
+ *
+ * Passing the fill through here rather than leaving it to the inner clipped
+ * view is what makes the outline round.
+ */
+export function raised(
+  t: Tokens,
+  radius: number,
+  fill: string,
+  level: 'low' | 'mid' | 'high' = 'mid',
+) {
+  const e = level === 'low' ? 2 : level === 'high' ? 8 : 4;
+  return {
+    borderRadius: radius,
+    backgroundColor: fill,
+    shadowColor: t.shadowColor,
+    shadowOffset: { width: 0, height: e / 2 },
+    shadowRadius: e * 2,
+    shadowOpacity: t.shadowOpacity,
+    elevation: e,
+  } as const;
+}

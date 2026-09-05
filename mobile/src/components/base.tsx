@@ -3,7 +3,7 @@ import { Animated, Platform, Pressable, StyleSheet, Text, View, type StyleProp, 
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Circle, Path, Polygon, Line as SvgLine, Text as SvgText } from 'react-native-svg';
 import { useTheme } from '../theme/theme';
-import { font, radius as R, fade } from '../theme/tokens';
+import { font, radius as R, fade, raised } from '../theme/tokens';
 import { curve, duration, scaled, USE_NATIVE_DRIVER } from '../theme/motion';
 import { useReducedMotion } from './motion';
 
@@ -116,14 +116,10 @@ export function Glass({
   return (
     <View
       style={[
-        elevated && {
-          borderRadius: radius,
-          shadowColor: t.shadowColor,
-          shadowOffset: { width: 0, height: 6 },
-          shadowRadius: 14,
-          shadowOpacity: t.shadowOpacity,
-          elevation: 3,
-        },
+        // The fill goes on this node, not just the clipped one below: Android
+        // shapes an elevation shadow from the background drawable, and without
+        // one it draws a sharp-cornered rectangle behind a rounded card.
+        elevated && raised(t, radius, fill ?? t.panel, 'low'),
         style,
       ]}
     >
@@ -184,16 +180,7 @@ export function Gradient({
   return (
     <View
       style={[
-        glow && {
-          borderRadius: radius,
-          shadowColor: t.shadowColor,
-          shadowOffset: { width: 0, height: 4 },
-          shadowRadius: 10,
-          shadowOpacity: t.shadowOpacity,
-          // Android renders shadowColor as a tinted spot shadow, and an indigo
-          // one at elevation 8 bled a milky halo around every primary surface.
-          elevation: 2,
-        },
+        glow && raised(t, radius, colors?.[0] ?? t.accFill, 'low'),
         style,
       ]}
     >

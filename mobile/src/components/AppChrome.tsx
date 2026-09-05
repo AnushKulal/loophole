@@ -9,7 +9,7 @@ import { findGame } from '../game/registry';
 import { useTheme } from '../theme/theme';
 import { CloseIcon, Glass, Glyph, Gradient, H, Kicker, P, Tap } from './base';
 import { FadeIn } from './GameChrome';
-import { font, radius as R } from '../theme/tokens';
+import { font, radius as R, raised } from '../theme/tokens';
 
 /**
  * The app-wide furniture that sits outside any one screen: the floating tab
@@ -129,18 +129,10 @@ export function TabBar({ scr }: { scr: Screen }) {
               {on ? (
                 // `0 0 16px rgba(150,180,255,.5)` — an even bloom, so the glow is
                 // drawn here rather than with Gradient's offset drop shadow.
-                <Gradient
-                  radius={14}
-                  glow={false}
-                  style={{
-                    borderRadius: 14,
-                    shadowColor: t.acc,
-                    shadowOffset: { width: 0, height: 0 },
-                    shadowRadius: 8,
-                    shadowOpacity: 0.5,
-                    elevation: 4,
-                  }}
-                >
+                // The fill is repeated on this node deliberately: Android
+                // shapes the elevation shadow from the background drawable, and
+                // without one it drew a sharp indigo rectangle inside the pill.
+                <Gradient radius={14} glow={false} style={raised(t, 14, t.accFill, 'low')}>
                   {cell}
                 </Gradient>
               ) : (
