@@ -12,6 +12,7 @@ import {
   queryUrl,
   runQuery,
   setDoc,
+  splitCollection,
   structuredQuery,
   type Ctx,
   type Http,
@@ -262,5 +263,34 @@ describe('isConflict', () => {
     expect(isConflict(new FirestoreError('PERMISSION_DENIED', 403))).toBe(false);
     expect(isConflict(new FirestoreError('UNAVAILABLE'))).toBe(false);
     expect(isConflict(new Error('nope'))).toBe(false);
+  });
+});
+
+describe('subcollections', () => {
+  it('splits a path into parent document and single-segment collection', () => {
+    // `collectionId` is one segment; the parent belongs in the URL.
+    expect(splitCollection('matches/ABC123/moves')).toEqual({
+      parent: 'matches/ABC123',
+      collectionId: 'moves',
+    });
+    expect(splitCollection('users')).toEqual({ parent: '', collectionId: 'users' });
+  });
+
+  it('hangs a subcollection query off its parent document', () => {
+    expect(queryUrl('loophole-test', 'matches/ABC123')).toBe(`${ROOT}/matches/ABC123:runQuery`);
+  });
+
+  it('sends only the last segment as the collection id', () => {
+    // Sending the whole path here is a 400 that only shows up against a real
+    // project, which is exactly the kind of bug this suite exists to catch.
+    const q = structuredQuery('matches/ABC123/moves');
+    expect(q.structuredQuery.from).toEqual([{ collectionId: 'moves' }]);
+  });
+
+  it('queries a subcollection at the right URL end to end', async () => {
+    const { calls, http } = spy([{ readTime: 'now' }]);
+    await runQuery(ctx(http), 'matches/ABC123/moves', { orderBy: [{ field: 'at' }] });
+    expect(calls[0].url).toBe(`${ROOT}/matches/ABC123:runQuery`);
+    expect(calls[0].body.structuredQuery.from).toEqual([{ collectionId: 'moves' }]);
   });
 });

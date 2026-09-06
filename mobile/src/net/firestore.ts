@@ -59,7 +59,23 @@ const trim = (p: string) => p.replace(/^\/+|\/+$/g, '');
 export const rootUrl = (projectId: string): string =>
   `${HOST}/projects/${projectId}/databases/(default)/documents`;
 
-export const queryUrl = (projectId: string): string => `${rootUrl(projectId)}:runQuery`;
+/**
+ * Split a collection path into the parent document and the collection itself.
+ *
+ * `collectionId` in a structured query is one segment, never a path — the
+ * parent goes in the URL. So `matches/ABC123/moves` queries `moves` under
+ * `matches/ABC123`, and a top-level `users` has no parent at all.
+ */
+export function splitCollection(path: string): { parent: string; collectionId: string } {
+  const parts = trim(path).split('/').filter(Boolean);
+  const collectionId = parts.pop() ?? '';
+  return { parent: parts.join('/'), collectionId };
+}
+
+/** Where `:runQuery` hangs off — the root, or the parent document. */
+export function queryUrl(projectId: string, parent = ''): string {
+  return parent ? `${rootUrl(projectId)}/${trim(parent)}:runQuery` : `${rootUrl(projectId)}:runQuery`;
+}
 
 /** The trailing id of a resource name — `users/abc` and the full name both give `abc`. */
 export const idOf = (name: string): string => trim(name).split('/').pop() ?? '';
@@ -198,7 +214,7 @@ export function structuredQuery(collection: string, q: Query = {}): any {
   const filters = (q.where ?? []).map(filterFor);
   return {
     structuredQuery: {
-      from: [{ collectionId: trim(collection) }],
+      from: [{ collectionId: splitCollection(collection).collectionId }],
       // One filter goes on its own; several need wrapping. Firestore rejects a
       // compositeFilter with a single child.
       ...(filters.length === 1
@@ -228,7 +244,8 @@ export function structuredQuery(collection: string, q: Query = {}): any {
  */
 export async function runQuery(ctx: Ctx, collection: string, q: Query = {}): Promise<Doc[]> {
   const c = guard(ctx.config ?? firebaseConfig);
-  const rows = await send(ctx, queryUrl(c.projectId), 'POST', structuredQuery(collection, q));
+  const { parent } = splitCollection(collection);
+  const rows = await send(ctx, queryUrl(c.projectId, parent), 'POST', structuredQuery(collection, q));
   return (Array.isArray(rows) ? rows : []).filter((r) => r?.document).map((r) => toDoc(r.document));
 }
 
