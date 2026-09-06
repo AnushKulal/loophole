@@ -52,6 +52,8 @@ export function P({
   style,
   children,
   numberOfLines,
+  accessibilityLabel,
+  accessibilityLiveRegion,
 }: {
   size?: number;
   weight?: 400 | 500 | 600 | 700;
@@ -59,11 +61,25 @@ export function P({
   style?: StyleProp<TextStyle>;
   children: ReactNode;
   numberOfLines?: number;
+  /** Overrides what a screen reader reads, for text that is not self-explaining. */
+  accessibilityLabel?: string;
+  /**
+   * Announce this as it changes, without the reader having to find it.
+   *
+   * A validation message that appears silently is one a screen reader user
+   * discovers by wondering why the form did not send.
+   */
+  accessibilityLiveRegion?: 'none' | 'polite' | 'assertive';
 }) {
   const t = useTheme();
   const family = weight === 400 ? font.bodyR : weight === 600 ? font.bodySb : weight === 700 ? font.bodyB : font.body;
   return (
-    <Text numberOfLines={numberOfLines} style={[{ fontFamily: family, fontSize: size, color: color ?? t.dim }, style]}>
+    <Text
+      numberOfLines={numberOfLines}
+      accessibilityLabel={accessibilityLabel}
+      accessibilityLiveRegion={accessibilityLiveRegion}
+      style={[{ fontFamily: family, fontSize: size, color: color ?? t.dim }, style]}
+    >
       {children}
     </Text>
   );
