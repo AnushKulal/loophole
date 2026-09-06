@@ -5,6 +5,9 @@ import { MARKS, OTHERS, REPLIES, SEED, grad, type ThreadLine } from '../data/peo
 import * as auth from '../auth/auth';
 import { AuthFailure, type Account, type AuthError } from '../auth/auth';
 import { toAuthError } from '../auth/errors';
+import { applyAction, ctx as socialCtx, findPeople, isLive, loadSocial } from '../social/live';
+import { CycleError, type Action, type Edge } from '../social/cycle';
+import { claimSomeHandle, publishProfile, type Profile } from '../social/service';
 
 /**
  * `unknown` is the launch state: a stored session may or may not be waiting, so
@@ -118,6 +121,27 @@ chatOpen: boolean;
   inboxGone: string[];
   claimed: number[];
   tint: number;
+
+  social: SocialState;
+}
+
+/**
+ * The social features, when they are real.
+ *
+ * `live` is false on a device account or an unconfigured build, and every
+ * screen falls back to the fixtures rather than pretending — see social/live.ts.
+ * `busy` holds the uids with an action in flight so a row can disable its own
+ * button without freezing the list.
+ */
+export interface SocialState {
+  live: boolean;
+  loading: boolean;
+  error: string | null;
+  edges: Edge[];
+  people: Record<string, Profile>;
+  searching: boolean;
+  results: Profile[];
+  busy: string[];
 }
 
 const initial = (): State => ({
@@ -171,7 +195,29 @@ const initial = (): State => ({
   inboxGone: [],
   claimed: [],
   tint: 0,
+
+  social: {
+    live: false,
+    loading: false,
+    error: null,
+    edges: [],
+    people: {},
+    searching: false,
+    results: [],
+    busy: [],
+  },
 });
+
+/** What each friend action says once it has landed. */
+const DONE: Record<Action, string> = {
+  request: 'Request sent',
+  accept: 'Added',
+  decline: 'Request declined',
+  cancel: 'Request withdrawn',
+  remove: 'Removed',
+  block: 'Blocked',
+  unblock: 'Unblocked',
+};
 
 type Listener = () => void;
 type Timer = ReturnType<typeof setTimeout>;
@@ -217,7 +263,15 @@ class Store {
 
   // ── navigation & chrome ──────────────────────────────────────────
 
-  go = (scr: Screen) => this.setState({ scr });
+  /** Screens whose contents come off the network rather than out of state. */
+  private static SOCIAL: Screen[] = ['friends', 'add', 'inbox'];
+
+  go = (scr: Screen) => {
+    this.setState({ scr });
+    // Refreshed on arrival rather than on a timer: a friends list that polls is
+    // one that drains a battery to report something that changes twice a day.
+    if (Store.SOCIAL.includes(scr)) void this.refreshSocial();
+  };
 
   toHome = () => this.setState({ scr: 'home', joinOpen: false });
 
@@ -427,8 +481,100 @@ class Store {
     }, 1400);
   };
 
-  setAddQuery = (addQuery: string) => this.setState({ addQuery });
+  // ── the real friend system ───────────────────────────────────────
+  //
+  // Everything below is inert on a device account or an unconfigured build:
+  // `isLive()` is false, the screens render fixtures, and none of these fire.
 
+  private setSocial = (patch: Partial<SocialState>) =>
+    this.setState({ social: { ...this.state.social, ...patch } });
+
+  private myUid = () => auth.currentAccount()?.uid ?? '';
+
+  /**
+   * Load relationships and the profiles they point at.
+   *
+   * Called on entering Friends or the inbox rather than on a timer: a friends
+   * list that polls is a friends list that drains a battery to tell you
+   * something that changes twice a day.
+   */
+  refreshSocial = async () => {
+    const live = isLive();
+    this.setSocial({ live });
+    if (!live) return;
+
+    const c = await socialCtx();
+    const me = this.myUid();
+    if (!c || !me) return this.setSocial({ live: false });
+
+    this.setSocial({ loading: true, error: null });
+    try {
+      const { edges, people } = await loadSocial(c, me);
+      this.setSocial({ edges, people, loading: false });
+    } catch {
+      // Deliberately vague: the causes — offline, rules not deployed, index
+      // missing — are all "try again" from where the player is sitting.
+      this.setSocial({ loading: false, error: 'Could not reach your friends list.' });
+    }
+  };
+
+  setAddQuery = (addQuery: string) => {
+    this.setState({ addQuery });
+    if (isLive()) void this.searchPeople(addQuery);
+  };
+
+  /**
+   * Search the directory.
+   *
+   * The query is re-checked after the round trip and the results dropped if it
+   * has moved on, so a slow reply for "an" cannot overwrite the results for
+   * "anush" that the player is already looking at.
+   */
+  searchPeople = async (query: string) => {
+    const c = await socialCtx();
+    const me = this.myUid();
+    if (!c || !me) return;
+
+    if (query.trim().length < 2) return this.setSocial({ results: [], searching: false });
+
+    this.setSocial({ searching: true });
+    try {
+      const results = await findPeople(c, me, query, this.state.social.edges);
+      if (this.state.addQuery !== query) return;
+      this.setSocial({ results, searching: false });
+    } catch {
+      if (this.state.addQuery !== query) return;
+      this.setSocial({ results: [], searching: false, error: 'Search is unavailable right now.' });
+    }
+  };
+
+  /**
+   * Send, accept, decline, cancel, remove or block.
+   *
+   * The edge is replaced locally from what the server reported rather than from
+   * what was asked for — they differ whenever the far side moved first, and the
+   * server's answer is the one both phones agree on.
+   */
+  friendAction = async (them: string, action: Action) => {
+    const c = await socialCtx();
+    const me = this.myUid();
+    if (!c || !me || !them) return;
+
+    this.setSocial({ busy: this.state.social.busy.concat([them]) });
+    try {
+      await applyAction(c, me, them, action, Date.now());
+      await this.refreshSocial();
+      this.flash(DONE[action]);
+    } catch (e) {
+      // A refused transition is worth reading — "that account is not
+      // available" is the whole of what a blocked player should learn.
+      this.flash(e instanceof CycleError ? e.message : 'That did not go through.');
+    } finally {
+      this.setSocial({ busy: this.state.social.busy.filter((u) => u !== them) });
+    }
+  };
+
+  /** The fixture path, kept so an unconfigured build still demonstrates itself. */
   sendRequest = (name: string) => {
     this.setState({ sent: this.state.sent.concat([name]) });
     this.flash(`Request sent to ${name}`);
@@ -445,7 +591,10 @@ class Store {
   };
 
   get inboxCount() {
-    return INBOX.filter((x) => !this.state.inboxGone.includes(inboxId(x))).length;
+    const { live, edges } = this.state.social;
+    if (!live) return INBOX.filter((x) => !this.state.inboxGone.includes(inboxId(x))).length;
+    const me = this.myUid();
+    return edges.filter((e) => e.state === 'pending' && e.by !== me).length;
   }
 
   // ── accounts ─────────────────────────────────────────────────────
@@ -468,12 +617,46 @@ class Store {
       if (user) {
         this.setAuth({ status: 'signedIn', user, busy: false });
         this.setState({ myName: user.name || user.email.split('@')[0] });
+        void this.publishMe(user);
       } else {
         this.setAuth({ busy: false });
       }
       onDone?.();
     } catch (e) {
       this.setAuth({ busy: false, error: e instanceof AuthFailure ? e.detail : toAuthError(undefined) });
+    }
+  };
+
+  /**
+   * Put yourself in the directory, and say you are here.
+   *
+   * Without this nobody can find you: search reads `users`, and an account that
+   * has never published has no row there. It runs on every sign-in and every
+   * restored session, which doubles as the presence heartbeat — the write is
+   * one document and the alternative is a separate timer.
+   *
+   * Failures are swallowed on purpose. Not being searchable is worth a retry
+   * next launch; it is not worth an error over the home screen of someone who
+   * only wanted to play against bots.
+   */
+  private publishMe = async (user: Account) => {
+    if (!isLive()) return;
+    const c = await socialCtx();
+    if (!c) return;
+    try {
+      const handle = await claimSomeHandle(c, user.uid, user.email || user.name || user.uid);
+      await publishProfile(c, {
+        uid: user.uid,
+        handle,
+        name: user.name || user.email.split('@')[0],
+        mark: MARKS[this.state.mark] ?? MARKS[0],
+        gi: this.state.tint,
+        level: 24,
+        lastSeen: Date.now(),
+      });
+      this.setSocial({ live: true });
+    } catch {
+      // Next launch tries again.
     }
   };
 
@@ -490,6 +673,7 @@ class Store {
     if (user) {
       this.setAuth({ status: 'signedIn', user });
       this.setState({ myName: user.name || user.email.split('@')[0] });
+      void this.publishMe(user);
     } else {
       this.setAuth({ status: 'signedOut' });
     }

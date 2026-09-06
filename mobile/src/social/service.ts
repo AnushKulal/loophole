@@ -92,6 +92,45 @@ export function handleProblem(raw: string): string | null {
   return null;
 }
 
+/**
+ * A first handle, derived from an email address or a name.
+ *
+ * People should not have to invent a username during sign-up — most abandon the
+ * form rather than think of one — so one is proposed and can be changed later.
+ * The local part of an email is the best guess available; anything it cannot
+ * legally contain is dropped, and a too-short result is padded rather than
+ * rejected, because "j@x.com" is a real address.
+ */
+export function suggestHandle(emailOrName: string): string {
+  // The `+tag` half of an address is routing, not identity — keeping it turns
+  // anush+loophole@… into `anushloophole`, which is nobody's name.
+  const local = (emailOrName.split('@')[0] ?? '').split('+')[0];
+  const cleaned = local.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20);
+  if (cleaned.length >= 3) return cleaned;
+  return (cleaned + 'player').slice(0, 20);
+}
+
+/**
+ * Claim `handle`, or the first free variant of it.
+ *
+ * Two people called Anush both get offered `anush`; the second becomes
+ * `anush2`. Bounded rather than looping forever — after a few tries the name is
+ * popular enough that a random suffix is a better answer than a queue.
+ */
+export async function claimSomeHandle(ctx: Ctx, uid: string, wanted: string, tries = 5): Promise<string> {
+  const base = normaliseHandle(suggestHandle(wanted));
+  for (let i = 0; i < tries; i++) {
+    const candidate = i === 0 ? base : `${base}${i + 1}`.slice(0, 20);
+    try {
+      return await claimHandle(ctx, uid, candidate);
+    } catch (e) {
+      if (!(e instanceof HandleTaken)) throw e;
+    }
+  }
+  // The uid's tail is unique by construction, so this terminates.
+  return claimHandle(ctx, uid, `${base.slice(0, 14)}${uid.slice(-5).toLowerCase()}`);
+}
+
 const profileFrom = (d: Doc): Profile => ({
   uid: d.id,
   handle: str(d.data.handle),

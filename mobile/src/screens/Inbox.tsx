@@ -2,6 +2,8 @@ import { ScrollView, View } from 'react-native';
 import { store, type State } from '../store/useStore';
 import { INBOX, inboxId } from '../data/progression';
 import { grad } from '../data/people';
+import { otherIn } from '../social/cycle';
+import { ago, sortRequests } from '../social/rows';
 import { useTheme } from '../theme/theme';
 import { Avatar, Chevron, CloseIcon, Glass, Glyph, Gradient, H, P, Tap } from '../components/base';
 import { FadeIn } from '../components/GameChrome';
@@ -55,7 +57,44 @@ function EmptyState({
 /** 17 · Inbox — invites and requests, emptying to a real empty state. */
 export default function Inbox({ s }: { s: State }) {
   const t = useTheme();
-  const items = INBOX.filter((x) => !s.inboxGone.includes(inboxId(x)));
+  const now = Date.now();
+  const { live, edges, people, busy } = s.social;
+  const me = s.auth.user?.uid ?? '';
+
+  /**
+   * Live, the inbox is exactly the requests waiting on you.
+   *
+   * The fixture list also carries lobby invites, and those are dropped here
+   * rather than kept: invites are not networked yet, and a real inbox showing
+   * an invite you cannot actually have received is the sort of thing that gets
+   * believed.
+   */
+  const items = live
+    ? sortRequests(edges.filter((e) => e.state === 'pending' && e.by !== me)).flatMap((e) => {
+        const them = otherIn(e, me);
+        const p = people[them];
+        return p
+          ? [
+              {
+                uid: them,
+                id: them,
+                kind: 'req' as const,
+                who: p.name || `@${p.handle}`,
+                mark: p.mark,
+                gi: p.gi,
+                title: 'Friend request',
+                sub: `@${p.handle}`,
+                when: ago(e.at, now),
+                act: 'Accept',
+              },
+            ]
+          : [];
+      })
+    : INBOX.filter((x) => !s.inboxGone.includes(inboxId(x))).map((x) => ({
+        ...x,
+        uid: '',
+        id: inboxId(x),
+      }));
 
   return (
     <FadeIn style={{ flex: 1, minHeight: 0, paddingTop: 62 }}>
@@ -104,7 +143,7 @@ export default function Inbox({ s }: { s: State }) {
 
         <View style={{ gap: 9 }}>
           {items.map((x) => (
-            <FadeIn key={inboxId(x)}>
+            <FadeIn key={x.id}>
               <Glass radius={16} elevated={false}>
                 <View
                   style={{
@@ -131,7 +170,11 @@ export default function Inbox({ s }: { s: State }) {
                     </P>
                   </View>
 
-                  <Tap onPress={() => store.dismissInbox(inboxId(x))} label={`Dismiss ${x.title}`}>
+                  <Tap
+                    onPress={() => (live ? store.friendAction(x.uid, 'decline') : store.dismissInbox(x.id))}
+                    label={`Dismiss ${x.title}`}
+                    disabled={!!x.uid && busy.includes(x.uid)}
+                  >
                     <View
                       style={{
                         width: 32,
@@ -148,7 +191,11 @@ export default function Inbox({ s }: { s: State }) {
                     </View>
                   </Tap>
 
-                  <Tap onPress={() => store.acceptInbox(inboxId(x), x.kind, x.who)} label={x.act}>
+                  <Tap
+                    onPress={() => (live ? store.friendAction(x.uid, 'accept') : store.acceptInbox(x.id, x.kind, x.who))}
+                    label={x.act}
+                    disabled={!!x.uid && busy.includes(x.uid)}
+                  >
                     <Gradient radius={10}>
                       <View style={{ height: 32, paddingHorizontal: 13, alignItems: 'center', justifyContent: 'center' }}>
                         <H size={11.5} color="#fff">

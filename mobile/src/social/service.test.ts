@@ -4,6 +4,7 @@ import { viewFor, type Edge } from './cycle';
 import {
   act,
   claimHandle,
+  claimSomeHandle,
   friendsIn,
   handleProblem,
   HandleInvalid,
@@ -13,6 +14,7 @@ import {
   normaliseHandle,
   pendingFor,
   searchByHandle,
+  suggestHandle,
 } from './service';
 
 const CONFIG = { apiKey: 'k', projectId: 'p' };
@@ -334,5 +336,65 @@ describe('reading your relationships back', () => {
       'edges/junk': { fields: { state: { stringValue: 'friends' } }, updateTime: 'v0' },
     });
     expect(await myEdges(ctx, ME)).toEqual([]);
+  });
+});
+
+describe('suggestHandle', () => {
+  it('takes the local part of an email', () => {
+    expect(suggestHandle('anushkulalm@gmail.com')).toBe('anushkulalm');
+  });
+
+  it('drops what a handle cannot legally contain', () => {
+    expect(suggestHandle('Anush.Kulal@x.com')).toBe('anushkulal');
+    expect(suggestHandle('Anush Kulal')).toBe('anushkulal');
+  });
+
+  it('ignores the +tag half of an address, which is routing not identity', () => {
+    expect(suggestHandle('anushkulalm+loophole@gmail.com')).toBe('anushkulalm');
+  });
+
+  it('pads a name too short to be a handle rather than rejecting it', () => {
+    // "j@x.com" is a real address, and a sign-up must not dead-end on it.
+    expect(suggestHandle('j@x.com')).toBe('jplayer');
+    expect(suggestHandle('')).toBe('player');
+  });
+
+  it('never proposes something the validator would refuse', () => {
+    for (const input of ['a@b.co', 'ANUSH@X.COM', '...@x.com', 'x'.repeat(40) + '@x.com', '1@x.com']) {
+      expect(handleProblem(suggestHandle(input)), input).toBeNull();
+    }
+  });
+});
+
+describe('claimSomeHandle', () => {
+  it('takes the plain handle when it is free', async () => {
+    const { ctx } = fakeStore();
+    expect(await claimSomeHandle(ctx, ME, 'anush@gmail.com')).toBe('anush');
+  });
+
+  it('falls to the next variant when someone has it', async () => {
+    const { ctx } = fakeStore({
+      'handles/anush': { fields: { uid: { stringValue: 'someoneElse' } }, updateTime: 'v0' },
+    });
+    expect(await claimSomeHandle(ctx, ME, 'anush@gmail.com')).toBe('anush2');
+  });
+
+  it('keeps your own handle on a second sign-in rather than numbering you', async () => {
+    // Otherwise every launch would hand you anush2, anush3, anush4…
+    const { ctx } = fakeStore({
+      'handles/anush': { fields: { uid: { stringValue: ME } }, updateTime: 'v0' },
+    });
+    expect(await claimSomeHandle(ctx, ME, 'anush@gmail.com')).toBe('anush');
+  });
+
+  it('gives up on variants and uses the uid, which is unique by construction', async () => {
+    const taken: Record<string, { fields: any; updateTime: string }> = {};
+    for (const h of ['anush', 'anush2', 'anush3', 'anush4', 'anush5']) {
+      taken[`handles/${h}`] = { fields: { uid: { stringValue: 'other' } }, updateTime: 'v0' };
+    }
+    const { ctx } = fakeStore(taken);
+    const got = await claimSomeHandle(ctx, ME, 'anush@gmail.com');
+    expect(got).toContain(ME.slice(-5).toLowerCase());
+    expect(handleProblem(got)).toBeNull();
   });
 });

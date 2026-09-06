@@ -3,6 +3,8 @@ import { ScrollView, TextInput, View } from 'react-native';
 import { Circle, Rect } from 'react-native-svg';
 import { store, type State } from '../store/useStore';
 import { CANDIDATES, grad } from '../data/people';
+import { viewFor } from '../social/cycle';
+import { primaryAction, rowFor, type PersonRow } from '../social/rows';
 import { useTheme } from '../theme/theme';
 import { Avatar, Chevron, Glass, Glyph, Gradient, H, Kicker, P, Tap } from '../components/base';
 import { FadeIn } from '../components/GameChrome';
@@ -15,6 +17,17 @@ import { font } from '../theme/tokens';
  */
 const TINT_14 = 'rgba(150,180,255,0.14)';
 const LINE_35 = 'rgba(150,180,255,0.35)';
+
+/** The outlined chip both non-primary row states use. */
+const CHIP = (t: ReturnType<typeof useTheme>) => ({
+  height: 34,
+  paddingHorizontal: 12,
+  borderRadius: 10,
+  borderWidth: 1,
+  borderColor: t.line,
+  alignItems: 'center' as const,
+  justifyContent: 'center' as const,
+});
 
 /** The magnifier — a circle and a stroke, drawn on the same 24×24 grid. */
 function SearchIcon({ color, size = 17 }: { color: string; size?: number }) {
@@ -54,12 +67,39 @@ function ActionChip({ label, onPress, icon }: { label: string; onPress: () => vo
   );
 }
 
-/** 18 · Add friends — live filtering, with a real no-results state. */
+/** A fixture candidate, in the shape the list renders. */
+const demoRow = (c: (typeof CANDIDATES)[number], sent: boolean): PersonRow => ({
+  key: c.name,
+  name: c.name,
+  mark: c.mark,
+  gi: c.gi,
+  level: 0,
+  sub: c.why,
+  online: false,
+  view: sent ? 'outgoing' : 'none',
+});
+
+/** 18 · Add friends — searches the directory, or filters the samples. */
 export default function AddFriends({ s }: { s: State }) {
   const t = useTheme();
-  const results = CANDIDATES.filter(
-    (c) => !s.addQuery || c.name.toLowerCase().startsWith(s.addQuery.toLowerCase()),
+  const now = Date.now();
+  const { live, results: found, searching, edges, busy } = s.social;
+  const me = s.auth.user?.uid ?? '';
+
+  // A search result carries no relationship of its own, so each is matched
+  // against the edges already loaded — which is what stops "Add" appearing
+  // beside someone whose request is already waiting in your inbox.
+  const byUid = new Map(
+    edges.map((e) => [e.pair[0] === me ? e.pair[1] : e.pair[0], e] as const),
   );
+
+  const results: PersonRow[] = live
+    ? found.map((p) => rowFor(p, viewFor(me, byUid.get(p.uid)), now))
+    : CANDIDATES.filter((c) => !s.addQuery || c.name.toLowerCase().startsWith(s.addQuery.toLowerCase())).map(
+        (c) => demoRow(c, s.sent.includes(c.name)),
+      );
+
+  const typing = live && s.addQuery.trim().length > 0 && s.addQuery.trim().length < 2;
 
   return (
     <FadeIn style={{ flex: 1, minHeight: 0, paddingTop: 62, paddingBottom: 34 }}>
@@ -92,7 +132,7 @@ export default function AddFriends({ s }: { s: State }) {
             <TextInput
               value={s.addQuery}
               onChangeText={store.setAddQuery}
-              placeholder="Name or #tag"
+              placeholder={live ? "Search by @username" : "Name or #tag"}
               placeholderTextColor={t.dim2}
               accessibilityLabel="Search for people"
               autoCapitalize="none"
@@ -138,10 +178,35 @@ export default function AddFriends({ s }: { s: State }) {
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 8 }}
       >
         <Kicker tracking={1.33} style={{ marginTop: 2, marginBottom: 9 }}>
-          SUGGESTED
+          {live ? (s.addQuery.trim() ? 'RESULTS' : 'SEARCH FOR SOMEONE') : 'SUGGESTED'}
         </Kicker>
 
-        {results.length === 0 && (
+        {/* Two characters is the floor for a prefix query — below it, most of
+            the directory matches and the answer is not worth sending. */}
+        {typing && (
+          <P size={12.5} weight={400} color={t.dim} style={{ paddingVertical: 24, textAlign: 'center' }}>
+            Keep typing — at least two characters.
+          </P>
+        )}
+
+        {live && searching && (
+          <P size={12.5} weight={400} color={t.dim} style={{ paddingVertical: 24, textAlign: 'center' }}>
+            Searching…
+          </P>
+        )}
+
+        {live && !searching && !s.addQuery.trim() && (
+          <P
+            size={12.5}
+            weight={400}
+            color={t.dim}
+            style={{ paddingVertical: 24, paddingHorizontal: 20, textAlign: 'center', lineHeight: 17.5 }}
+          >
+            Everyone picks a username when they sign up. Type theirs to find them.
+          </P>
+        )}
+
+        {results.length === 0 && !searching && !typing && (live ? !!s.addQuery.trim() : true) && (
           <View style={{ alignItems: 'center', gap: 13, paddingVertical: 40, paddingHorizontal: 20 }}>
             <Glass radius={18} elevated={false} style={{ width: 56, height: 56 }}>
               <View style={{ width: 54, height: 54, alignItems: 'center', justifyContent: 'center' }}>
@@ -158,9 +223,15 @@ export default function AddFriends({ s }: { s: State }) {
 
         <View style={{ gap: 9 }}>
           {results.map((c) => {
-            const sent = s.sent.includes(c.name);
+            // What to offer comes from the relationship, not from a list of
+            // names we happen to have tapped this session.
+            const action = primaryAction(c.view);
+            const working = !!c.uid && busy.includes(c.uid);
+            const act = (a: 'request' | 'cancel' | 'accept') =>
+              live && c.uid ? store.friendAction(c.uid, a) : store.sendRequest(c.name);
+
             return (
-              <Glass key={c.name} radius={16} elevated={false}>
+              <Glass key={c.key} radius={16} elevated={false}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 11, paddingVertical: 11, paddingHorizontal: 13 }}>
                   <Avatar mark={c.mark} grad={grad(c.gi)} size={42} fontSize={16} />
                   <View style={{ flex: 1, minWidth: 0 }}>
@@ -168,28 +239,12 @@ export default function AddFriends({ s }: { s: State }) {
                       {c.name}
                     </H>
                     <P size={11} weight={400} color={t.dim} numberOfLines={1} style={{ marginTop: 2 }}>
-                      {c.why}
+                      {c.handle ? `@${c.handle}` : c.sub}
                     </P>
                   </View>
-                  {sent ? (
-                    <View
-                      style={{
-                        height: 34,
-                        paddingHorizontal: 12,
-                        borderRadius: 10,
-                        backgroundColor: 'transparent',
-                        borderWidth: 1,
-                        borderColor: t.line,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <H size={11} color={t.dim2}>
-                        SENT
-                      </H>
-                    </View>
-                  ) : (
-                    <Tap onPress={() => store.sendRequest(c.name)} label="Add">
+
+                  {action === 'add' && (
+                    <Tap onPress={() => act('request')} label={`Add ${c.name}`} disabled={working}>
                       <Gradient radius={10}>
                         <View style={{ height: 34, paddingHorizontal: 14, alignItems: 'center', justifyContent: 'center' }}>
                           <H size={11.5} color="#fff">
@@ -197,6 +252,40 @@ export default function AddFriends({ s }: { s: State }) {
                           </H>
                         </View>
                       </Gradient>
+                    </Tap>
+                  )}
+
+                  {/* An outgoing request is withdrawable, which is the one
+                      thing the old flat "SENT" chip could not do. */}
+                  {action === 'cancel' && (
+                    <Tap onPress={() => act('cancel')} label={`Withdraw request to ${c.name}`} disabled={working}>
+                      <View style={CHIP(t)}>
+                        <H size={11} color={t.dim2}>
+                          SENT
+                        </H>
+                      </View>
+                    </Tap>
+                  )}
+
+                  {action === 'accept' && (
+                    <Tap onPress={() => act('accept')} label={`Accept ${c.name}`} disabled={working}>
+                      <Gradient radius={10} glow={false}>
+                        <View style={{ height: 34, paddingHorizontal: 14, alignItems: 'center', justifyContent: 'center' }}>
+                          <H size={11.5} color="#fff">
+                            Accept
+                          </H>
+                        </View>
+                      </Gradient>
+                    </Tap>
+                  )}
+
+                  {action === 'message' && (
+                    <Tap onPress={() => store.openDm(c.name)} label={`Message ${c.name}`}>
+                      <View style={CHIP(t)}>
+                        <H size={11} color={t.lime}>
+                          FRIENDS
+                        </H>
+                      </View>
                     </Tap>
                   )}
                 </View>

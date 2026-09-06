@@ -3,7 +3,9 @@ import { ScrollView, TextInput, View } from 'react-native';
 import { Circle } from 'react-native-svg';
 import { store, type State } from '../store/useStore';
 import { FRIENDS, grad } from '../data/people';
-import { useTheme, type Tokens } from '../theme/theme';
+import { otherIn } from '../social/cycle';
+import { filterRows, rowsFrom, sortForPlaying, sortRequests, type PersonRow } from '../social/rows';
+import { useTheme } from '../theme/theme';
 import { Avatar, Chevron, Glass, Glyph, Gradient, H, Kicker, P, Tap } from '../components/base';
 import { FadeIn } from '../components/GameChrome';
 import { font } from '../theme/tokens';
@@ -18,13 +20,54 @@ const TINT_14 = 'rgba(150,180,255,0.14)';
 const LINE_30 = 'rgba(150,180,255,0.3)';
 const LINE_35 = 'rgba(150,180,255,0.35)';
 
-/** `FRIENDS` carries the presence dot as a CSS custom property. */
-const dotColor = (t: Tokens, css: string) => (css === 'var(--ink)' ? t.ink : css);
+/** The presence dot when someone is not around. Ink when they are. */
+const DOT_AWAY = 'rgba(255,255,255,.3)';
 
-const REQUESTS = [
+/** The sample requests an unconfigured build shows, so it still demonstrates itself. */
+const DEMO_REQUESTS = [
   { name: 'Aditya', mark: '◈', gi: 6, mutual: '3 mutual friends' },
   { name: 'Priya', mark: '△', gi: 4, mutual: '1 mutual friend' },
 ];
+
+/** A fixture friend, in the shape the list renders. */
+const demoRow = (f: (typeof FRIENDS)[number]): PersonRow => ({
+  key: f.name,
+  name: f.name,
+  mark: f.mark,
+  gi: f.gi,
+  level: f.lvl,
+  sub: f.status,
+  online: f.dot === 'var(--ink)',
+  view: 'friends',
+});
+
+/**
+ * Said once, at the top of the list, when the people below are invented.
+ *
+ * The alternative is a friends list that looks real, accepts requests and
+ * forgets them — which is worse than an empty one.
+ */
+function DemoNote() {
+  const t = useTheme();
+  return (
+    <View
+      style={{
+        marginBottom: 10,
+        paddingVertical: 9,
+        paddingHorizontal: 12,
+        borderRadius: 12,
+        backgroundColor: TINT_11,
+        borderWidth: 1,
+        borderColor: LINE_30,
+      }}
+    >
+      <P size={11} weight={400} color={t.dim} style={{ lineHeight: 15.5 }}>
+        Sample people. Connect a project and these become real — see
+        docs/BACKEND.md.
+      </P>
+    </View>
+  );
+}
 
 /** The magnifier — a circle and a stroke, drawn on the same 24×24 grid. */
 function SearchIcon({ color }: { color: string }) {
@@ -81,9 +124,25 @@ function EmptyState({
 export default function Friends({ s }: { s: State }) {
   const t = useTheme();
   const [query, setQuery] = useState('');
-  const list = s.empty
-    ? []
-    : FRIENDS.filter((f) => !query || f.name.toLowerCase().includes(query.toLowerCase()));
+  const now = Date.now();
+  const { live, edges, people, busy } = s.social;
+  const me = s.auth.user?.uid ?? '';
+
+  // Live or fixtures, but the same shape either way — the rows below do not
+  // know which they are rendering, which is what keeps the two paths honest.
+  const all = live
+    ? sortForPlaying(rowsFrom(me, edges, people, now, (v) => v === 'friends'))
+    : FRIENDS.map(demoRow);
+  const list = s.empty ? [] : filterRows(all, query);
+
+  const requests = live
+    ? sortRequests(edges.filter((e) => e.state === 'pending' && e.by !== me)).flatMap((e) => {
+        const them = otherIn(e, me);
+        const p = people[them];
+        // Its profile has not arrived yet; the next refresh will bring it.
+        return p ? [{ uid: them, name: p.name || `@${p.handle}`, mark: p.mark, gi: p.gi, mutual: `@${p.handle}` }] : [];
+      })
+    : DEMO_REQUESTS.map((r) => ({ ...r, uid: '' }));
 
   return (
     <FadeIn style={{ flex: 1, minHeight: 0, paddingTop: 62 }}>
@@ -143,12 +202,16 @@ export default function Friends({ s }: { s: State }) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 8 }}
       >
-        <Kicker tracking={1.33} style={{ marginTop: 2, marginBottom: 9 }}>
-          REQUESTS · {REQUESTS.length}
-        </Kicker>
+        {!live && <DemoNote />}
+
+        {requests.length > 0 && (
+          <Kicker tracking={1.33} style={{ marginTop: 2, marginBottom: 9 }}>
+            REQUESTS · {requests.length}
+          </Kicker>
+        )}
 
         <View style={{ gap: 8 }}>
-          {REQUESTS.map((q) => (
+          {requests.map((q) => (
             <View
               key={q.name}
               style={{
@@ -165,12 +228,39 @@ export default function Friends({ s }: { s: State }) {
             >
               <Avatar mark={q.mark} grad={grad(q.gi)} size={40} fontSize={16} />
               <View style={{ marginRight: 'auto', minWidth: 0 }}>
-                <H size={13.5}>{q.name}</H>
-                <P size={11} weight={400} color={t.dim2} style={{ marginTop: 2 }}>
+                <H size={13.5} numberOfLines={1}>{q.name}</H>
+                <P size={11} weight={400} color={t.dim2} numberOfLines={1} style={{ marginTop: 2 }}>
                   {q.mutual}
                 </P>
               </View>
-              <Tap onPress={() => store.flash(`${q.name} added`)} label="Accept">
+              {/* Declining has to be as reachable as accepting, or the only way
+                  to clear a request you do not want is to accept it. */}
+              <Tap
+                onPress={() => (live ? store.friendAction(q.uid, 'decline') : store.flash('Declined'))}
+                label={`Decline ${q.name}`}
+                disabled={busy.includes(q.uid)}
+              >
+                <View
+                  style={{
+                    height: 34,
+                    paddingHorizontal: 12,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: t.line,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <H size={11.5} color={t.dim}>
+                    Decline
+                  </H>
+                </View>
+              </Tap>
+              <Tap
+                onPress={() => (live ? store.friendAction(q.uid, 'accept') : store.flash(`${q.name} added`))}
+                label={`Accept ${q.name}`}
+                disabled={busy.includes(q.uid)}
+              >
                 <Gradient radius={12} glow={false}>
                   <View style={{ paddingVertical: 9, paddingHorizontal: 14 }}>
                     <H size={11.5} color="#fff">
@@ -192,13 +282,13 @@ export default function Friends({ s }: { s: State }) {
           />
         ) : (
           <Kicker tracking={1.33} style={{ marginTop: 20, marginBottom: 9 }}>
-            ALL FRIENDS · {FRIENDS.length}
+            ALL FRIENDS · {all.length}
           </Kicker>
         )}
 
         <View style={{ gap: 8 }}>
           {list.map((f) => (
-            <Glass key={f.name} radius={18} elevated={false}>
+            <Glass key={f.key} radius={18} elevated={false}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingHorizontal: 12 }}>
                 <Tap
                   onPress={() => store.openPlayer(f.name)}
@@ -214,7 +304,7 @@ export default function Friends({ s }: { s: State }) {
                         width: 12,
                         height: 12,
                         borderRadius: 6,
-                        backgroundColor: dotColor(t, f.dot),
+                        backgroundColor: f.online ? t.ink : DOT_AWAY,
                         borderWidth: 2.5,
                         borderColor: t.bg,
                       }}
@@ -226,9 +316,12 @@ export default function Friends({ s }: { s: State }) {
                         {f.name}
                       </H>
                       <H size={8.5} color={t.accLt} numberOfLines={1}>
-                        LVL {f.lvl}
+                        LVL {f.level}
                       </H>
-                      {f.name === 'Divya' && (
+                      {/* The unread badge is fixture-only until DMs are
+                          networked; inventing one over a real friend would be
+                          a message that does not exist. */}
+                      {!live && f.name === 'Divya' && (
                         <View
                           style={{
                             minWidth: 17,
@@ -247,7 +340,7 @@ export default function Friends({ s }: { s: State }) {
                       )}
                     </View>
                     <P size={11} weight={400} color={t.dim2} numberOfLines={1} style={{ marginTop: 2 }}>
-                      {f.status}
+                      {f.sub}
                     </P>
                   </View>
                 </Tap>
@@ -273,11 +366,11 @@ export default function Friends({ s }: { s: State }) {
                     to watch theirs instead. */}
                 <Tap
                   onPress={() =>
-                    f.status.includes('In a lobby')
+                    f.sub.includes('In a lobby')
                       ? store.go('spectate')
                       : store.flash(`Invite sent to ${f.name}`)
                   }
-                  label={f.status.includes('In a lobby') ? `Watch ${f.name}` : `Invite ${f.name}`}
+                  label={f.sub.includes('In a lobby') ? `Watch ${f.name}` : `Invite ${f.name}`}
                 >
                   <View
                     style={{
@@ -292,7 +385,7 @@ export default function Friends({ s }: { s: State }) {
                     }}
                   >
                     <H size={11} color={t.lime}>
-                      {f.status.includes('In a lobby') ? 'Watch' : 'Invite'}
+                      {f.sub.includes('In a lobby') ? 'Watch' : 'Invite'}
                     </H>
                   </View>
                 </Tap>
