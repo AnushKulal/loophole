@@ -1,0 +1,131 @@
+rules_version = '2';
+
+// Loophole's Firestore security rules.
+//
+// These are the whole of the server. There is no backend of ours between the
+// phone and the database, so anything not forbidden here is permitted to anyone
+// who extracts the API key from the APK — which is trivial and expected; the
+// key identifies the project, it does not authorise anything.
+//
+// Deploy with:  firebase deploy --only firestore:rules
+// Or paste into: console.firebase.google.com -> Firestore -> Rules
+//
+// The shapes these rules rely on are documented in src/social/service.ts and
+// src/net/match.ts. Two are load-bearing:
+//   • an edge document's id is the two uids sorted and joined with `_`, so the
+//     rule can check membership from the id alone
+//   • a move's id is its index, so a move can be created but never rewritten
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function me() {
+      return request.auth.uid;
+    }
+
+    // ── profiles ──────────────────────────────────────────────────
+    //
+    // Public on purpose: finding someone by their handle is the entire point,
+    // and there is nothing here that is not already on their player card.
+    match /users/{uid} {
+      allow read: if signedIn();
+      allow write: if signedIn() && me() == uid;
+    }
+
+    // ── handles ───────────────────────────────────────────────────
+    //
+    // The document id is the uniqueness constraint — Firestore has no other way
+    // to express one. Create-only, and only pointing at yourself: without the
+    // second half, anyone could reserve every good handle for someone else.
+    // Deleting is allowed so you can change your own handle; updating is not,
+    // because a handle that can be repointed is not a claim.
+    match /handles/{handle} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.uid == me();
+      allow delete: if signedIn() && resource.data.uid == me();
+      allow update: if false;
+    }
+
+    // ── relationships ─────────────────────────────────────────────
+    //
+    // One document per pair, readable and writable by either member. The id
+    // carries both uids, so membership is checkable without reading anything.
+    match /edges/{pair} {
+      function members() {
+        return pair.split('_');
+      }
+
+      function amMember() {
+        return signedIn() && me() in members();
+      }
+
+      // A write has to leave the document describing this same pair, or the id
+      // and the contents stop agreeing and `viewFor` resolves against the wrong
+      // person.
+      function pairMatches() {
+        return request.resource.data.pair == members()
+            || request.resource.data.pair == [members()[1], members()[0]];
+      }
+
+      // You may only act in your own name. Without this, either member could
+      // write `by: <the other>` and manufacture a request they then "accept",
+      // which is how you end up on someone's friends list uninvited.
+      function actingAsSelf() {
+        return request.resource.data.by == me();
+      }
+
+      allow read: if amMember();
+      allow delete: if amMember();
+      allow create, update: if amMember()
+                            && pairMatches()
+                            && actingAsSelf()
+                            && request.resource.data.state in ['pending', 'friends', 'blocked'];
+    }
+
+    // ── matches ───────────────────────────────────────────────────
+    //
+    // Readable by anyone signed in, because joining a table means reading it
+    // before you are in it — the room code is the access control, which is the
+    // same bargain every party game makes.
+    match /matches/{code} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.host == me();
+
+      // Anyone signed in may update, which is what lets a newcomer add their
+      // own seat. The host alone may end the match, so nobody else can close a
+      // table out from under it.
+      allow update: if signedIn()
+                    && (resource.data.host == me()
+                        || request.resource.data.status == resource.data.status);
+      allow delete: if signedIn() && resource.data.host == me();
+
+      // ── the move log ────────────────────────────────────────────
+      //
+      // Create-only, in your own name. That a move can never be updated or
+      // deleted is what makes the log an authority: a move that has been shown
+      // on someone's screen cannot afterwards become a different move.
+      //
+      // Turn order is not enforced here. Doing so would mean replaying the
+      // whole game inside a rule, which rules cannot do; the engines reject an
+      // illegal move on every client instead. The consequence is that a
+      // determined player could write a move out of turn and desynchronise
+      // their own table — a cheat that spoils their own game and is caught by
+      // the divergence digest.
+      match /moves/{index} {
+        allow read: if signedIn();
+        allow create: if signedIn() && request.resource.data.by == me();
+        allow update, delete: if false;
+      }
+    }
+
+    // Anything not named above is denied. Adding a collection means adding a
+    // rule for it, deliberately.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
