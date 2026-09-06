@@ -47,6 +47,28 @@ export interface MatchConfig {
   opponents: Player[];
   difficulty: Difficulty;
   options: MatchOptions;
+  /**
+   * Present when this match is shared with other phones.
+   *
+   * Absent is the ordinary local game against bots, and every screen keeps that
+   * path working unchanged — a networked match is an addition, not a
+   * replacement. See `game/useMatch.ts`.
+   */
+  net?: NetInfo;
+}
+
+/** The shared half of a match: where the log lives, and which seat you are. */
+export interface NetInfo {
+  /** Room code, and the match document's id. */
+  id: string;
+  /** Seeds every client's engine, which is what makes the deals agree. */
+  seed: number;
+  host: string;
+  /** Seat order, fixed when the match was created. */
+  seats: { uid: string; name: string; mark: string; gi: number; bot?: boolean }[];
+  /** Which of those seats is this device. */
+  mySeat: number;
+  me: string;
 }
 
 export type Difficulty = 'Easy' | 'Normal' | 'Sharp';
