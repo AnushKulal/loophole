@@ -6,11 +6,13 @@ import * as auth from '../auth/auth';
 import { AuthFailure, type Account, type AuthError } from '../auth/auth';
 import { toAuthError } from '../auth/errors';
 import { applyAction, ctx as socialCtx, findPeople, isLive, loadSocial } from '../social/live';
-import { CycleError, viewFor as viewOf, type Action, type Edge } from '../social/cycle';
-import { claimSomeHandle, publishProfile, type Profile } from '../social/service';
+import { CycleError, otherIn, viewFor as viewOf, type Action, type Edge } from '../social/cycle';
+import { claimSomeHandle, friendsIn, publishProfile, type Profile } from '../social/service';
 import { canMessage, type Message, type ThreadPreview } from '../social/dm';
 import { markRead, readMessages, myThreads, sendMessage } from '../net/threads';
 import { createMatch, getMatch, joinMatch, roomCode, type Match } from '../net/match';
+import { placeOf, playersByUid, recordScore, topPlayers } from '../net/board';
+import { levelFor, rank, xpFor, type BoardRow, type Outcome as ScoreOutcome } from '../social/scores';
 import { pairId } from '../social/cycle';
 
 /**
@@ -154,6 +156,11 @@ export interface SocialState {
   sending: boolean;
   /** The shared table this device is sitting at, if any. */
   match: Match | null;
+  /** The leaderboard, once it has been asked for. */
+  board: BoardRow[];
+  /** Your own row, even when it fell off the end of the page. */
+  myRow: BoardRow | null;
+  boardLoading: boolean;
 }
 
 const initial = (): State => ({
@@ -222,6 +229,9 @@ const initial = (): State => ({
     messages: [],
     sending: false,
     match: null,
+    board: [],
+    myRow: null,
+    boardLoading: false,
   },
 });
 
@@ -288,6 +298,7 @@ class Store {
     // Refreshed on arrival rather than on a timer: a friends list that polls is
     // one that drains a battery to report something that changes twice a day.
     if (Store.SOCIAL.includes(scr)) void this.refreshSocial();
+    if (scr === 'board') void this.refreshBoard();
   };
 
   toHome = () => this.setState({ scr: 'home', joinOpen: false });
@@ -337,7 +348,6 @@ class Store {
   setLibCat = (libCat: 'All' | Category) => this.setState({ libCat });
   setMode = (mode: Mode) => this.setState({ mode });
   setDiff = (diff: Difficulty) => this.setState({ diff });
-  setScope = (scope: State['scope']) => this.setState({ scope });
 
   /** Selecting a game anywhere in the library drops you into setup with it chosen. */
   pickGame = (name: string) => {
@@ -509,7 +519,105 @@ class Store {
   };
 
   /** A registry game finished. Hand its scoreboard to the results screen. */
-  finishMatch = (result: GameResult) => this.setState({ scr: 'results', result });
+  finishMatch = (result: GameResult) => {
+    this.setState({ scr: 'results', result });
+    void this.bankResult(result);
+  };
+
+  /**
+   * Bank a finished match, if it was one anybody else was at.
+   *
+   * Local games against bots deliberately do not count. A global board fed by
+   * matches you can win against Easy bots in a minute is furniture, and the
+   * results screen still shows the XP either way — it just stays on the phone.
+   */
+  private bankResult = async (result: GameResult) => {
+    const match = this.state.social.match;
+    const me = this.myUid();
+    if (!match || !me || !isLive()) return;
+
+    const c = await socialCtx();
+    if (!c) return;
+
+    // The results screen already worked out who won, in the row it marked.
+    const mine = result.rows.find((r) => r.n === this.state.myName);
+    const outcome: ScoreOutcome = mine?.win
+      ? 'won'
+      : result.rows.some((r) => r.win)
+        ? 'lost'
+        : 'drew';
+
+    try {
+      await recordScore(c, {
+        uid: me,
+        match: match.id,
+        game: result.game,
+        outcome,
+        xp: xpFor(outcome),
+        at: Date.now(),
+      });
+      // The table is finished with; leaving it here would offer a rematch on a
+      // log that already has a winner in it.
+      this.setSocial({ match: null });
+    } catch {
+      // Already banked, or offline. Neither is worth interrupting a scoreboard
+      // for — the claim either landed the first time or can be made again.
+    }
+  };
+
+  // ── the board ────────────────────────────────────────────────────
+
+  setScope = (scope: State['scope']) => {
+    this.setState({ scope });
+    void this.refreshBoard();
+  };
+
+  /**
+   * Load the leaderboard for the scope in view.
+   *
+   * Global is the server's own top page; Friends is the people you have
+   * actually added, which is a different query rather than a filter over the
+   * first — somebody in two hundredth place is still first among their friends.
+   */
+  refreshBoard = async () => {
+    if (!isLive()) return;
+    const c = await socialCtx();
+    const me = this.myUid();
+    if (!c || !me) return;
+
+    this.setSocial({ boardLoading: true });
+    try {
+      const friendsOnly = this.state.scope === 'Friends';
+      const people = friendsOnly
+        ? await playersByUid(c, [me, ...friendsIn(me, this.state.social.edges).map((e) => otherIn(e, me))])
+        : await topPlayers(c);
+
+      const { rows, mine } = rank(people, me);
+
+      // Off the end of the global page, "you are 51st" would be a lie; ask how
+      // many people are genuinely ahead instead.
+      let myRow = mine;
+      if (!friendsOnly && !mine) {
+        const own = this.state.social.people[me];
+        const xp = own?.xp ?? 0;
+        myRow = {
+          uid: me,
+          name: this.state.myName,
+          handle: own?.handle ?? '',
+          mark: MARKS[this.state.mark] ?? MARKS[0],
+          gi: this.state.tint,
+          xp,
+          level: levelFor(xp),
+          place: await placeOf(c, xp),
+          me: true,
+        };
+      }
+
+      this.setSocial({ board: rows, myRow, boardLoading: false });
+    } catch {
+      this.setSocial({ boardLoading: false, error: 'Could not load the board.' });
+    }
+  };
 
   // ── imposter quiz ────────────────────────────────────────────────
 
@@ -883,7 +991,10 @@ class Store {
         name: user.name || user.email.split('@')[0],
         mark: MARKS[this.state.mark] ?? MARKS[0],
         gi: this.state.tint,
-        level: 24,
+        // Neither is written by `publishProfile` — the score is the board's to
+        // move, not a sign-in's. They are here to satisfy the shape.
+        level: 0,
+        xp: 0,
         lastSeen: Date.now(),
       });
       this.setSocial({ live: true });

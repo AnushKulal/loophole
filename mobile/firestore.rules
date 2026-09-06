@@ -156,6 +156,23 @@ service cloud.firestore {
                         || request.resource.data.status == resource.data.status);
       allow delete: if signedIn() && resource.data.host == me();
 
+      // ── scores ──────────────────────────────────────────────────
+      //
+      // Your claim about how a match went, in your own name and written once.
+      // Create-only is what stops a match being banked twice; that it can never
+      // be edited is what makes it evidence rather than an opinion, since the
+      // move log that produced it sits in the same document tree.
+      //
+      // These rules cannot check that the claim is *true* — verifying it means
+      // replaying the whole game, which rules cannot do. What they guarantee is
+      // that it is attributable and unchangeable, so a false claim is one
+      // somebody can point at.
+      match /scores/{uid} {
+        allow read: if signedIn();
+        allow create: if signedIn() && uid == me() && request.resource.data.uid == me();
+        allow update, delete: if false;
+      }
+
       // ── the move log ────────────────────────────────────────────
       //
       // Create-only, in your own name. That a move can never be updated or

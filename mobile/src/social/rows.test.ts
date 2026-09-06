@@ -25,6 +25,7 @@ const profile = (uid: string, over: Partial<Profile> = {}): Profile => ({
   mark: '▲',
   gi: 1,
   level: 12,
+  xp: 0,
   lastSeen: NOW,
   ...over,
 });

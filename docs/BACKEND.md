@@ -103,6 +103,7 @@ told about composite ones. Two queries need them:
 | `users` | `handle` (ascending) |
 | `threads` | `pair` (array-contains), `lastAt` (descending) |
 | `reads` | `uid` (ascending) |
+| `users` | `xp` (descending) |
 
 The console offers to build these for you the first time a query fails: the
 error in the app's logs contains a direct link. That is genuinely the easiest
@@ -112,7 +113,7 @@ route — open Friends, watch it fail once, click the link.
 
 ```bash
 cd mobile
-npm test          # 985 tests, none of which need a project
+npm test          # 1071 tests, none of which need a project
 npm run web       # sign up twice in two browser profiles and add yourself
 ```
 
@@ -136,9 +137,18 @@ trade for getting it working.
 
 Being honest about the boundary:
 
-- **The leaderboard is still fixtures.** Friends, Add friends, the inbox and DMs
-  are wired; ranks still come from `src/data/people.ts`, because a real one needs
-  scores written at the end of a match and matches are not networked yet.
+- **Only shared matches score.** A global board fed by games against Easy bots is
+  farmable in a minute, so local games keep their XP on the phone that earned it.
+  A board with nobody on it means nobody has played a friend yet.
+- **Scores are self-reported.** The rules let you write your own profile and
+  nobody else's, and there is no server here to referee, so the number on the
+  board is the number its owner wrote. It is not unfalsifiable: the claim is
+  stored beside the move log that produced it, and replaying the log says who
+  actually won. Among people who know each other, a claim that can be checked is
+  enough — but it is worth knowing rather than assuming otherwise.
+- **Region is a fixture-only scope.** Nobody's region is collected anywhere, so
+  the live board shows Global and Friends only rather than quietly serving the
+  global list under a third name.
 - **One game at a time.** The lockstep transport is general, but each of the 14
   screens needs its local `useState` swapped for the shared move log. UNO,
   Connect 4 and Chess are the ones to do first — turn-based, small moves, and

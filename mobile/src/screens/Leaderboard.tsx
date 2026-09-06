@@ -5,9 +5,57 @@ import { TINTS } from '../data/progression';
 import { useTheme, type Tokens } from '../theme/theme';
 import { bloom } from '../theme/tokens';
 import { Avatar, Bar, Chevron, Glass, Glyph, H, Kicker, P, Tap } from '../components/base';
+import { barFor, commas, podium as podiumOf, restOf, type BoardRow } from '../social/scores';
 import { FadeIn } from '../components/GameChrome';
 
 const SCOPES: State['scope'][] = ['Global', 'Friends', 'Region'];
+
+/**
+ * Region is a fixture-only scope.
+ *
+ * Nobody's region is collected anywhere, so a live board cannot answer it, and
+ * a tab that quietly shows the global list under another name is worse than one
+ * that is not there.
+ */
+const LIVE_SCOPES: State['scope'][] = ['Global', 'Friends'];
+
+/** "1st", "2nd", "3rd" — the badge on a podium step. */
+const ordinal = (n: number): string => {
+  const tens = n % 100;
+  if (tens >= 11 && tens <= 13) return `${n}th`;
+  return `${n}${['th', 'st', 'nd', 'rd'][n % 10] ?? 'th'}`;
+};
+
+/** The three podium colours, by place. */
+const PODIUM_NEON = ['var(--gold)', 'var(--cyan)', 'var(--pink)'];
+
+/** One row, from either source — the fixtures or the real board. */
+interface Row {
+  key: string;
+  place: number;
+  name: string;
+  mark: string;
+  /** Index into the avatar palette. */
+  gi: number;
+  pts: string;
+  /** How far through the current level, 0–1. */
+  bar: number;
+  neon: string;
+  /** Absent for a fixture row, which is also how a tap knows not to navigate. */
+  uid?: string;
+}
+
+const fromBoard = (r: BoardRow): Row => ({
+  key: r.uid,
+  uid: r.uid,
+  place: r.place,
+  name: r.name,
+  mark: r.mark,
+  gi: r.gi,
+  pts: commas(r.xp),
+  bar: barFor(r),
+  neon: PODIUM_NEON[r.place - 1] ?? 'var(--acc)',
+});
 
 /** The design's fixed accent wash — the tinted square behind the back chevron. */
 const TINT = 'rgba(150,180,255,0.14)';
@@ -49,7 +97,7 @@ function XpBar({ pct }: { pct: number }) {
 }
 
 /** One podium step: a tier-coloured ring, the player's disc, and a place badge. */
-function PodiumStep({ p }: { p: PodiumEntry }) {
+function PodiumStep({ p }: { p: Row }) {
   const t = useTheme();
   const neon = paint(t, p.neon);
   const ring = p.place === 1 ? 72 : 58;
@@ -76,7 +124,7 @@ function PodiumStep({ p }: { p: PodiumEntry }) {
           }}
         />
         {/* `calc(100% - 11px)` — the disc sits 5.5px inside the rim */}
-        <Avatar mark={p.mark} grad={grad(p.place + 1)} size={ring - 11} fontSize={18} />
+        <Avatar mark={p.mark} grad={grad(p.gi)} size={ring - 11} fontSize={18} />
         <View
           style={{
             position: 'absolute',
@@ -88,7 +136,7 @@ function PodiumStep({ p }: { p: PodiumEntry }) {
           }}
         >
           <H size={8.5} color={t.onAcc}>
-            {p.rank}
+            {ordinal(p.place)}
           </H>
         </View>
       </View>
@@ -105,6 +153,35 @@ function PodiumStep({ p }: { p: PodiumEntry }) {
 /** 13 · Leaderboard — podium, ranked rows, and a sticky "you". */
 export default function Leaderboard({ s }: { s: State }) {
   const t = useTheme();
+  const { live, board, myRow, boardLoading } = s.social;
+
+  /**
+   * Live or fixtures, in one shape.
+   *
+   * The fixture podium and ladder are two differently-shaped arrays; the real
+   * board is one ordered list. Both become `Row[]` here so everything below
+   * renders once rather than twice.
+   */
+  const rows: Row[] = live
+    ? board.map(fromBoard)
+    : [
+        ...PODIUM.slice().sort((a, b) => a.place - b.place),
+        ...RANKS.map((r) => ({ ...r, place: r.n, mark: r.mark, name: r.name })),
+      ].map((r: any, i) => ({
+        key: r.name,
+        place: r.place ?? i + 1,
+        name: r.name,
+        mark: r.mark,
+        gi: (r.place ?? i + 1) + 1,
+        pts: r.pts,
+        bar: r.bar ? pctOf(r.bar) : 1 - i * 0.06,
+        neon: r.neon ?? PODIUM_NEON[i] ?? 'var(--acc)',
+      }));
+
+  const top = podiumOf(rows as never) as unknown as Row[];
+  const ladder = restOf(rows as never) as unknown as Row[];
+  const scopes = live ? LIVE_SCOPES : SCOPES;
+  const you = live ? (myRow ? fromBoard(myRow) : null) : null;
 
   return (
     <FadeIn style={{ flex: 1, minHeight: 0, paddingTop: 62 }}>
@@ -137,7 +214,7 @@ export default function Leaderboard({ s }: { s: State }) {
 
       {/* scope */}
       <View style={{ flexDirection: 'row', gap: 6, paddingHorizontal: 20, paddingBottom: 16 }}>
-        {SCOPES.map((n) => {
+        {scopes.map((n) => {
           const on = s.scope === n;
           return (
             <Pressable
@@ -178,8 +255,8 @@ export default function Leaderboard({ s }: { s: State }) {
           paddingBottom: 18,
         }}
       >
-        {PODIUM.map((p) => (
-          <PodiumStep key={p.name} p={p} />
+        {top.map((p) => (
+          <PodiumStep key={p.key} p={p} />
         ))}
       </View>
 
@@ -196,15 +273,27 @@ export default function Leaderboard({ s }: { s: State }) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 20 }}
       >
+        {live && !board.length && !boardLoading && (
+          <View style={{ alignItems: 'center', gap: 10, paddingVertical: 44, paddingHorizontal: 20 }}>
+            <H size={15}>Nobody has scored yet</H>
+            {/* Says what actually counts, since a bot game not appearing here
+                otherwise reads as the board being broken. */}
+            <P size={12.5} weight={400} color={t.dim} style={{ maxWidth: 240, textAlign: 'center', lineHeight: 17.5 }}>
+              Matches against a friend are what count. Open a room, play one, and
+              you will both be on here.
+            </P>
+          </View>
+        )}
+
         <View style={{ gap: 7 }}>
-          {RANKS.map((r) => (
-            <Tap key={r.name} onPress={() => store.openPlayer(r.name)} label={r.name}>
+          {ladder.map((r) => (
+            <Tap key={r.key} onPress={() => store.openPlayer(r.name)} label={r.name}>
               <Glass radius={15} elevated={false}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, paddingHorizontal: 12 }}>
                   <H size={11} color={t.dim2} style={{ minWidth: 13 }}>
-                    {r.n}
+                    {r.place}
                   </H>
-                  <Avatar mark={r.mark} grad={grad(r.n)} size={32} fontSize={12} />
+                  <Avatar mark={r.mark} grad={grad(r.gi)} size={32} fontSize={12} />
                   <View style={{ flex: 1, minWidth: 0 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 6 }}>
                       <H size={12} numberOfLines={1} style={{ marginRight: 'auto' }}>
@@ -214,7 +303,7 @@ export default function Leaderboard({ s }: { s: State }) {
                         {r.pts} XP
                       </H>
                     </View>
-                    <XpBar pct={pctOf(r.bar)} />
+                    <XpBar pct={r.bar} />
                   </View>
                 </View>
               </Glass>
@@ -240,7 +329,7 @@ export default function Leaderboard({ s }: { s: State }) {
           }}
         >
           <H size={11} color={t.accLt} style={{ minWidth: 13 }}>
-            12
+            {you ? you.place : 12}
           </H>
           <Avatar mark={MARKS[s.mark]} grad={TINTS[s.tint].grad} size={32} fontSize={12} />
           <View style={{ flex: 1, minWidth: 0 }}>
@@ -249,10 +338,12 @@ export default function Leaderboard({ s }: { s: State }) {
                 You
               </H>
               <H size={9} weight={700} color={t.lime} numberOfLines={1}>
-                LEVEL UP SOON
+                {/* The real one says where you are; the fixture keeps its
+                    original copy, which was never about a real total. */}
+                {you ? `${you.pts} XP` : 'LEVEL UP SOON'}
               </H>
             </View>
-            <Bar pct={0.68} fill={t.lime} height={4} style={{ marginTop: 6 }} />
+            <Bar pct={you ? you.bar : 0.68} fill={t.lime} height={4} style={{ marginTop: 6 }} />
           </View>
         </View>
       </View>

@@ -20,8 +20,8 @@ import {
   commit,
   getDoc,
   isConflict,
+  mergeDoc,
   runQuery,
-  setDoc,
   type Ctx,
   type Doc,
 } from '../net/firestore';
@@ -47,6 +47,8 @@ export interface Profile {
   /** Index into the avatar gradient palette. */
   gi: number;
   level: number;
+  /** Career total. The board reads this; `level` is derived from it. */
+  xp: number;
   lastSeen: number;
 }
 
@@ -138,6 +140,7 @@ const profileFrom = (d: Doc): Profile => ({
   mark: str(d.data.mark) || '◆',
   gi: num(d.data.gi),
   level: num(d.data.level),
+  xp: num(d.data.xp),
   lastSeen: num(d.data.lastSeen),
 });
 
@@ -177,13 +180,19 @@ export async function claimHandle(ctx: Ctx, uid: string, raw: string): Promise<s
   return handle;
 }
 
+/**
+ * Publish the profile, without touching the score.
+ *
+ * A merge rather than a set, and `xp` is deliberately absent from it: signing
+ * in republishes the profile, and a full write would reset a career total to
+ * whatever this device happened to think it was.
+ */
 export async function publishProfile(ctx: Ctx, p: Profile): Promise<void> {
-  await setDoc(ctx, `users/${p.uid}`, {
+  await mergeDoc(ctx, `users/${p.uid}`, {
     handle: p.handle,
     name: p.name,
     mark: p.mark,
     gi: p.gi,
-    level: p.level,
     lastSeen: p.lastSeen,
   });
 }
