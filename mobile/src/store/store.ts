@@ -588,6 +588,12 @@ class Store {
     this.setSocial({ boardLoading: true });
     try {
       const friendsOnly = this.state.scope === 'Friends';
+
+      // Relationships are loaded by the Friends screen, and Rankings can be
+      // reached from the tab bar without ever going there — so this board would
+      // have contained nothing but you.
+      if (friendsOnly && !this.state.social.edges.length) await this.refreshSocial();
+
       const people = friendsOnly
         ? await playersByUid(c, [me, ...friendsIn(me, this.state.social.edges).map((e) => otherIn(e, me))])
         : await topPlayers(c);
