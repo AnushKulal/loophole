@@ -6,8 +6,11 @@ import * as auth from '../auth/auth';
 import { AuthFailure, type Account, type AuthError } from '../auth/auth';
 import { toAuthError } from '../auth/errors';
 import { applyAction, ctx as socialCtx, findPeople, isLive, loadSocial } from '../social/live';
-import { CycleError, type Action, type Edge } from '../social/cycle';
+import { CycleError, viewFor as viewOf, type Action, type Edge } from '../social/cycle';
 import { claimSomeHandle, publishProfile, type Profile } from '../social/service';
+import { canMessage, type Message, type ThreadPreview } from '../social/dm';
+import { markRead, readMessages, myThreads, sendMessage } from '../net/threads';
+import { pairId } from '../social/cycle';
 
 /**
  * `unknown` is the launch state: a stored session may or may not be waiting, so
@@ -142,6 +145,12 @@ export interface SocialState {
   searching: boolean;
   results: Profile[];
   busy: string[];
+  /** One preview per conversation, for the friends list and the badge. */
+  threads: ThreadPreview[];
+  /** The open conversation, keyed by the other person's uid. */
+  openWith: string | null;
+  messages: Message[];
+  sending: boolean;
 }
 
 const initial = (): State => ({
@@ -205,6 +214,10 @@ const initial = (): State => ({
     searching: false,
     results: [],
     busy: [],
+    threads: [],
+    openWith: null,
+    messages: [],
+    sending: false,
   },
 });
 
@@ -462,13 +475,79 @@ class Store {
 
   // ── friends & messages ───────────────────────────────────────────
 
-  openDm = (name: string) => this.setState({ scr: 'dm', dmWith: name, dmInput: '' });
+  /**
+   * Open a conversation.
+   *
+   * Takes a name because that is what every caller has — a friends row, a
+   * lobby avatar, a search result. When live, the name is resolved back to a
+   * uid through the profiles already loaded; when it cannot be, the thread
+   * falls back to the fixture behaviour rather than opening an empty screen.
+   */
+  openDm = (name: string) => {
+    this.setState({ scr: 'dm', dmWith: name, dmInput: '' });
+
+    const uid = this.uidForName(name);
+    if (!isLive() || !uid) {
+      this.setSocial({ openWith: null, messages: [] });
+      return;
+    }
+    this.setSocial({ openWith: uid, messages: [] });
+    void this.loadThread(uid);
+  };
+
+  /** The uid of a loaded profile with this display name, if there is one. */
+  private uidForName = (name: string): string | null => {
+    const { people } = this.state.social;
+    for (const [uid, p] of Object.entries(people)) {
+      if (p.name === name || `@${p.handle}` === name) return uid;
+    }
+    return null;
+  };
+
+  private loadThread = async (them: string) => {
+    const c = await socialCtx();
+    const me = this.myUid();
+    if (!c || !me) return;
+
+    try {
+      const pair = pairId(me, them);
+      const messages = await readMessages(c, pair);
+      // Guard against a slow reply for a conversation the player has left.
+      if (this.state.social.openWith !== them) return;
+      this.setSocial({ messages });
+
+      const last = messages[messages.length - 1];
+      if (last) {
+        await markRead(c, me, pair, last.at);
+        void this.refreshThreads();
+      }
+    } catch {
+      if (this.state.social.openWith !== them) return;
+      this.setSocial({ error: 'Could not load that conversation.' });
+    }
+  };
+
+  /** The conversation previews behind the friends list and the unread badge. */
+  refreshThreads = async () => {
+    if (!isLive()) return;
+    const c = await socialCtx();
+    const me = this.myUid();
+    if (!c || !me) return;
+    try {
+      this.setSocial({ threads: await myThreads(c, me) });
+    } catch {
+      // A missing preview list is a quieter failure than a broken screen.
+    }
+  };
   openPlayer = (name: string) => this.setState({ scr: 'player', who: name });
   setDmInput = (dmInput: string) => this.setState({ dmInput });
 
   sendDm = (text: string) => {
     const who = this.state.dmWith;
     if (!who || !text) return;
+
+    const them = this.state.social.openWith;
+    if (isLive() && them) return void this.sendReal(them, text);
 
     const threads = { ...this.state.threads, [who]: (this.state.threads[who] || []).concat([['me', text]]) };
     this.setState({ threads, dmInput: '', typing: true });
@@ -511,10 +590,53 @@ class Store {
     try {
       const { edges, people } = await loadSocial(c, me);
       this.setSocial({ edges, people, loading: false });
+      void this.refreshThreads();
     } catch {
       // Deliberately vague: the causes — offline, rules not deployed, index
       // missing — are all "try again" from where the player is sitting.
       this.setSocial({ loading: false, error: 'Could not reach your friends list.' });
+    }
+  };
+
+  /**
+   * Send for real, showing the message before the server confirms it.
+   *
+   * The optimistic bubble is the point: a chat that waits for a round trip
+   * before showing your own words feels broken on a slow connection, and the
+   * write either lands or the message is put back in the box for you to try
+   * again — which is what would have happened anyway.
+   */
+  private sendReal = async (them: string, text: string) => {
+    const c = await socialCtx();
+    const me = this.myUid();
+    if (!c || !me) return;
+
+    // Only friends may message each other; the rules enforce it too, and this
+    // is the half that keeps the composer from offering a refused write.
+    const edge = this.state.social.edges.find((e) => e.pair.includes(them));
+    if (!canMessage(viewOf(me, edge))) return this.flash('You can only message friends.');
+
+    const at = Date.now();
+    const optimistic: Message = { id: `${at}_local`, by: me, text, at };
+    this.setSocial({ messages: this.state.social.messages.concat([optimistic]), sending: true });
+    this.setState({ dmInput: '' });
+
+    try {
+      const sent = await sendMessage(c, me, them, text, at);
+      // Swap the local bubble for the real one, so its id matches the server's
+      // and the next refresh does not render it twice.
+      this.setSocial({
+        sending: false,
+        messages: this.state.social.messages.map((m) => (m.id === optimistic.id ? sent : m)),
+      });
+      void this.refreshThreads();
+    } catch {
+      this.setSocial({
+        sending: false,
+        messages: this.state.social.messages.filter((m) => m.id !== optimistic.id),
+      });
+      this.setState({ dmInput: text });
+      this.flash('Message not sent.');
     }
   };
 

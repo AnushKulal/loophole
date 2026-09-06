@@ -86,6 +86,59 @@ service cloud.firestore {
                             && request.resource.data.state in ['pending', 'friends', 'blocked'];
     }
 
+    // ── direct messages ───────────────────────────────────────────
+    //
+    // Keyed by the same sorted pair as the friendship, so a thread and the
+    // relationship it belongs to are addressed identically.
+    match /threads/{pair} {
+      function members() {
+        return pair.split('_');
+      }
+
+      function amMember() {
+        return signedIn() && me() in members();
+      }
+
+      // Friends only, checked against the edge document rather than trusted
+      // from the client. This costs one extra read per message and is the
+      // difference between "only your friends can message you" and "anyone
+      // who knows your uid can".
+      function areFriends() {
+        return exists(/databases/$(database)/documents/edges/$(pair))
+            && get(/databases/$(database)/documents/edges/$(pair)).data.state == 'friends';
+      }
+
+      allow read: if amMember();
+      // The thread document is only ever the preview of the last message, so
+      // it is rewritten on every send rather than created once.
+      allow create, update: if amMember() && areFriends() && request.resource.data.lastBy == me();
+      allow delete: if false;
+
+      // A message is written once, in your own name, and never altered. An
+      // editable message log is one where what someone said can be changed
+      // after it has been read.
+      match /messages/{id} {
+        allow read: if amMember();
+        allow create: if amMember() && areFriends() && request.resource.data.by == me();
+        allow update, delete: if false;
+      }
+    }
+
+    // ── read markers ──────────────────────────────────────────────
+    //
+    // How far each person has read, one document each. Private: whether you
+    // have read something is nobody else's business, and keeping it out of the
+    // thread document means the two people are never writing the same row.
+    // `request.resource` is null on a read and `resource` is null on a create,
+    // so these cannot be collapsed into one `read, write` — doing so denies
+    // every read, which is the sort of thing that only shows up against a real
+    // project.
+    match /reads/{marker} {
+      allow read: if signedIn() && resource.data.uid == me();
+      allow create, update: if signedIn() && request.resource.data.uid == me();
+      allow delete: if signedIn() && resource.data.uid == me();
+    }
+
     // ── matches ───────────────────────────────────────────────────
     //
     // Readable by anyone signed in, because joining a table means reading it

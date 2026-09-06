@@ -85,7 +85,12 @@ The rules are commented; the parts worth knowing:
   lists they never agreed to.
 - A move can be created but never changed or deleted. That is what makes the
   move log an authority: a move already shown on someone's screen cannot
-  afterwards become a different move.
+  afterwards become a different move. Messages are the same — an editable
+  message log is one where what somebody said can change after it was read.
+- Messaging checks the friendship, by reading the edge document rather than
+  trusting the sender. It costs one extra read per message and is the whole
+  difference between "only your friends can message you" and "anyone who knows
+  your uid can".
 
 ## 4 · Add the two indexes
 
@@ -96,6 +101,8 @@ told about composite ones. Two queries need them:
 | --- | --- |
 | `edges` | `pair` (array-contains), `at` (ascending) |
 | `users` | `handle` (ascending) |
+| `threads` | `pair` (array-contains), `lastAt` (descending) |
+| `reads` | `uid` (ascending) |
 
 The console offers to build these for you the first time a query fails: the
 error in the app's logs contains a direct link. That is genuinely the easiest
@@ -105,7 +112,7 @@ route — open Friends, watch it fail once, click the link.
 
 ```bash
 cd mobile
-npm test          # 905 tests, none of which need a project
+npm test          # 985 tests, none of which need a project
 npm run web       # sign up twice in two browser profiles and add yourself
 ```
 
@@ -129,10 +136,9 @@ trade for getting it working.
 
 Being honest about the boundary:
 
-- **The screens still read fixtures.** `src/data/people.ts` is unchanged, so
-  Friends, Inbox and the leaderboard show the same six invented people until
-  they are wired to `src/social/service.ts`. That is the next piece of work.
-- **DMs are not networked.** The thread UI is real; the messages are canned.
+- **The leaderboard is still fixtures.** Friends, Add friends, the inbox and DMs
+  are wired; ranks still come from `src/data/people.ts`, because a real one needs
+  scores written at the end of a match and matches are not networked yet.
 - **One game at a time.** The lockstep transport is general, but each of the 14
   screens needs its local `useState` swapped for the shared move log. UNO,
   Connect 4 and Chess are the ones to do first — turn-based, small moves, and

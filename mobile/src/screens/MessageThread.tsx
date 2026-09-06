@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Animated, Easing, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { store, type State } from '../store/useStore';
 import { FRIENDS, GRADV, grad } from '../data/people';
+import { presence } from '../social/rows';
 import { useTheme } from '../theme/theme';
 import { Avatar, Chevron, Glass, Glyph, Gradient, H, P, Tap } from '../components/base';
 import { FadeIn } from '../components/GameChrome';
@@ -95,8 +96,21 @@ function Bubble({ mine, text, delay }: { mine: boolean; text: string; delay: num
 /** 15 · Message thread — a real DM with quick replies and a typing indicator. */
 export default function MessageThread({ s }: { s: State }) {
   const t = useTheme();
-  const who = FRIENDS.find((f) => f.name === s.dmWith);
-  const messages = (s.dmWith && s.threads[s.dmWith]) || [];
+  const me = s.auth.user?.uid ?? '';
+  const { live, openWith, people, messages: real, sending } = s.social;
+
+  // A live conversation is a list of documents with an author; the fixture one
+  // is a list of ['me' | 'them', text]. Both become the same tuple here so the
+  // bubbles below render one shape.
+  const them = openWith ? people[openWith] : undefined;
+  const lines: [boolean, string][] = live && openWith
+    ? real.map((m) => [m.by === me, m.text] as [boolean, string])
+    : ((s.dmWith && s.threads[s.dmWith]) || []).map(([from, text]) => [from === 'me', text] as [boolean, string]);
+
+  const fixture = FRIENDS.find((f) => f.name === s.dmWith);
+  const mark = them?.mark ?? fixture?.mark ?? '';
+  const avatar = them ? grad(them.gi) : fixture ? grad(fixture.gi) : GRADV;
+  const status = them ? presence(them.lastSeen, Date.now()) : (fixture?.status ?? '');
   const listRef = useRef<ScrollView>(null);
 
   // The web pinned a trailing element with `scrollIntoView`; here the list is
@@ -104,7 +118,7 @@ export default function MessageThread({ s }: { s: State }) {
   useEffect(() => {
     const id = requestAnimationFrame(() => listRef.current?.scrollToEnd({ animated: true }));
     return () => cancelAnimationFrame(id);
-  }, [messages.length, s.typing]);
+  }, [lines.length, s.typing]);
 
   const send = () => store.sendDm(s.dmInput.trim());
 
@@ -144,11 +158,11 @@ export default function MessageThread({ s }: { s: State }) {
           label={s.dmWith ?? 'Player'}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginRight: 'auto' }}
         >
-          <Avatar mark={who?.mark ?? ''} grad={who ? grad(who.gi) : GRADV} size={38} fontSize={15} />
+          <Avatar mark={mark} grad={avatar} size={38} fontSize={15} />
           <View>
             <H size={14.5}>{s.dmWith ?? ''}</H>
             <P size={10.5} weight={400} color={t.dim2}>
-              {who?.status ?? ''}
+              {status}
             </P>
           </View>
         </Tap>
@@ -181,11 +195,14 @@ export default function MessageThread({ s }: { s: State }) {
         onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
         contentContainerStyle={{ paddingTop: 16, paddingHorizontal: 20, paddingBottom: 8, gap: 8 }}
       >
-        {messages.map(([from, text], i) => (
-          <Bubble key={i} mine={from === 'me'} text={text} delay={Math.min(i * 60, 400)} />
+        {lines.map(([mine, text], i) => (
+          <Bubble key={i} mine={mine} text={text} delay={Math.min(i * 60, 400)} />
         ))}
 
-        {s.typing && (
+        {/* Nobody is telling us they are typing; there is no such signal on a
+            polled transport, and inventing one over a real conversation would
+            be a lie about a person. */}
+        {!live && s.typing && (
           <Glass radius={14} elevated={false} style={{ alignSelf: 'flex-start' }}>
             <View
               accessible

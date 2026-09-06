@@ -125,8 +125,11 @@ export default function Friends({ s }: { s: State }) {
   const t = useTheme();
   const [query, setQuery] = useState('');
   const now = Date.now();
-  const { live, edges, people, busy } = s.social;
+  const { live, edges, people, busy, threads } = s.social;
   const me = s.auth.user?.uid ?? '';
+
+  // Which conversations have something new in them, by the other person's uid.
+  const unread = new Set(threads.filter((th) => th.unread).map((th) => th.other));
 
   // Live or fixtures, but the same shape either way — the rows below do not
   // know which they are rendering, which is what keeps the two paths honest.
@@ -318,10 +321,9 @@ export default function Friends({ s }: { s: State }) {
                       <H size={8.5} color={t.accLt} numberOfLines={1}>
                         LVL {f.level}
                       </H>
-                      {/* The unread badge is fixture-only until DMs are
-                          networked; inventing one over a real friend would be
-                          a message that does not exist. */}
-                      {!live && f.name === 'Divya' && (
+                      {/* Live, this is a real unread conversation; on the
+                          fixture path it is the one the sample thread has. */}
+                      {(live ? !!f.uid && unread.has(f.uid) : f.name === 'Divya') && (
                         <View
                           style={{
                             minWidth: 17,
