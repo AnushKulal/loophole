@@ -10,6 +10,7 @@ import { CycleError, viewFor as viewOf, type Action, type Edge } from '../social
 import { claimSomeHandle, publishProfile, type Profile } from '../social/service';
 import { canMessage, type Message, type ThreadPreview } from '../social/dm';
 import { markRead, readMessages, myThreads, sendMessage } from '../net/threads';
+import { createMatch, getMatch, joinMatch, roomCode, type Match } from '../net/match';
 import { pairId } from '../social/cycle';
 
 /**
@@ -151,6 +152,8 @@ export interface SocialState {
   openWith: string | null;
   messages: Message[];
   sending: boolean;
+  /** The shared table this device is sitting at, if any. */
+  match: Match | null;
 }
 
 const initial = (): State => ({
@@ -218,6 +221,7 @@ const initial = (): State => ({
     openWith: null,
     messages: [],
     sending: false,
+    match: null,
   },
 });
 
@@ -365,6 +369,112 @@ class Store {
       setTimeout(() => this.setState({ joined: 4 }), 2000),
       setTimeout(() => this.setState({ joined: 5 }), 3400),
     ];
+  };
+
+  // ── shared tables ────────────────────────────────────────────────
+  //
+  // Two seats. Connect 4 has exactly two, UNO plays well with two, and a table
+  // that seats more raises questions — who waits for whom, what happens when
+  // the third never arrives — that are worth answering deliberately rather
+  // than as a side effect of supporting them.
+  static NET_SEATS = 2;
+
+  private seatForMe = () => {
+    const u = this.state.auth.user;
+    return {
+      uid: u?.uid ?? '',
+      name: this.state.myName,
+      mark: MARKS[this.state.mark] ?? MARKS[0],
+      gi: this.state.tint,
+    };
+  };
+
+  /**
+   * Open a table other people can join, and sit at it.
+   *
+   * The room code is the document id, so joining is a direct read rather than a
+   * query and two live tables cannot share a code.
+   */
+  hostTable = async () => {
+    if (!isLive()) return this.flash('Sign in with an account to play a friend.');
+    const c = await socialCtx();
+    const me = this.seatForMe();
+    if (!c || !me.uid) return this.flash('Sign in with an account to play a friend.');
+
+    this.setState({ toast: 'Opening a table…' });
+    try {
+      // One attempt is enough at this scale; a clash means someone holds a
+      // 30^6 code right now, and the next tap gets another.
+      const code = roomCode(Math.random);
+      const match = await createMatch(c, code, {
+        game: this.state.game,
+        host: me.uid,
+        seed: Math.floor(Math.random() * 0x7fffffff),
+        seats: [me],
+        status: 'lobby',
+        options: { players: Store.NET_SEATS, stack: this.state.opt.stack },
+        createdAt: Date.now(),
+      });
+      this.setSocial({ match });
+      this.setState({ scr: 'lobby', joined: 1, copied: false });
+      this.flash(`Room ${match.id} — share the code`);
+    } catch {
+      this.flash('Could not open a table.');
+    }
+  };
+
+  /** Take the free seat at someone else's table, and start playing. */
+  joinTable = async (raw: string) => {
+    const code = raw.trim().toUpperCase();
+    if (!code) return;
+    const c = await socialCtx();
+    const me = this.seatForMe();
+    if (!c || !me.uid) return this.flash('Sign in with an account to join a table.');
+
+    try {
+      const match = await joinMatch(c, code, me, Store.NET_SEATS);
+      this.setSocial({ match });
+      // The table decides the game, not whatever this phone last looked at.
+      this.setState({ game: match.game, scr: 'game', joinOpen: false, codeInput: '' });
+    } catch (e) {
+      this.flash(e instanceof Error ? e.message : 'Could not join that table.');
+    }
+  };
+
+  /** Start the match the host has opened, once somebody else has sat down. */
+  startTable = async () => {
+    const match = this.state.social.match;
+    const c = await socialCtx();
+    if (!match || !c) return;
+    if (match.seats.length < 2) return this.flash('Waiting for somebody to join.');
+    this.setState({ scr: 'game' });
+  };
+
+  /** Poll the table while its host waits for a guest. */
+  refreshTable = async () => {
+    const match = this.state.social.match;
+    const c = await socialCtx();
+    if (!match || !c) return;
+    try {
+      const fresh = await getMatch(c, match.id);
+      if (fresh) this.setSocial({ match: fresh });
+    } catch {
+      // The lobby keeps showing what it last saw.
+    }
+  };
+
+  leaveTable = () => this.setSocial({ match: null });
+
+  /**
+   * A typed room code.
+   *
+   * Live, that is a real table to sit at. Otherwise it is the sample lobby the
+   * app has always shown, so an unconfigured build still demonstrates itself
+   * rather than reporting that a code nobody issued does not exist.
+   */
+  joinCode = (code: string) => {
+    if (isLive()) return void this.joinTable(code);
+    this.enterLobby();
   };
 
   /**

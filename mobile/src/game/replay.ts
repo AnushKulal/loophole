@@ -207,6 +207,38 @@ export function replayUno(seed: number, options: UnoOptions, moves: Move[]): Uno
 }
 
 /**
+ * The same round, told from `mySeat`'s side of the table.
+ *
+ * Every UNO screen in this app is written as though you are seat 0 — your hand
+ * is `hands[0]`, it is your turn when `turn === 0`. Rather than rewrite all of
+ * that for the three players who are not seat 0, the state is rotated so each
+ * phone sees itself first. Relative seat order is preserved, so `dir` and every
+ * skip still mean the same thing; only the labels move.
+ *
+ * `seatFromView` is the inverse, for turning a tapped row back into the seat
+ * the log talks about.
+ */
+export function rotateUno(u: UnoState, mySeat: number): UnoState {
+  const n = u.hands.length;
+  if (!n || mySeat % n === 0) return u;
+  const shift = ((mySeat % n) + n) % n;
+  return {
+    ...u,
+    hands: u.hands.map((_, i) => u.hands[(i + shift) % n]),
+    turn: (u.turn - shift + n) % n,
+    winner: u.winner === null ? null : (u.winner - shift + n) % n,
+  };
+}
+
+/** View row -> engine seat. */
+export const seatFromView = (view: number, mySeat: number, seats: number): number =>
+  seats > 0 ? (((view + mySeat) % seats) + seats) % seats : 0;
+
+/** Engine seat -> view row. */
+export const viewFromSeat = (seat: number, mySeat: number, seats: number): number =>
+  seats > 0 ? (((seat - mySeat) % seats) + seats) % seats : 0;
+
+/**
  * What a bot at `seat` would play.
  *
  * Bots are decided on every client from shared state, so they need no seat on

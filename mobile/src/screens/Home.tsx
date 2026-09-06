@@ -321,7 +321,7 @@ export default function Home({ s }: { s: State }) {
                       autoCorrect={false}
                       selectionColor={t.cyan}
                       returnKeyType="go"
-                      onSubmitEditing={store.enterLobby}
+                      onSubmitEditing={() => store.joinCode(s.codeInput)}
                       style={{
                         width: '100%',
                         padding: 0,
@@ -332,7 +332,7 @@ export default function Home({ s }: { s: State }) {
                         textAlign: 'center',
                       }}
                     />
-                    <Tap onPress={store.enterLobby} label="JOIN" style={{ marginTop: 8 }}>
+                    <Tap onPress={() => store.joinCode(s.codeInput)} label="JOIN" style={{ marginTop: 8 }}>
                       <View style={{ paddingVertical: 9, borderRadius: 12, backgroundColor: t.cyan, alignItems: 'center' }}>
                         <H size={11} color={t.onCyan}>
                           JOIN

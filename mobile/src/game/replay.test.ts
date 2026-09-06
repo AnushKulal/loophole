@@ -8,9 +8,12 @@ import {
   discFor,
   replayC4,
   replayUno,
+  rotateUno,
+  seatFromView,
   unoApply,
   unoBotMove,
   unoLegal,
+  viewFromSeat,
   type C4Move,
   type UnoMove,
 } from './replay';
@@ -249,5 +252,60 @@ describe('unoBotMove', () => {
     const u = { ...replayUno(3, OPTS, []), draw: 2 } as UnoState;
     const m = unoBotMove(u, u.turn);
     expect(m === null || 'take' in m || 'play' in m).toBe(true);
+  });
+});
+
+describe('rotateUno', () => {
+  const OPTS = { seats: 4, stack: false };
+
+  it('is a no-op for seat 0', () => {
+    const u = replayUno(21, OPTS, []);
+    expect(rotateUno(u, 0)).toBe(u);
+  });
+
+  it('puts your own hand first', () => {
+    const u = replayUno(21, OPTS, []);
+    expect(rotateUno(u, 2).hands[0]).toEqual(u.hands[2]);
+    expect(rotateUno(u, 2).hands[1]).toEqual(u.hands[3]);
+    expect(rotateUno(u, 2).hands[2]).toEqual(u.hands[0]);
+  });
+
+  it('moves the turn with the hands', () => {
+    const u = { ...replayUno(21, OPTS, []), turn: 2 };
+    expect(rotateUno(u, 2).turn).toBe(0);
+    expect(rotateUno(u, 1).turn).toBe(1);
+  });
+
+  it('moves the winner with them', () => {
+    const u = { ...replayUno(21, OPTS, []), winner: 3 };
+    expect(rotateUno(u, 3).winner).toBe(0);
+    expect(rotateUno(u, 0).winner).toBe(3);
+  });
+
+  it('leaves the pile, the colour and the direction alone', () => {
+    // Rotation preserves relative order, so a reverse still means the same.
+    const u = replayUno(21, OPTS, []);
+    const r = rotateUno(u, 3);
+    expect(r.top).toBe(u.top);
+    expect(r.colour).toBe(u.colour);
+    expect(r.dir).toBe(u.dir);
+    expect(r.draw).toBe(u.draw);
+  });
+
+  it('round-trips through the seat mapping', () => {
+    for (let mine = 0; mine < 4; mine++) {
+      for (let seat = 0; seat < 4; seat++) {
+        expect(seatFromView(viewFromSeat(seat, mine, 4), mine, 4)).toBe(seat);
+      }
+    }
+  });
+
+  it('maps my own seat to the first row from every side', () => {
+    for (let mine = 0; mine < 4; mine++) expect(viewFromSeat(mine, mine, 4)).toBe(0);
+  });
+
+  it('survives an empty table without dividing by zero', () => {
+    expect(seatFromView(0, 0, 0)).toBe(0);
+    expect(viewFromSeat(0, 0, 0)).toBe(0);
   });
 });

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Easing, View, type LayoutChangeEvent } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Avatar, Glass, H, Kicker, P, Tap, gradStops } from '../../components/base';
@@ -17,6 +17,8 @@ import {
 } from '../../components/GameChrome';
 import { BOT, makeRng, pick, type BotProfile, type GameScreenProps, type PlayableGame, type Player, type Rng } from '../../game/contract';
 import { COLS, ROWS, emptyBoard, findWin, lowest, place, botMove, type Board, type Disc, type Outcome } from '../../game/connect4';
+import { botDriver, c4Init, replayC4, type C4State } from '../../game/replay';
+import { useNetMatch } from '../../game/useMatch';
 import { useTheme } from '../../theme/theme';
 import { radius as R, bloom } from '../../theme/tokens';
 
@@ -131,16 +133,63 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
   const rng = useRef<Rng | null>(null);
   if (!rng.current) rng.current = makeRng(Math.floor(Math.random() * 0x7fffffff));
 
-  const [board, setBoard] = useState<Board>(emptyBoard);
-  const [turn, setTurn] = useState<Turn>('you');
-  const [winner, setWinner] = useState<Outcome>(null);
-  const [winLine, setWinLine] = useState<number[]>([]);
-  const [lastIdx, setLastIdx] = useState(-1);
+  const [lBoard, setBoard] = useState<Board>(emptyBoard);
+  const [lTurn, setTurn] = useState<Turn>('you');
+  const [lWinner, setWinner] = useState<Outcome>(null);
+  const [lWinLine, setWinLine] = useState<number[]>([]);
+  const [lLastIdx, setLastIdx] = useState(-1);
   const [tally, setTally] = useState({ you: 0, bot: 0, drawn: 0 });
   const [over, setOver] = useState(false);
   const [secs, setSecs] = useState(clock);
   const [emote, setEmote] = useState<string | null>(null);
   const [box, setBox] = useState({ w: 0, h: 0 });
+
+  /**
+   * The shared match, when there is one.
+   *
+   * Everything below reads `board` / `turn` / `winner`, and those are the
+   * *local* state for a bot game and the replayed log for a shared one. The
+   * screen does not branch beyond this block.
+   */
+  const net = config.net;
+  const mySeat = net?.mySeat ?? 0;
+
+  const c4Bot = useCallback(
+    (st: C4State) => {
+      const col = chooseColumn(st.board, profile, rng.current as Rng);
+      return col === null ? null : ({ col } as never);
+    },
+    [profile],
+  );
+
+  const nm = useNetMatch<C4State>(
+    net,
+    replayC4,
+    (st) => st.turn,
+    c4Bot,
+    net ? botDriver(net.seats, net.host) : null,
+  );
+
+  /**
+   * The engine names its two sides 'you' and 'bot' — really "seat 0" and
+   * "seat 1". Seat 1's player is told the opposite way round, so that from
+   * either phone your own discs are the ones the whole screen already calls
+   * 'you'. Without this, the second player would watch their own moves land in
+   * the opponent's colour under the opponent's name.
+   */
+  const flip = !!net && mySeat === 1;
+  const asMine = (d: Disc | null): Disc | null => (!d || !flip ? d : d === 'you' ? 'bot' : 'you');
+
+  const netState = nm.state ?? c4Init();
+  const board = net ? netState.board.map(asMine) : lBoard;
+  const winLine = net ? netState.line : lWinLine;
+  const lastIdx = net ? netState.last : lLastIdx;
+  const winner: Outcome = net
+    ? netState.winner === 'draw' || netState.winner === null
+      ? netState.winner
+      : asMine(netState.winner)
+    : lWinner;
+  const turn: Turn = net ? (netState.turn === mySeat ? 'you' : 'bot') : lTurn;
 
   const now = useRef({ board, turn, winner });
   now.current = { board, turn, winner };
@@ -186,6 +235,8 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
 
   // ── the opponent thinks, then drops ───────────────────────────────
   useEffect(() => {
+    // A shared match drives its bots through the move log, from one client.
+    if (net) return;
     if (winner || turn !== 'bot') return;
     const b = board;
     const col = chooseColumn(b, profile, rng.current as Rng);
@@ -202,6 +253,10 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
 
   // ── your clock: the lobby's turn timer, spent on one column ───────
   useEffect(() => {
+    // No house move in a shared match: dropping a disc for somebody means
+    // posting it as them, and a clock that fires on two phones a second apart
+    // would post it twice.
+    if (net) return;
     if (!mine) {
       setSecs(clock);
       return;
@@ -245,8 +300,16 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
   const drop = (col: number) => {
     if (winner) return onToast('The board is closed — rematch, or take the scoreboard');
     if (turn !== 'you') return onToast(`${foe.name} is thinking`);
+    if (lowest(board, col) < 0) return onToast(`Column ${col + 1} is full`);
+
+    if (net) {
+      // Nothing is applied here — the move goes to the log and comes back as
+      // everyone else's does, which is the only way both boards stay equal.
+      if (nm.sending) return;
+      return nm.play({ col } as never);
+    }
+
     const r = lowest(board, col);
-    if (r < 0) return onToast(`Column ${col + 1} is full`);
     const n = place(board, col, 'you');
     if (!n) return;
     settle(n, 'you', r * COLS + col);
@@ -254,6 +317,9 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
 
   /** A fresh board. Whoever lost the last one opens the next. */
   const rematch = () => {
+    // A rematch is a new seed and a new log, which is a new table — offering it
+    // here would silently restart only this phone.
+    if (net) return onToast('Open a new room for a rematch');
     const opener: Turn = winner === 'you' ? 'bot' : 'you';
     setBoard(emptyBoard());
     setWinner(null);

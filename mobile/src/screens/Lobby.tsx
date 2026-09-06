@@ -10,6 +10,7 @@ import { bloom } from '../theme/tokens';
 import { ArrowRight, Avatar, Chevron, Glass, Glyph, Gradient, H, Kicker, P, Tap } from '../components/base';
 import { FadeIn } from '../components/GameChrome';
 
+/** The code a bots-only lobby shows. A shared table brings its own. */
 const ROOM = 'K7QX2M';
 
 /** The design's one literal tint — the fill and rim of every accented control. */
@@ -188,6 +189,26 @@ function SeatCell({ p, onPress }: { p: Seat; onPress: () => void }) {
 export default function Lobby({ s }: { s: State }) {
   const t = useTheme();
   const { seats, canStart, joinedLabel } = buildSeats(s);
+
+  /**
+   * A shared table, if this lobby is one.
+   *
+   * Hosting replaces the sample code with a real one and the sample seats with
+   * whoever has actually sat down — a lobby that shows five friends arriving
+   * while nobody has joined is the kind of thing that gets believed.
+   */
+  const table = s.social.match;
+  const room = table?.id ?? ROOM;
+  const waiting = !!table && table.seats.length < 2;
+  const ready = table ? table.seats.length >= 2 : canStart;
+
+  // While the host waits, look for the guest.
+  useEffect(() => {
+    if (!waiting) return;
+    const id = setInterval(() => void store.refreshTable(), 2500);
+    void store.refreshTable();
+    return () => clearInterval(id);
+  }, [waiting]);
   const chips = chipsFor(s);
   const modeChip = s.mode === 'friends' ? 'Friends only' : s.mode === 'bots' ? `Bots · ${s.diff}` : `Bots fill · ${s.diff}`;
   // CSS grid `repeat(3,1fr)` becomes rows of three, padded so cells keep their width.
@@ -255,10 +276,29 @@ export default function Lobby({ s }: { s: State }) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 20 }}
       >
+        {/* Opening a shared table, when this is still a bots-only lobby. The
+            sample code above cannot be joined by anybody; a real one can. */}
+        {s.social.live && !table && (
+          <Tap onPress={() => void store.hostTable()} label="Play a friend on their own phone" style={{ marginBottom: 12 }}>
+            <Glass radius={16} borderColor={TINT_LINE}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 13, paddingHorizontal: 15 }}>
+                <Glyph d="M2.5 20a6.5 6.5 0 0113 0M18 8v6M15 11h6" size={17} color={t.lime} width={2.2} />
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <H size={12.5}>Play a friend</H>
+                  <P size={10.5} weight={400} color={t.dim2} numberOfLines={1} style={{ marginTop: 2 }}>
+                    Opens a real room they can join by code
+                  </P>
+                </View>
+                <ArrowRight size={17} />
+              </View>
+            </Glass>
+          </Tap>
+        )}
+
         {/* room code */}
         <Tap
-          onPress={() => store.copyCode(ROOM)}
-          label={`Room code ${ROOM}, tap to share`}
+          onPress={() => store.copyCode(room)}
+          label={`Room code ${room}, tap to share`}
           style={{
             borderRadius: 20,
             padding: 18,
@@ -272,13 +312,13 @@ export default function Lobby({ s }: { s: State }) {
             overflow: 'hidden',
           }}
         >
-          <Shine />
+          {!table && <Shine />}
           <View>
             <H size={9} color={t.dim2} style={{ letterSpacing: 1.44, marginBottom: 5 }}>
               ROOM CODE · TAP TO SHARE
             </H>
             <H size={32} color={t.accLt} style={{ letterSpacing: 5.12 }}>
-              {ROOM}
+              {room}
             </H>
           </View>
 
@@ -404,11 +444,11 @@ export default function Lobby({ s }: { s: State }) {
       {/* start */}
       <View style={{ paddingHorizontal: 20, paddingTop: 16 }}>
         <Tap
-          onPress={store.startGame}
-          disabled={!canStart}
-          label={canStart ? 'Start game' : 'Waiting for players'}
+          onPress={table ? store.startTable : store.startGame}
+          disabled={!ready}
+          label={ready ? 'Start game' : waiting ? 'Waiting for somebody to join' : 'Waiting for players'}
         >
-          {canStart ? (
+          {ready ? (
             <Gradient radius={18}>
               <View
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 18, paddingHorizontal: 22 }}

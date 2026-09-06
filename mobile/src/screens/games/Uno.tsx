@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, ScrollView, View } from 'react-native';
 import { Glass, Glyph, Gradient, H, Kicker, P, Tap, gradStops } from '../../components/base';
 import {
@@ -45,6 +45,15 @@ import {
   type Colour,
   type UnoState,
 } from '../../game/uno';
+import {
+  botDriver,
+  replayUno,
+  rotateUno,
+  seatFromView,
+  unoBotMove,
+} from '../../game/replay';
+import { useNetMatch } from '../../game/useMatch';
+import { grad as gradOf } from '../../data/people';
 import { useTheme } from '../../theme/theme';
 import { radius as R, bloom } from '../../theme/tokens';
 
@@ -208,9 +217,8 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
   const table: Player[] = roster.slice(0, wanted);
   const seats = Math.max(MIN_SEATS, table.length);
   /** Only reached if a lobby somehow starts one-handed; every seat still gets a name and a row. */
-  const seatAt = (i: number): Player =>
+  const localSeatAt = (i: number): Player =>
     table[i] ?? { name: `Seat ${i + 1}`, mark: '●', grad: cardGrad(COLOURS[i % COLOURS.length]), bot: true };
-  const who = (i: number) => seatAt(i).name;
 
   /** Board option: how long a turn may be held before it plays itself. */
   const clock = clamp(Math.round(config.options.turn) || 20, 5, 90);
@@ -222,19 +230,67 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
   if (!seed.current) seed.current = makeRng(Math.floor(Math.random() * 0x7fffffff));
   const rng = seed.current;
 
-  const [st, setSt] = useState<UnoState>(() => deal(seats, rng, stacking));
+  const [lSt, setSt] = useState<UnoState>(() => deal(seats, rng, stacking));
   const [emote, setEmote] = useState<string | null>(null);
   const [secs, setSecs] = useState(clock);
+  /** The colour picker is a local step: a wild and its colour go out as one move. */
+  const [pendingWild, setPendingWild] = useState<number | null>(null);
+
+  /**
+   * The shared match, when there is one.
+   *
+   * This screen — like the design it came from — is written as though you are
+   * seat 0: your hand is `hands[0]` and it is your turn when `turn === 0`.
+   * Rather than rewrite all of that for the players who are not seat 0, the
+   * replayed state is rotated so every phone sees itself first. Relative order
+   * is preserved, so a reverse still means the same thing to everyone.
+   */
+  const net = config.net;
+  const mySeat = net?.mySeat ?? 0;
+  const netSeats = net?.seats.length ?? seats;
+
+  const unoReplay = useCallback(
+    (moves: Parameters<typeof replayUno>[2]) =>
+      replayUno(net?.seed ?? 0, { seats: netSeats, stack: stacking }, moves),
+    [net?.seed, netSeats, stacking],
+  );
+
+  const nm = useNetMatch<UnoState>(
+    net,
+    unoReplay,
+    (u) => u.turn,
+    (u, seat) => unoBotMove(u, seat) as never,
+    net ? botDriver(net.seats, net.host) : null,
+  );
+
+  /**
+   * Row `i` of the table, as this phone sees it — row 0 is always you.
+   *
+   * The rotation that puts your hand first has to move the names with it, or
+   * every label would belong to somebody else's cards.
+   */
+  const seatAt = (i: number): Player => {
+    if (!net) return localSeatAt(i);
+    const seat = net.seats[seatFromView(i, mySeat, netSeats)];
+    return seat
+      ? { name: seat.name, mark: seat.mark, grad: gradOf(seat.gi), bot: !!seat.bot }
+      : localSeatAt(i);
+  };
+  const who = (i: number) => seatAt(i).name;
+
+  const st: UnoState = net ? rotateUno(nm.state, mySeat) : lSt;
   const stRef = useRef(st);
   stRef.current = st;
   const done = useRef(false);
 
   const over = st.winner !== null;
   const myTurn = st.turn === 0 && !over;
-  const picking = st.need && st.pending !== null;
+  const picking = net ? pendingWild !== null : st.need && st.pending !== null;
 
   // ── the bots, on the beat their profile sets ──────────────────────
   useEffect(() => {
+    // A shared match drives its bots through the move log, from one client.
+    if (net) return;
     if (over || st.turn === 0) return;
     const seat = st.turn;
     const id = setTimeout(() => {
@@ -253,6 +309,9 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
 
   // ── your clock: the lobby's turn timer, spent on one card ─────────
   useEffect(() => {
+    // No automatic draw in a shared match: it would be posted as you, from two
+    // phones whose clocks are a second apart.
+    if (net) return;
     if (!myTurn || picking) {
       setSecs(clock);
       return;
@@ -292,12 +351,24 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
       if (card.v === '+4') return onToast(`You still hold ${UNAME[st.colour]}`);
       return onToast('That card does not match');
     }
-    // A wild needs a colour before it can resolve — open the picker.
-    if (card.c === 'W') return setSt({ ...st, need: true, pending: i });
+    // A wild needs a colour before it can resolve — open the picker. In a
+    // shared match the pick stays on this phone until it is made, so a wild
+    // and its colour reach the table as one move.
+    if (card.c === 'W') {
+      if (net) return setPendingWild(i);
+      return setSt({ ...st, need: true, pending: i });
+    }
+    if (net) return nm.sending ? undefined : nm.play({ play: i } as never);
     setSt(playFrom(st, 0, i, null, who, rng));
   };
 
   const chooseColour = (c: Colour) => {
+    if (net) {
+      if (pendingWild === null) return;
+      const play = pendingWild;
+      setPendingWild(null);
+      return nm.play({ play, colour: c } as never);
+    }
     if (st.pending === null) return;
     setSt(playFrom(st, 0, st.pending, c, who, rng));
   };
@@ -305,10 +376,15 @@ function Screen({ config, onFinish, onExit, onRules, onChat, chatCount, onToast 
   const drawOne = () => {
     if (over) return;
     if (!myTurn) return onToast('Wait for your turn');
+    // Taking a live +2 pile and drawing a card are different moves, and the
+    // log has to say which — the pile is taken whole and ends the turn.
+    if (net) return nm.sending ? undefined : nm.play((st.draw > 0 ? { take: true } : { draw: true }) as never);
     setSt(drawFrom(st, 0, true, who, rng));
   };
 
   const again = () => {
+    // A new deal is a new seed and a new log, which is a new table.
+    if (net) return onToast('Open a new room for another round');
     setSt(deal(seats, rng, stacking));
     setSecs(clock);
   };
